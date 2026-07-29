@@ -14,15 +14,16 @@ the pipeline from here.
 
 ## Execution Axioms
 
-These four axioms gate EVERY action in the framework. They are binary (pass/fail),
+These five axioms gate EVERY action in the framework. They are binary (pass/fail),
 mechanically verifiable, and non-negotiable. No protocol, no phase, no role is exempt.
 The agent evaluates these BEFORE each action, not after.
 
 **AXIOM-HANDOFF**: Zero lines of code or configuration without an approved handoff file. No handoff = no code.
 No exceptions. No "quick fix". No "simple change". No "while I'm here". If a
 handoff file does not exist for the work, the work does not happen. If the platform
-supports scoped tool permissions: restrict Write/Edit tools in phases prior to Plan.
-A handoff file on disk is the unlock signal.
+supports scoped tool permissions: restrict Write/Edit tools for code and configuration
+files in phases prior to Plan. Planning artifacts under `docs/` are exempt --- they are
+the expected output of pre-Plan phases. A handoff file on disk is the unlock signal.
 See [Delegation Contract](#delegation-contract).
 
 **AXIOM-ORCHESTRATOR**: The orchestrator coordinates ONLY. If it finds itself writing
@@ -41,6 +42,13 @@ failure at any stage blocks the commit.
 **AXIOM-TDD**: Red → Green → Refactor is the execution methodology, not a suggestion.
 Each phase has entry and exit criteria defined in the [TDD Cycle](#tdd-cycle) protocol.
 No phase may be skipped. No commit mid-cycle.
+
+**AXIOM-NATIVE**: Use the native, idiomatic capabilities of the declared stack and
+version. Reimplementing what the stack already solves, or using patterns from older
+versions when the declared version supersedes them, is technical debt --- requiring
+documented justification with a remediation path, not a scope decision. This axiom
+applies to ALL solution types (web, CLI, TUI, mobile, desktop, embedded) and ALL
+technology choices without exception.
 
 These axioms are referenced by compact rules ([PROJECT-ANTI-DRIFT](#project-anti-drift),
 [PROJECT-TEST](#project-test), [PROJECT-TDD](#project-tdd)) and enforced through the
@@ -219,25 +227,7 @@ Each gate's artifact feeds the next. The graph starts coarse (entities) and refi
 atomic tasks. At Plan time, the DAG is immutable --- changes during Build require a
 re-plan.
 
-```mermaid
-flowchart LR
-    CAP([Capture]) --> DIS([Discover])
-    DIS --> ARC([Architect])
-    ARC --> REF([Refine])
-    REF --> PLAN([Plan])
-    PLAN --> BUILD([Build])
-    BUILD --> VER([Verify])
-    VER --> ACC([Accept])
-
-    style CAP fill:#3b82f6,color:#fff
-    style DIS fill:#3b82f6,color:#fff
-    style ARC fill:#8b5cf6,color:#fff
-    style REF fill:#f59e0b,color:#fff
-    style PLAN fill:#f59e0b,color:#fff
-    style BUILD fill:#22c55e,color:#fff
-    style VER fill:#22c55e,color:#fff
-    style ACC fill:#22c55e,color:#fff
-```
+See the dependency-annotated diagram above for the linear phase sequence.
 
 | Phase | Produces | Gate to Next | MIM Required |
 | ----- | -------- | ------------ | ------------ |
@@ -252,13 +242,15 @@ flowchart LR
 
 **MIM (Manual Inspection Milestone)**: a phase boundary where human approval is required
 before proceeding. The orchestrator presents results and waits --- it does not continue
-until the human responds. Visual and UX decisions always require MIM regardless of phase.
+until the human responds.
 
 **MIM Conflict Resolution**: when role perspectives disagree at a MIM, apply this
-precedence: PO breaks scope and priority ties, Dev Lead breaks technical and feasibility
-ties, SM escalates process deadlocks to the human. If no precedence applies, the
-disagreement is escalated to human. This generalizes Refinement's synthesis step to all
-phases.
+precedence: PO breaks scope and priority ties, Dev Team breaks technical and feasibility
+ties, UX Advocate breaks interaction design and accessibility ties, QA Lead breaks
+quality certification and test strategy ties, DevSecOps Lead breaks security and
+infrastructure ties, SM escalates process deadlocks to the human. If no precedence
+applies, the disagreement is escalated to human. This generalizes Refinement's synthesis
+step to all phases.
 
 ### Scrum Team Matrix
 
@@ -268,27 +260,62 @@ protocols reference this matrix instead of embedding local copies.
 
 **Matrix 1 --- Participation**:
 
-| Phase | PO | Dev Team | SM |
-| ----- | -- | -------- | -- |
-| Capture | Leads stakeholder conversation, defines value proposition | Provides feasibility signals, flags technical risks early | Guards scope, ensures constraints are captured |
-| Discover | Validates user needs, assigns MoSCoW priorities | Builds domain model, identifies entity dependencies | Verifies INVEST compliance, flags story coupling |
-| Architect | Validates NFR coverage, approves API contracts | Leads tech decisions, maps epic-level dependencies | Verifies Echo System config, ensures process gates exist |
-| Refine | Defends MVP Cut with rationale, completes ACs | Estimates, validates dependency DAG, authors addenda | Enforces DOR, ensures no blocked stories enter batch |
-| Plan | Confirms batch scope vs. capacity | Validates handoffs, runs file-overlap check | Runs pre-flight checklist, verifies delegation readiness |
-| Verify | Reviews AC evidence against original intent | Runs regression, checks coverage thresholds | Validates DOD compliance, flags process gaps |
-| Accept | Demos to stakeholder, validates success metrics | Available for technical questions and live fixes | Facilitates review, captures feedback for retrospective |
+| Phase | PO | Dev Team | SM | UX Advocate | QA Lead | DevSecOps Lead |
+| ----- | -- | -------- | -- | ----------- | ------- | -------------- |
+| Capture | Leads stakeholder conversation, defines value proposition | Provides feasibility signals, flags technical risks early | Guards scope, ensures constraints are captured | Identifies interaction surfaces and solution-type UX constraints | Identifies testability requirements, flags unmeasurable success metrics | Identifies deployment constraints, data sensitivity, security requirements |
+| Discover | Validates user needs, assigns MoSCoW priorities | Builds domain model, identifies entity dependencies | Verifies INVEST compliance, flags story coupling | Defines interaction patterns per solution type, maps user flows, identifies accessibility requirements | Evaluates story testability, identifies edge cases and rabbit holes, maps risk zones | Identifies security-sensitive flows, maps infrastructure dependencies, flags trust boundary crossings |
+| Architect | Validates NFR coverage, approves API contracts | Leads tech decisions, maps epic-level dependencies | Verifies Echo System config, ensures process gates exist | Reviews tech for interaction-layer impact, validates accessibility support, creates PROJECT-UX block | Co-owns testing strategy, validates Contract Truth Gate achievability, defines coverage thresholds | Co-owns Echo System commands, pre-commit hook, deployment strategy, security audit, threat model |
+| Refine | Defends MVP Cut with rationale, completes ACs | Estimates, validates dependency DAG, authors addenda | Enforces DOR, ensures no blocked stories enter batch | Conditional reviewer: interaction completeness, error/empty/loading states, accessibility ACs | QA reviewer: test plan validation, boundary conditions, rabbit holes, Contract Truth Gate prerequisites | Conditional reviewer: security implications, security ACs for trust boundary stories |
+| Plan | Confirms batch scope vs. capacity | Validates handoffs, runs file-overlap check | Runs pre-flight checklist, verifies delegation readiness | Validates user-facing handoffs include interaction specs and UX quality gates | Validates quality gates are falsifiable, every critical AC has EXE-type gate | Validates Scaffold Readiness Gate, security handoffs reference threat model |
+| Build | (absent --- per-handoff MIM only) | Leads implementation via TDD | Runs PDC after every worker return | Absent from execution; available for UX clarification via orchestrator | Absent from Build (structural independence for Verify) | Co-owns T-001 scaffolding validation; monitors Echo Stage 4 results |
+| Verify | Reviews AC evidence against original intent | Available for technical questions | Validates DOD compliance, flags process gaps | Validates interfaces match interaction contract, runs accessibility verification | **LEADS**: independent quality certification, Contract Truth Gate, tautological test detection | Dependency vulnerability scan, secrets detection, deployment readiness validation |
+| Accept | Demos to stakeholder, validates success metrics | Available for technical questions and live fixes | Facilitates review, captures feedback for retrospective | Leads usability walkthrough segment, highlights interaction and accessibility compliance | Presents quality certification summary: coverage, risk assessment, quality compromises | Confirms deployment readiness, rollback plan, security posture summary |
 
 **Matrix 2 --- MIM Validation**:
 
-| Phase | PO gate | Dev Team gate | SM gate |
-| ----- | ------- | -------------- | ------- |
-| Capture | Real pain addressed? Value proposition falsifiable? | No known technical blockers? Feasibility not ruled out? | Scope bounded? All constraints captured in project brief? |
-| Discover | All user needs captured? MoSCoW priorities defensible? | Domain model covers all entities? Entity dependencies annotated? | Every story passes INVEST? No hidden coupling between stories? |
-| Architect | NFRs have measurable targets? API contracts cover all user flows? | Tech stack justified per criterion? Dependency DAG covers all epics? | Echo System stages configured? All process gates have owners? |
-| Refine | Every AC testable? MVP cut has value justification per story? | Estimates calibrated? Dependency DAG acyclic and complete? | Every story passes DOR checklist? No blocked stories in batch? |
-| Plan | Batch scope fits capacity? No low-priority stories displacing higher? | Every handoff has all 12 elements? File-overlap check passes? | Pre-flight checklist green? All delegation prerequisites met? |
-| Verify | Every AC has evidence matching original intent? No scope drift? | All tests pass? Coverage meets threshold? No regressions? | DOD checklist complete? Echo System green? All evidence recorded? |
-| Accept | Increment delivers promised value? Success metrics met or on track? | No tech debt without ADR? Performance within NFR bounds? | Process followed? Retrospective items captured? |
+| Phase | PO gate | Dev Team gate | SM gate | UX Advocate gate | QA Lead gate | DevSecOps Lead gate |
+| ----- | ------- | -------------- | ------- | ---------------- | ------------ | ------------------- |
+| Capture | Real pain addressed? Value proposition falsifiable? | No known technical blockers? Feasibility not ruled out? | Scope bounded? All constraints captured in project brief? | Interaction surfaces identified? Success metrics include UX dimension? | Success metrics measurable and testable? Quality constraints captured? | Deployment constraints captured? Security-sensitive data domains identified? |
+| Discover | All user needs captured? MoSCoW priorities defensible? | Domain model covers all entities? Entity dependencies annotated? | Every story passes INVEST? No hidden coupling between stories? | User flows cover primary tasks? Interaction patterns defined for solution type? Accessibility documented? | Every story testable as written? Edge cases identified? Risk-based test priority drafted? | Security-sensitive flows identified and tagged? Trust boundary crossings annotated? |
+| Architect | NFRs have measurable targets? API contracts cover all user flows? | Tech stack justified per criterion? Dependency DAG covers all epics? | Echo System stages configured? All process gates have owners? | Tech supports declared interaction patterns? Accessibility mapped to stack? PROJECT-UX exists? | Testing strategy covers all quality dimensions? Coverage thresholds achievable? Contract Truth Gate implementable? | Echo System fully specified with executable commands? Pre-commit hook complete? Deployment strategy documented? PROJECT-INFRA exists? |
+| Refine | Every AC testable? MVP cut has value justification per story? | Estimates calibrated? Dependency DAG acyclic and complete? | Every story passes DOR checklist? No blocked stories in batch? | User-facing stories have interaction-level ACs? Error states specified? | Every AC has mapped test with boundary values? Rabbit holes documented? Test plan risk-prioritized? | Security-sensitive stories have security ACs? Infrastructure dependencies accounted for? |
+| Plan | Batch scope fits capacity? No low-priority stories displacing higher? | Every handoff has all 12 elements? File-overlap check passes? | Pre-flight checklist green? All delegation prerequisites met? | User-facing handoffs reference interaction specs? UX quality gates defined? | Every critical AC has EXE-type gate? Assertions genuinely falsifiable? | Scaffold Readiness Gate achievable? Echo Stage 4 command verified as executable? |
+| Verify | Every AC has evidence matching original intent? No scope drift? | All tests pass? Coverage meets threshold? No regressions? | DOD checklist complete? Echo System green? All evidence recorded? | Interfaces match interaction contract? Accessibility checks pass? Error/empty states implemented? | Every AC has verified falsifiable assertion with counter-example? No tautological tests? Coverage qualified? **[LEADS]** | Dependency vulnerability scan passes? No secrets in committed code? Deployment-ready with rollback? |
+| Accept | Increment delivers promised value? Success metrics met or on track? | No tech debt without ADR? Performance within NFR bounds? | Process followed? Retrospective items captured? | Interaction patterns consistent? Accessibility met? UX debt documented? | Quality certification complete? Risks documented? Quality debt recorded? | Deployment procedure tested? Security posture summary complete? Monitoring configured? |
+
+**Phase Leadership and Gate Flow**:
+
+The following diagram shows who leads each phase, what type of gate separates
+phases, and how human checkpoints distribute across the pipeline. Colors indicate
+the leading role. Details per role are in Matrix 1 and Matrix 2 above.
+
+```mermaid
+flowchart TD
+    CAP["Capture\nPO leads"] -->|"MIM"| DIS["Discover\nPO leads"]
+    DIS -->|"MIM"| ARC["Architect\nDev Team leads"]
+    ARC -->|"MIM"| REF["Refine\nAll roles · SM enforces DOR"]
+    REF -->|"MIM (MVP cut)"| PLAN["Plan\nSM leads pre-flight"]
+    PLAN -->|"automated"| BUILD["Build\nDev Team leads"]
+    BUILD -->|"PDC per task"| VER["Verify\nQA Lead leads"]
+    VER -->|"automated"| ACC["Accept\nPO leads demo"]
+    ACC -->|"MIM"| DONE([Release Decision])
+
+    style CAP fill:#3b82f6,color:#fff
+    style DIS fill:#3b82f6,color:#fff
+    style ARC fill:#22c55e,color:#fff
+    style REF fill:#f59e0b,color:#fff
+    style PLAN fill:#f59e0b,color:#fff
+    style BUILD fill:#22c55e,color:#fff
+    style VER fill:#ef4444,color:#fff
+    style ACC fill:#3b82f6,color:#fff
+    style DONE fill:#10b981,color:#fff
+```
+
+Legend: 🟦 PO-led | 🟩 Dev Team-led | 🟧 SM-led or shared | 🟥 QA-led
+
+- **MIM** = Manual Inspection Milestone — human approval required before proceeding
+- **PDC** = Post-Delegation Checkpoint — mechanical 4-step verification after every task
+- **automated** = gate is verified mechanically, no human intervention required
 
 ### Optional Phases
 
@@ -313,6 +340,30 @@ panel. PDC compresses to async verification (no separate checkpoint message). Ph
 time-box: 2 iterations of orchestrator work per phase before mandatory human escalation.
 Axioms, Circuit Breaker, and Anti-Rationalization remain invariant --- they are safety
 mechanisms, not ceremony.
+
+**Role compression in Lightweight Mode**: when Lightweight Mode is active, the 6-role
+team compresses to the original 3 roles with absorbed responsibilities:
+
+| Full Role | Merges Into | Absorbed Concerns |
+| --------- | ----------- | ------------------ |
+| UX Advocate | PO | Interaction-specific ACs, accessibility requirements, interaction contract as inline story notes |
+| QA Lead | SM | Test plan review during DOR enforcement, Contract Truth Gate enforcement during Verify |
+| DevSecOps Lead | Dev Team | Echo Stage 4 ownership, security scan, infrastructure setup via T-001, compliance checks |
+
+Absorbed DOR/DOD items remain active but are verified by the merge-target role.
+
+**Invariant gates in Lightweight Mode**: regardless of ceremony reduction, these
+gates survive intact:
+
+- AC-to-assertion traceability ([Contract Truth Gate](#contract-truth-gate))
+- Mock shape and contract validation
+- Pre-commit hook enforcement (Build + Test stages minimum)
+- [Scaffold Readiness Gate](#scaffold-readiness-gate)
+- Verify phase independence (no shared Build context)
+- T0 security practices (see [Activation Tiers](#activation-tiers))
+
+These are quality mechanisms, not ceremony. Removing them re-introduces the failure
+modes the framework exists to prevent.
 
 ### Phase Regression Protocol
 
@@ -362,7 +413,7 @@ results, and manages phase transitions. It does NOT execute substantive work its
 | Read to explore/understand (4+ files) | --- | Yes |
 | Read as preparation for writing | --- | Yes, together with the write |
 | Write any project file | --- | Yes |
-| Run state commands (git status, file listing) | Yes | --- |
+| Run state commands (VCS status, file listing) | Yes | --- |
 | Run execution commands (test, build, install) | --- | Yes |
 | Architecture/design decisions (single-step, no research) | Yes | --- |
 | Architecture research or multi-source synthesis | --- | Yes |
@@ -396,6 +447,11 @@ the framework degrades gracefully:
 All artifact formats, DOR/DOD, commit conventions, and quality gates apply in
 Single-Agent Mode. Only the delegation mechanism changes.
 
+In Single-Agent Mode, approximate Verify independence by starting a fresh context
+(new session or explicit context reset) before the Verify phase. The Verify agent
+receives the spec, task list, and committed code --- not the Build session's
+reasoning or self-assessments.
+
 ### Expert Personas (optional)
 
 Workers MAY receive an **expertise persona** that sets the communication style and
@@ -412,6 +468,80 @@ technical lens. Personas do NOT override compact rules or project conventions.
 > **Example:** A testing task receives "Testing Architecture Specialist" with expertise
 > in test design and AAA pattern. A frontend task receives "Component Design Expert"
 > with expertise in state management and accessibility.
+
+### UX Advocate
+
+The UX Advocate owns the user's experience across ALL solution types. Every solution has
+users and every user has an experience: web users navigate layouts, CLI users parse
+command grammar, TUI users flow between screens, mobile users gesture, desktop users
+manage windows, library users consume APIs. The UX Advocate ensures that information
+architecture, interaction patterns, feedback mechanisms, error communication, and
+accessibility are intentionally designed rather than accidentally inherited from
+implementation decisions. UX owns HOW IT FEELS TO USE IT --- distinct from PO (WHAT
+to build) and Dev Team (HOW to build it). UX produces interaction models at "fat marker
+sketch" altitude: places, affordances, and connections --- never pixel-perfect
+specifications.
+
+**Solution-type interaction models**:
+
+| Solution Type | Interaction Model Artifact | Key Concerns |
+| ------------- | -------------------------- | ------------ |
+| Web | Page flow diagram with affordances | Responsive breakpoints, WCAG, keyboard navigation, semantic HTML |
+| CLI | Command tree with argument shapes | stdout/stderr discipline, help text, exit codes, shell completion |
+| TUI | Screen state diagram | Focus management, keyboard shortcuts, resize behavior, terminal compatibility |
+| Mobile | Screen flow with gesture annotations | Touch targets (44x44pt min), platform conventions, offline handling |
+| Desktop | Window state diagram + shortcut map | Multi-monitor, high-DPI, native dialog usage, keyboard design |
+| Embedded | I/O mapping table | Physical constraints, sub-100ms feedback, error recovery without screen |
+| Library | API surface sketch with usage examples | Method naming, error types, time-to-first-call, type-level UX |
+
+### QA Lead
+
+The QA Lead owns independent quality certification. QA does NOT write tests --- the Dev
+Team writes and executes tests via TDD. QA owns quality STRATEGY: test architecture,
+risk-based prioritization, boundary condition identification, and independent
+verification that delivered software meets its contract. The QA Lead is the structural
+fix for the fox-guarding-the-henhouse problem: the entity that builds the code must
+not certify it. QA validates that tests are MEANINGFUL (not tautological), that coverage
+targets the RIGHT code paths (risk-based, not percentage-based), and that the Contract
+Truth Gate is genuinely falsifiable. During Refine, QA surfaces rabbit holes --- edge
+cases, boundary conditions, and failure modes that consume cycle time if not caught
+early. During Verify, QA LEADS independent certification with no shared context from
+Build.
+
+### DevSecOps Lead
+
+The DevSecOps Lead owns the infrastructure that makes the pipeline real: CI/CD
+implementation, environment provisioning, deployment strategy, security posture, and
+the operational health of the Echo System. The Echo System exists as an abstract
+pipeline definition --- DevSecOps converts it into concrete, executable commands. This
+role bridges "we have a 4-stage pipeline specification" to "the pipeline actually runs,
+catches failures, and deploys safely." DevSecOps also owns security: threat awareness
+during Architect, security-specific AC review during Refine, dependency vulnerability
+monitoring via Echo Stage 4, and deployment security. When the project's activation
+tier includes compliance (T2), DevSecOps additionally manages the Compliance Standards
+Registry and formal threat model (see [Activation Tiers](#activation-tiers)).
+
+### Activation Tiers
+
+Role depth scales with project needs. The Capture phase classifies the project's
+activation tier based on concrete questions. Higher tiers include all lower-tier
+requirements.
+
+| Tier | Scope | Trigger | Security | UX | QA |
+| ---- | ----- | ------- | -------- | -- | -- |
+| **T0 --- Invariant** | Non-negotiable even in spikes | Always | No secrets in code, hash passwords, input validation, OWASP basics, dependency audit (Stage 4) | Error states visible, no silent failures | Tests falsifiable, Red phase evidence |
+| **T1 --- MVP** | Default for this framework | Capture declares it (default) | Threat awareness, security ACs for trust boundaries, deployment security, secrets management | Interaction contract, accessibility per solution type, interaction model artifact | Contract Truth Gate, boundary tests, QA leads Verify, rabbit hole analysis |
+| **T2 --- Compliance** | Formal regulatory requirements | Capture identifies applicable regulations | Compliance Standards Registry (`docs/architecture/compliance-registry.md`), formal threat model (`docs/architecture/threat-model.md`), Risk Acceptance Register, regulatory evidence trail | Formal accessibility certification per applicable standard | Risk-based test strategy with formal traceability, quality metrics tracking |
+
+**T0 rules are injected into EVERY handoff regardless of project tier or Lightweight
+Mode.** They are prohibitions, not recommendations.
+
+**T2 activation** is mechanical: during Capture, the orchestrator asks: "Does this
+project handle health data, payment data, personal data under privacy regulations,
+or data subject to industry-specific compliance?" A yes answer activates T2 and
+requires the Compliance Standards Registry and threat model as Architect-phase
+deliverables. T2 artifacts follow the same lazy-load policy as other architecture
+documents.
 
 ### Model Assignment Policy
 
@@ -440,7 +570,7 @@ Each handoff file MUST contain these elements:
 | Metadata | Task ID, batch, epic, persona, priority |
 | Objective | 1-3 sentence north star for this task |
 | Pre-conditions | Checkable conditions that must be true before work begins |
-| Context bundle | Pointers to exact files with line ranges; the orchestrator verifies existence and currency at pre-flight. Workers open and read only these files |
+| Context bundle | Pointers to exact files with line ranges; the orchestrator verifies existence and currency at pre-flight. Workers MUST read these files before starting work and cite relevant constraints in their first status report |
 | Deliverables | Files to create/modify with expected outputs |
 | Quality gates | Ordered verification commands with pass criteria (copy-pasteable) |
 | Boundaries | Explicit OUT OF SCOPE list (minimum 3 task-relevant items with exclusion rationale) |
@@ -451,7 +581,11 @@ Each handoff file MUST contain these elements:
 | Progress tracker | Checkbox per deliverable and per quality gate, updated during execution |
 
 **Rules**:
-- If a handoff exceeds 300 lines, the task is too large --- split it.
+- **Canonical line budget**: if a handoff exceeds 300 lines (excluding compact rules
+  pasted inline), the task is too large --- split it. This line budget applies to
+  handoff files --- units of delegated work. It does not apply to this framework
+  specification document, and it does not apply to `ARTIFACT-TEMPLATES.md`. All other
+  references to a 300-line handoff limit in this document defer to this rule.
 - Workers receive rules as **inline text**, never as file paths to read.
 - The orchestrator runs the pre-flight checklist before every delegation.
 
@@ -469,7 +603,7 @@ check means the handoff is defective --- fix it before delegating.
 | 4 | Pre-conditions have been independently verified | Worker builds on broken foundation |
 | 5 | Boundaries explicitly name at least 3 task-relevant things OUT of scope, each with a one-line rationale for exclusion | Scope creep will occur |
 | 6 | Compact rules are pasted inline, not referenced by path | Worker cannot read external files not in bundle |
-| 7 | The handoff is under 300 lines (excluding compact rules) | Task is too large --- split it |
+| 7 | The handoff satisfies the canonical line budget ([Handoff Structure](#handoff-structure)) | Task is too large --- split it |
 | 8 | Deliverables list every file to create AND modify | Worker omits files or creates unexpected ones |
 | 9 | No deliverable file appears in more than one handoff within the same parallel wave | Merge conflicts between parallel workers |
 | 10 | Objective section is present and states a binary PASS/FAIL verifiable goal | Worker has no north star |
@@ -477,6 +611,13 @@ check means the handoff is defective --- fix it before delegating.
 | 12 | Rollback guidance section is present | No recovery path on failure |
 | 13 | Status protocol format is specified | Orchestrator cannot parse worker response |
 | 14 | Progress tracker has one checkbox per deliverable and per gate | PDC step 3 (MARK) cannot execute |
+| 15 | **PROJECT-{DOMAIN} compact rules present**: if `docs/architecture/tech-stack.md` documents stack-specific conventions (required patterns, prohibited API usage, mandatory idioms), at least one `PROJECT-{DOMAIN}` block distinct from the generic blocks exists and is injected into relevant handoffs. Absence requires an explicit "no stack-specific conventions apply" note | Workers default to generic patterns and drift from stack conventions |
+| 16 | **AC-to-gate forwarding**: every acceptance criterion containing a verb + specific pattern/approach reference has a corresponding quality-gate row in the handoff. Every anti-pattern not backed by an EXE gate carries a written rationale for why it is non-critical | Guidance without enforcement --- workers repeat known mistakes with no mechanical check |
+| 17 | **Context bundle citation**: at least one file from the context bundle was opened and a specific constraint from it is cited in the handoff's quality gates or compact rules (not generic acknowledgment) | Context bundle is decorative, not load-bearing |
+| 18 | **UX context forwarding**: for user-facing tasks, interaction contract reference exists in context bundle and the referenced artifact is current (not STALE). Absence requires explicit "no user-facing output" note in the handoff | Worker implements without interaction constraints, UX drift |
+| 19 | **QA gate presence**: every AC marked CRITICAL in the risk-based test priority has a corresponding EXE-type quality gate with a falsifiable assertion. Contract Truth Gate prerequisites are satisfiable: typed contract artifacts exist for every external interface | Quality gates are not falsifiable, tautological tests pass uncaught |
+| 20 | **Security context forwarding**: handoffs crossing security boundaries reference the threat model in the context bundle. Absence requires explicit "no security boundaries crossed" note | Security concerns not encoded in handoff, missed in Build |
+| 21 | **Echo Stage 4 readiness**: Echo Stage 4 (Audit) command is verified as executable before any Build-phase delegation. T-001 scaffolding handoff includes all Scaffold Readiness Gate deliverables | Audit command fails at commit time, blocking pipeline |
 
 ### Delegation Launch Contract
 
@@ -528,7 +669,7 @@ flowchart TD
 ```
 
 1. **REPORT** --- Print the acceptance gates from the handoff: `GATES: [gate1] | [gate2] | [gate3]`
-2. **VERIFY** --- For each gate: `GATE [name]: PASS|FAIL --- [evidence]`. Evidence must reference a file, line, or command output. "Looks correct" is NOT evidence.
+2. **VERIFY** --- For each acceptance criterion: `AC [id]: PASS|FAIL --- [test name] | [quoted assertion from source]`. The orchestrator MUST open the cited test file and confirm the quoted text exists. "Looks correct" is NOT evidence. A suite-level exit code is NOT AC-level evidence. See [Contract Truth Gate](#contract-truth-gate) for the required mapping format.
 3. **MARK** --- Update the progress tracker in the handoff file NOW. Mark checkboxes with evidence. If step 3 is not completed, the orchestrator CANNOT proceed.
 4. **DECIDE** --- Any FAIL: no advance, re-delegate or correct. Any MAN gate: route to human at MIM, print
    `PENDING_HUMAN` and wait. All PASS (no pending MAN): print `CHECKPOINT CLEAR` and proceed.
@@ -574,6 +715,39 @@ Blocker: (if applicable --- describe exactly what blocks)
 | No status block returned | STALLED --- kill and relaunch |
 | BLOCKED > 1 iteration | Kill, reassign with blocker context |
 | FAILED | Diagnose root cause before relaunch |
+
+### Remediation Handoff Protocol
+
+AXIOM-HANDOFF applies to ALL code modifications, including bug fixes, remediations,
+and corrections found during review. A code change without a handoff is a "quick
+fix" --- explicitly prohibited.
+
+**Threshold**: a remediation handoff (REM-NNN) is REQUIRED when the fix:
+
+- Touches more than one file, OR
+- Reverts or changes a previously-DONE task's deliverable
+
+If the same root cause requires changes across multiple files --- whether delivered
+as one handoff or split across several --- the full REM-NNN format is required for
+all of them. Splitting a multi-file fix into sequential single-file lightweight
+handoffs to evade this threshold is itself a violation.
+
+A single-file, single-line fix (typo, off-by-one in one location) may use a
+lightweight format (minimum 10 lines) but MUST still exist as a tracked file under
+`docs/subtasks/`. Lightweight REM handoffs are exempt from Pre-Flight Checklist items
+5 (Boundaries ≥3), 11 (Anti-patterns ≥2), and 12 (Rollback guidance). All other
+Pre-Flight items apply.
+
+| Element | Required |
+| ------- | -------- |
+| Bug description | What is broken and how it manifests |
+| Root cause | Why it happened --- not just what to change |
+| Affected files | Every file to be modified |
+| Correction strategy | How the fix addresses the root cause |
+| Regression test | Test that would have caught this bug originally |
+
+Remediation handoffs may be shorter than feature handoffs but MUST exist as
+committed files. A commit message is NOT a substitute for a handoff file.
 
 ### Anti-Stall Design Principles
 
@@ -633,9 +807,24 @@ If any box is unchecked, the story is NOT ready --- send it back to refinement.
 > **CONDITIONAL** (include when the project has an API):
 - [ ] API contract endpoints touched by this story are defined in `docs/architecture/api-contract.md`
 
-> The User Story artifact template ([User Story](#user-story)) extends this base DOR with
-> story-specific items (domain contracts, interface contracts, validation rules, edge cases).
-> Both checklists must be satisfied.
+> **CONDITIONAL — UX** (include when the story produces user-facing output):
+- [ ] Interaction-level acceptance criteria describe observable user behavior (error states, feedback mechanisms, empty states) appropriate to the declared solution type
+- [ ] Accessibility requirements documented for the story's solution type (WCAG for web, keyboard navigation for TUI, help text for CLI, touch targets for mobile, API ergonomics for library)
+- [ ] Interaction contract from Discover phase referenced for all user-facing flows touched by this story
+
+> **CONDITIONAL — QA** (always included):
+- [ ] Test plan includes boundary conditions, negative scenarios, and error paths --- not just happy-path ACs. At minimum one boundary test per numeric or string-length constraint
+- [ ] Rabbit holes (edge cases, failure modes) identified and either mitigated in ACs or documented as deferred with rationale
+- [ ] Contract Truth Gate prerequisites identified: typed contract artifacts listed for every external interface the story touches
+
+> **CONDITIONAL — DevSecOps** (include when the story handles sensitive data or crosses security boundaries):
+- [ ] Security-sensitive stories have explicit security acceptance criteria (input validation, authentication, authorization as applicable)
+- [ ] Infrastructure dependencies identified and provisioning approach documented (or explicitly deferred with rationale)
+- [ ] Deployment impact assessed: infrastructure changes, environment variables, database migrations, or security policy updates required are documented
+
+> The User Story artifact template ([User Story](ARTIFACT-TEMPLATES.md#user-story))
+> extends this base DOR with story-specific items (domain contracts, interface contracts,
+> validation rules, edge cases). Both checklists must be satisfied.
 
 ## Definition of Done (DOD)
 
@@ -648,19 +837,45 @@ A user story MUST meet every condition below before it can be marked complete.
 - [ ] Code reviewed via adversarial worker (separate agent with different persona and mandate to find flaws)
 - [ ] Changes committed using conventional commit format
 - [ ] Corresponding checkbox in `docs/INDEX.md` is marked done
+- [ ] No dead code: unused exports, unreachable branches, and orphan files removed
+- [ ] No unused dependencies: every installed package is imported somewhere in the codebase
+- [ ] AXIOM-NATIVE spot-check: at least one implementation decision is verified
+      against the Architect-phase native-capability audit table. Deviations from native
+      capabilities have documented justification with a remediation path
 
 > **CONDITIONAL** (include when defined in tech-stack.md):
 - [ ] Performance: response time under threshold defined in tech-stack.md
 - [ ] Security: no new vulnerabilities from static analysis
-- [ ] No dead code: unused exports, unreachable branches, and orphan files removed
-- [ ] No unused dependencies: every installed package is imported somewhere in the codebase
 
-> The User Story artifact template ([User Story](#user-story)) extends this base DOD with
-> story-specific items. Both checklists must be satisfied.
+> **CONDITIONAL — UX** (include when the story produces user-facing output):
+- [ ] Implemented interfaces match the interaction contract defined during Discover --- deviations documented with rationale
+- [ ] Solution-type-appropriate accessibility verification passes (automated scan for web, keyboard navigation test for TUI, help output inspection for CLI, touch target audit for mobile)
+- [ ] Error states, empty states, and loading states implemented per documented ACs --- no silent failures in user-facing flows
+
+> **CONDITIONAL — QA** (always included):
+- [ ] Independent quality certification completed by QA (separate agent context from Build): Contract Truth Gate satisfied, AC-to-assertion mapping complete with counter-examples, no tautological tests
+- [ ] AC-to-assertion mapping verified as genuinely falsifiable --- each test would FAIL if its AC were violated (Red phase evidence exists)
+- [ ] Coverage qualified: coverage percentage accompanied by AC-to-assertion mapping evidence --- coverage number alone is insufficient
+- [ ] Boundary-value and edge-case tests exist for every in-scope rabbit hole --- absence requires citation of rationale that moved it out of scope
+
+> **CONDITIONAL — DevSecOps** (always included):
+- [ ] Echo System Stage 4 (Audit) passes clean --- no known critical or high vulnerabilities (documented exceptions require mitigation timeline)
+- [ ] No secrets (API keys, tokens, credentials, private keys) detected in committed code via automated scan or manual inspection
+- [ ] Security acceptance criteria verified by test evidence for stories tagged as security-sensitive --- not by inspection alone
+- [ ] Deployment procedure documented and rollback plan verified as viable
+
+> The User Story artifact template ([User Story](ARTIFACT-TEMPLATES.md#user-story))
+> extends this base DOD with story-specific items. Both checklists must be satisfied.
 
 ## Commit Convention
 
-Every commit message follows [Conventional Commits](https://www.conventionalcommits.org/).
+The commit message format is resolved during the Architect phase in
+`docs/architecture/tech-stack.md`. The Architect defines the convention (e.g.,
+Conventional Commits, Angular convention, or a project-specific format) and the
+enforcement mechanism (commit-msg hook, linter, or manual review).
+
+**Default recommendation** (override in tech-stack.md if the project requires a
+different convention):
 
 ### Format
 
@@ -681,7 +896,7 @@ Optional body with details.
 | `fix` | Bug fixes |
 | `chore` | Tooling, config, dependencies, CI |
 | `task` | Changes to existing functionality |
-| `spike` | Research or exploration (no production code). Spike code MUST be deleted before TDD cycle begins --- it cannot be repurposed as Green-phase implementation. Test commits must precede implementation commits in git history |
+| `spike` | Research or exploration (no production code). Spike code MUST be deleted before TDD cycle begins --- it cannot be repurposed as Green-phase implementation. Test commits must precede implementation commits in version-control history |
 | `docs` | Documentation only |
 | `test` | Adding or updating tests only |
 | `refactor` | Code restructuring with no behavior change |
@@ -689,6 +904,7 @@ Optional body with details.
 ### Rules
 
 - Subject line: imperative mood, lowercase, no trailing period, max 72 characters
+- Scope = epic or module name when applicable
 - Body: brief description followed by bullet points listing each concrete change
 - No AI attribution lines (no `Co-Authored-By` or similar)
 - One logical change per commit (atomic commits)
@@ -715,6 +931,9 @@ receive the text directly --- never file paths or references to read.
 - Breaking an existing test is a blocking issue --- fix before proceeding
 - Tests map directly to user story acceptance criteria
 - Test evidence (command output, screenshots) is required for DOD --- "it works" is not evidence
+- Mock shapes MUST derive from typed contract artifacts --- never from design intent or prose (see [Contract Truth Gate](#contract-truth-gate))
+- Test evidence requires AC-level assertion mapping, not suite-level exit codes
+- Disabled or skipped tests MUST include a tracking reference --- untracked skips are treated as missing tests
 
 ### PROJECT-TDD
 
@@ -731,13 +950,14 @@ receive the text directly --- never file paths or references to read.
 
 - AXIOM-HANDOFF: no code without an approved handoff file --- no exceptions, no "quick fix" (see [Execution Axioms](#execution-axioms))
 - AXIOM-ORCHESTRATOR: the orchestrator coordinates only --- if it writes code or runs builds, it is in violation (see [Execution Axioms](#execution-axioms))
+- AXIOM-NATIVE: use the stack's native, idiomatic capabilities for the declared version --- reimplementing solved problems or using deprecated/superseded patterns is drift (see [Execution Axioms](#execution-axioms))
 - Respect the current phase --- do not jump ahead in the pipeline
 - Capture/Discover phases: NO code, NO technology choices, NO architecture diagrams
 - Every decision must trace back to a requirement or acceptance criterion
-- Version pinning: ALL dependencies use exact versions --- no floating or range specifiers (e.g., `^`, `~`, `*`,
-  `latest` in npm; `>=` in pip; `~>` in Gemfile) --- use the ecosystem's exact-version syntax. Use LTS runtime
-  versions when available. The Architect phase defines the version policy and lockfile enforcement in
-  `docs/architecture/tech-stack.md`. The Echo System Stage 4 (Audit) verifies compliance
+- Version pinning: ALL dependencies use exact versions --- no floating or range specifiers. Use the ecosystem's
+  exact-version syntax as defined in `docs/architecture/tech-stack.md`. Use LTS runtime versions when available.
+  The Architect phase defines the version policy and lockfile enforcement mechanism. The Echo System Stage 4
+  (Audit) verifies compliance
 - Scope is defined by the handoff --- work outside the handoff boundaries is a violation
 - Dead code and unused dependencies MUST be removed --- never conserved "just in case"
 - Prefer technologies and tooling that enable static dead code detection (tree-shaking,
@@ -759,6 +979,35 @@ receive the text directly --- never file paths or references to read.
 > **Note:** Echo System defines 4 stages (Build, Test, E2E, Audit). The concrete commands and stage composition for
 > your project are declared in `docs/architecture/tech-stack.md` during the Architect phase.
 
+### PROJECT-UX
+
+- Every user-facing surface has an interaction contract defined during Discover/Architect --- implement within its boundaries
+- Error states, empty states, and loading states are REQUIRED for user-facing flows --- silent failures are prohibited
+- Accessibility requirements are solution-type-specific: WCAG for web, keyboard navigation for TUI, help text for CLI, touch targets for mobile, API ergonomics for library
+- UX decisions follow the interaction model's fat-marker-sketch boundaries --- details are resolved during Build, not prescribed upfront
+- User-facing output must match the solution type's conventions: CLI respects stdout/stderr discipline, web respects semantic HTML, mobile respects platform guidelines
+- When an interaction decision is ambiguous, escalate via orchestrator --- do not default to developer convenience over user experience
+
+### PROJECT-QA
+
+- Every acceptance criterion MUST have a falsifiable test --- a test that would FAIL if the AC were violated
+- Boundary-value tests are required for every numeric, length, or format constraint in ACs
+- Mock shapes MUST derive from typed contract artifacts --- never from design intent or prose (Contract Truth Gate)
+- Coverage percentage alone is not quality evidence --- AC-to-assertion mapping is the required proof
+- Tautological tests (tests that pass regardless of implementation) are treated as missing tests
+- Red phase evidence must show the RIGHT failure (assertion failure, not syntax/import error)
+- Test isolation: each test must be independently runnable --- no implicit ordering dependencies
+
+### PROJECT-INFRA
+
+- Echo System commands MUST resolve to concrete, executable commands --- placeholder commands are a DevSecOps failure
+- Pre-commit hook MUST be active and wired to the platform's hook mechanism --- passive hooks are equivalent to no hooks
+- Echo Stage 4 (Audit) is non-waivable: dependency vulnerability scan + version policy compliance on every commit
+- No secrets (API keys, tokens, credentials, private keys) in committed code --- enforce via automated scan or pre-commit check
+- Security-sensitive flows (user input, auth, sensitive data) require security-specific ACs and test evidence
+- Deployment procedure and rollback plan MUST be documented before Accept --- deployment is not an afterthought
+- Version policy: exact versions only, no floating ranges, LTS runtime versions --- enforced by Stage 4 audit command
+
 ## Anti-Rationalization Protocol
 
 All protocols in this document are mandatory. The agent cannot grant itself exceptions.
@@ -767,7 +1016,9 @@ All protocols in this document are mandatory. The agent cannot grant itself exce
   No exact text → not authorized. The citation must be a verbatim substring of this
   document --- paraphrased or approximate citations do not satisfy the requirement
 - **Rationalization signals**: phrases like "this doesn't warrant", "given the simplicity",
-  "an exception for" indicate the agent is rationalizing. Stop and comply as written
+  "an exception for", "[inferior pattern] is simpler than [native capability]",
+  "we can add [native capability] later", "for this scope [workaround] is sufficient"
+  indicate the agent is rationalizing. Stop and comply as written
 - **Ambiguity → compliance**: ambiguity resolves in favor of MORE compliance, not less
 - **Scale, don't skip**: "scale to the work" means reduce content volume, never omit
   required structural elements
@@ -775,18 +1026,38 @@ All protocols in this document are mandatory. The agent cannot grant itself exce
   repeats the override back for confirmation before acting
 - **Burden of proof**: rests on the agent, not on this document
 
-### Discretionary Judgment
+### Discretionary Judgment and Mandatory Actions
 
-When this document is SILENT on a procedural matter (no protocol exists for the
-situation), the agent MAY exercise professional judgment and MUST:
+Actions governed by MUST in this document execute automatically --- the agent does
+not ask permission. Asking "should I run the tests?" when tests are mandatory is
+itself a violation.
 
-Discretionary Judgment NEVER applies to: Execution Axioms, DOD requirements, Echo System
-stages, MVP Cut scoring methodology, or the Anti-Rationalization Protocol itself. These
-are governed by explicit rules and are never "silent."
+| Category | Examples | Agent Behavior |
+| -------- | -------- | --------------- |
+| Mandatory (MUST) | Echo System, PDC, TDD cycle, pre-commit hook, Scaffold Readiness Gate, AXIOM-NATIVE (native capability is the default) | Execute without asking. Scope and thoroughness are also non-discretionary --- if Echo System means Build + Test + Audit, all three stages run every time |
+| Discretionary (human decides) | Phase transitions, MIM responses, MVP cut selection (which stories qualify, not the scoring formula), commit timing, Lightweight Mode selection | Present options and wait for human response |
+
+Separately, when this document is SILENT on a procedural matter (no protocol exists
+for the situation --- distinct from the named Discretionary category above), the
+agent MAY exercise professional judgment and MUST:
 
 1. Document the judgment call in the resulting artifact
 2. Flag it for human review at the next MIM
 3. If the situation recurs, propose an AGENTS.md amendment via the Retrospective protocol
+
+This silence-driven judgment NEVER applies to: Execution Axioms, DOD requirements,
+Echo System stages, MVP Cut scoring methodology, or the Anti-Rationalization
+Protocol itself. These are governed by explicit rules and are never "silent."
+
+**Additional rationalization signals** (extend the list in the Anti-Rationalization
+Protocol above):
+
+- "Should I run [mandatory action]?"
+- "Do you want the full [mandatory action] or just [subset]?"
+- "Given the simplicity, we can skip [mandatory action]"
+
+These phrases convert a non-discretionary gate into a discretionary choice. Stop
+and execute the full mandatory action as specified.
 
 ## Process Protocols
 
@@ -805,11 +1076,19 @@ deliverables.
 4. Launch review team in parallel (minimum 3 reviewers):
    - **Domain reviewer** --- validates business logic and acceptance criteria
    - **Technical reviewer** --- validates feasibility, technical approach, deliverables
-   - **QA reviewer** --- validates testability, edge cases, test plan completeness
-   - Additional reviewers for security, performance, or UX when the story touches those
+   - **QA reviewer** --- validates testability, edge cases, boundary conditions, test plan
+     completeness, rabbit holes, Contract Truth Gate satisfiability
+   - **UX reviewer** (conditional) --- validates interaction completeness, error states,
+     accessibility criteria. Required when the story touches user-facing interfaces
+   - **Security reviewer** (conditional) --- validates security implications, input
+     validation, trust boundary crossings. Required when the story handles sensitive
+     data or crosses security boundaries
+   - Additional reviewers for performance when the story touches performance-sensitive paths
 
    Reviewer mapping: Domain reviewer = PO perspective, Technical reviewer = Dev Team
-   perspective, QA reviewer = SM perspective. The same person may fill multiple reviewer
+   perspective, QA reviewer = QA Lead perspective, UX reviewer = UX Advocate perspective,
+   Security reviewer = DevSecOps Lead perspective. SM enforces DOR compliance as a process
+   gate, not as a reviewer perspective. The same agent may fill multiple reviewer
    roles in small teams.
 5. Synthesis agent merges all perspectives, resolves conflicts conservatively
 6. Orchestrator writes refined stories to the repository
@@ -853,6 +1132,12 @@ Elicits the core idea from the human and produces the project foundation documen
    - What does success look like? (measurable criteria)
    - What constraints exist? (time, budget, technology, compliance)
    - What is the MVP scope? (what is IN v1, what is deferred)
+   - **UX discovery**: What are the interaction surface types (web, CLI, TUI, mobile,
+     desktop, embedded, library)? What is the primary interaction modality?
+   - **Quality constraints**: What quality attributes matter (reliability, performance,
+     data integrity)? Are success metrics mechanically verifiable?
+   - **Infrastructure and security**: Where will this run (deployment target)? Are there
+     compliance requirements? Does the solution handle sensitive data?
 3. Draft `docs/project-brief.md` following the Project Brief format
 4. Create `docs/INDEX.md` with Header and Project Overview populated; all other sections
    as placeholders marked `TBD --- populated during {phase name}`
@@ -911,6 +1196,33 @@ Makes technology decisions and locks the technical foundation.
    - Pre-commit hook specification: the hook MUST run the Echo System and exit non-zero on failure (structural
      enforcement of AXIOM-ECHO)
    - Artifact definitions: what each Echo System stage produces and where it lands in `./artifacts/`
+   - Health check and startup specification: `{health_check_url}` or
+     `{health_check_command}` (type-appropriate for the project),
+     `{startup_timeout}` --- consumed by the [Scaffold Readiness Gate](#scaffold-readiness-gate)
+   - Smoke test command: `{smoke_test_command}` --- consumed by the
+     [Autonomous Execution Safeguard](#autonomous-execution-safeguard)
+   - Native capability audit: for each major technical decision, document the
+     stack's native solution for the problem. AXIOM-NATIVE requires that native
+     capabilities are the default --- alternatives carry the burden of proof.
+     Record as a table: `| Problem | Native Capability | Decision | Justification |`
+   - Project-specific compact rule blocks: extract stack conventions that workers
+     MUST follow as `PROJECT-{DOMAIN}` compact rule blocks (e.g., required
+     architectural patterns, prohibited API usage, mandatory idioms for the
+     declared version). These blocks are injected into handoffs alongside the
+     generic PROJECT-* rules --- conventions that exist only in prose are not enforced
+   - **DevSecOps co-ownership**: the DevSecOps Lead co-owns the following subsections
+     within `docs/architecture/tech-stack.md`: Echo System command specification
+     (resolving placeholder commands into concrete tooling), pre-commit hook implementation
+     specification, security audit command for Stage 4, deployment strategy and environment
+     provisioning approach, secrets management approach, and threat model for
+     security-sensitive flows (STRIDE or equivalent, scaled to project complexity).
+     Dev Team retains overall Architect phase leadership. Disagreements between Dev Team
+     and DevSecOps on these subsections follow the MIM Conflict Resolution protocol
+   - **UX interaction contracts**: the UX Advocate defines interaction contracts during
+     Architect for the chosen solution type --- the set of user-facing behaviors the
+     solution promises. Interaction contracts define places, affordances, and connections
+     at fat-marker-sketch altitude. They are recorded in `docs/architecture/` and
+     referenced by user-facing stories during Refine
 4. Produce the epic-and-capability-level dependency DAG (refined to story-level at the
    Dependency Ordering gate during Refine/Plan) (Dependency Mapping gate output) and
    record it in `docs/architecture/tech-stack.md`
@@ -938,6 +1250,18 @@ section. Missing DOR means the story needs refinement first.
 2. Decompose stories into atomic tasks
 3. Generate handoff files following the template
 4. Validate: every AC maps to at least one handoff, no file overlap between handoffs
+   and no compilation dependency between parallel handoffs (if handoff B imports from
+   files that handoff A modifies, they are sequential by definition --- even if they
+   touch different files).
+   Additionally: ACs that specify an implementation approach MUST be forwarded as
+   quality gates in the handoff (not as anti-patterns --- anti-patterns are guidance,
+   gates are enforcement). Every critical anti-pattern MUST have a corresponding
+   EXE-type quality gate with a verifiable command.
+
+   A critical anti-pattern is one whose occurrence would violate an acceptance
+   criterion, break a typed contract, or introduce a security/data-integrity defect.
+   Severity is not a discretionary label --- these three conditions define it
+   objectively.
 5. Write handoff files to `docs/subtasks/{epic}/{task-id}-{slug}.md`
 
 Team roles and MIM gates for this phase: see [Scrum Team Matrix](#scrum-team-matrix).
@@ -947,6 +1271,39 @@ Team roles and MIM gates for this phase: see [Scrum Team Matrix](#scrum-team-mat
 - Group stories that share domain entities or modify the same files
 - A batch should be completable in one focused session
 - Stories with no cross-dependencies can be parallelized within a batch
+- **Parallel worker isolation**: when delegating multiple tasks concurrently, the
+  orchestrator MUST ensure workers operate in isolated environments (separate
+  worktrees, branches, or sessions). Workers sharing a single working directory
+  see each other's intermediate states and produce compilation conflicts. If
+  the platform does not support worktree isolation, parallel tasks MUST execute
+  sequentially. After parallel workers return, the orchestrator runs
+  `{build_command}` on the merged result BEFORE PDC --- a combined build failure
+  means at least one worker's output is incompatible and requires remediation
+
+### Scaffold Readiness Gate
+
+Before the first feature task (T-002+) in any batch may begin, scaffolding
+deliverables MUST be verified as ACTIVE --- not just documented, not just committed,
+but mechanically functional. This gate is part of T-001 DOD.
+
+**Required scaffolding deliverables**:
+
+| Deliverable | Verification | If Blocked |
+| ----------- | ------------ | ---------- |
+| Environment boots | `{startup_command}` exits 0 within `{startup_timeout}`; service health checks return expected responses | Report BLOCKED with exact manual steps for human |
+| Pre-commit hook ACTIVE | Hook file exists AND is wired to the platform's hook mechanism + a synthetic bad commit is rejected | Report BLOCKED --- without an active hook, AXIOM-ECHO has no mechanical enforcement |
+| Echo System commands resolve | Each `{x_command}` from `docs/architecture/tech-stack.md` runs without "command not found" | Report BLOCKED with missing command and install instruction |
+
+**Generalized capability existence rule**: any `{x_command}` or named mechanism
+declared in `docs/architecture/tech-stack.md` receives an existence check at this
+gate. If the architecture doc defines `{e2e_command}`, at least one E2E test file
+must exist (a skipped test with a tracking reference is acceptable; an absent test
+file is not). This generalizes to ALL named capabilities --- not just E2E.
+
+**Enforcement**: the orchestrator MUST NOT delegate T-002 until this gate passes.
+If the agent cannot satisfy a deliverable due to platform restrictions (e.g.,
+cannot create a required environment file), it reports BLOCKED immediately with
+exact instructions for the human. Silent skip is a violation.
 
 ### TDD Cycle
 
@@ -1084,20 +1441,48 @@ When a worker reports DONE, the orchestrator runs this checklist:
 1. Run PDC (all 4 steps: REPORT, VERIFY, MARK, DECIDE)
 2. Verify every acceptance criterion against test evidence
 3. Confirm the worker's Echo System run was green (verify evidence in the progress tracker)
-4. Update `docs/INDEX.md` --- mark the story checkbox as done
-5. If all stories in an epic are done, mark the epic as done
-6. Commit with conventional commit format
+4. **Doc-code reconciliation**: for files touched by this story, scan `README.md`
+   and architecture docs (`docs/architecture/*.md`) for verifiable technical claims
+   --- algorithm names, data types and column definitions, middleware order, library
+   names and versions, configuration values. Each claim found is checked against
+   actual source code. A claim that contradicts source MUST be corrected before the
+   story is marked done
+5. Update `docs/INDEX.md` --- mark the story checkbox as done
+6. If all stories in an epic are done, mark the epic as done
+7. Commit with conventional commit format
 
 ### Verify
 
-Runs full regression and validates that the batch meets DOD.
+Runs full regression and validates that the batch meets DOD. The Verify phase MUST
+be executed by an agent with no shared context from the Build workers or
+orchestrator that reported DONE --- this prevents the self-grading failure mode
+where the entity that built the code also certifies it.
+
+**Phase leadership**: QA Lead. The QA Lead owns the independent quality
+certification decision. Dev Team remains available for technical questions but
+does not lead or certify the verification outcome. This separation ensures that
+the entity that builds the code is never the same entity that certifies it.
 
 **Process**:
 
 1. Run the complete Echo System pipeline (all 4 stages)
-2. Walk every story's acceptance criteria and verify each has test evidence
-3. Run DOD checklist --- every item must be checked with observable evidence
-4. Compile verification report: per-story AC status, test coverage, Echo System output
+2. Walk every story's acceptance criteria using the [Contract Truth Gate](#contract-truth-gate)
+   AC-to-assertion mapping --- verify each AC has a test with a quoted, falsifiable assertion
+3. Validate that boundary-value and edge-case tests exist for all in-scope rabbit holes
+   identified during Refine
+4. Run security verification: dependency vulnerability scan, secrets detection scan,
+   threat model mitigation check (DevSecOps concerns)
+5. Validate user-facing deliverables against interaction contracts and run
+   solution-type-appropriate accessibility verification (UX concerns)
+6. Run DOD checklist --- every item must be checked with observable evidence
+7. Compile verification report: per-story AC status, quality certification,
+   security findings, UX compliance, test coverage qualification, Echo System output
+
+**Independent review requirement**: the Verify agent receives the spec, the task
+list, and the committed code. It does NOT receive Build workers' reasoning,
+self-assessments, or prior PDC outputs. Its mandate is to find what Build missed,
+not to confirm what Build claimed. When the platform supports parallel reviewers,
+use two independent blind reviewers with a synthesis pass for higher confidence.
 
 Team roles and MIM gates for this phase: see [Scrum Team Matrix](#scrum-team-matrix).
 
@@ -1108,9 +1493,17 @@ Human reviews the delivered increment and decides whether to approve.
 **Process**:
 
 1. Orchestrator presents working software to the human (demo or access to running instance)
-2. Walk through each story with its AC evidence
-3. Reconcile delivered increment against success criteria from the project brief
-4. Human provides MIM response (APPROVED / APPROVED WITH CHANGES / REJECTED)
+2. **PO** walks through each story with its AC evidence, reconciles delivered increment
+   against success criteria from the project brief
+3. **UX Advocate** presents the usability walkthrough: interaction pattern compliance,
+   accessibility verification results, and any UX debt with rationale
+4. **QA Lead** presents quality certification summary: AC-to-assertion coverage analysis,
+   Contract Truth Gate compliance, risk assessment (what was tested deeply, what tested
+   minimally), residual quality risks, and any quality compromises with documented rationale
+5. **DevSecOps Lead** confirms deployment readiness: environment status, deployment
+   procedure, rollback plan viability, security posture summary (vulnerabilities addressed,
+   audit results, residual security risks), monitoring status
+6. Human provides MIM response (APPROVED / APPROVED WITH CHANGES / REJECTED)
 
 Team roles and MIM gates for this phase: see [Scrum Team Matrix](#scrum-team-matrix).
 
@@ -1133,6 +1526,28 @@ Next: {what happens next}
 
 This surfaces problems between MIM checkpoints. The human can intervene at any time.
 
+### Autonomous Execution Safeguard
+
+During unattended execution (no human actively reviewing each task), drift
+compounds silently between MIM gates. This safeguard adds a periodic integration
+check within the Build phase.
+
+**Rule**: every 4 completed tasks, the orchestrator runs `{smoke_test_command}`
+(defined during the Architect phase in `docs/architecture/tech-stack.md`). This is
+a hard gate --- the number 4 is fixed, not a range or suggestion.
+
+| Smoke Result | Action |
+| ------------ | ------ |
+| Pass | Continue to next task |
+| Fail | STOP. Report BLOCKED with failure output. Do not delegate further tasks |
+| Command undefined | Fall back to Echo System pipeline: `{build_command}` + `{test_command}` |
+
+**Scope**: this safeguard activates based on a mechanical count: tasks completed
+since the last INBOUND human message (not outbound status reports). If 4+ tasks
+complete without an explicit human response between them, the safeguard is active.
+An orchestrator's own status report never counts as human presence --- only
+messages originating from the human deactivate the counter.
+
 ### Phase Transition
 
 - The orchestrator verifies DOR/DOD for the transition boundary
@@ -1149,6 +1564,17 @@ retrospective:
 2. **What went wrong** --- friction, failures, process gaps
 3. **Action items** --- concrete changes, including proposed AGENTS.md amendments
 4. **Velocity check** --- compare estimated sizes (S/M/L) against actual effort; adjust future estimates
+5. **Quality and security review** --- QA reports test effectiveness (false positives,
+   missed defects, tautological test patterns). DevSecOps reports pipeline health
+   (Stage 4 findings, infrastructure issues, security posture changes). UX reports
+   interaction debt accumulated during the batch
+6. **Consolidation review** --- when proposing a new rule or gate for this
+   document, identify one existing rule it subsumes or renders redundant. If no
+   consolidation candidate exists, document why the new rule is genuinely net-new.
+   Periodic consolidation passes (every 3 batches or at phase transitions) review
+   the full rule set for redundancy, merging overlapping rules and retiring
+   obsolete ones. The framework specification must not grow monotonically ---
+   every addition carries a corresponding obligation to simplify
 
 If an action item proposes changing this file, it requires human approval before taking
 effect. The retrospective is committed as `docs/retro-{date}-{batch}.md` (optional ---
@@ -1157,222 +1583,14 @@ only when there are meaningful findings).
 This is the ONLY sanctioned path for evolving the framework. Without it, the
 Anti-Rationalization Protocol prevents all process adaptation.
 
-## Artifact Formats
+## Artifact Formats and Templates
 
-Artifact templates are reference material loaded when producing a specific artifact.
-Agents should read only the template for the artifact being created, not the entire
-section. Phase execution does not require these templates --- they are consumed at
-artifact-creation time.
+All artifact templates live in [`ARTIFACT-TEMPLATES.md`](ARTIFACT-TEMPLATES.md).
+Agents read only the template for the artifact being created, not the entire file.
 
-This section defines the format for every artifact the pipeline produces. The orchestrator
-and workers MUST follow these formats. Each artifact begins with a breadcrumb linking back
-to the index: `> [INDEX](path/to/INDEX.md) / [Parent] / Document Title`.
-
-### INDEX.md --- Project Dashboard
-
-File: `docs/INDEX.md`. Created during Capture phase. This is the agent's primary
-reference for project state --- read it to understand what exists and what remains.
-
-Sections:
-
-1. **Header** --- project name, one-line description
-2. **Document Map** --- Mermaid flowchart showing relationships between all artifacts
-3. **Project Overview** --- checkboxes for project-brief.md and domain-glossary.md
-4. **Epics** --- checkboxes for each epic, nested with their user stories
-5. **Architecture** --- checkboxes for tech-stack, testing-strategy, and other arch docs
-6. **Sprint Planning** --- checkboxes for batch plans and handoff files
-7. **Navigation Notes** --- how documents cross-reference each other
-
-Checkbox convention: `- [ ]` not started, `- [x]` complete. The orchestrator updates
-INDEX.md after every story completion (see Story Completion protocol).
-
-### Project Brief
-
-File: `docs/project-brief.md`. Created during Capture phase.
-
-Sections:
-
-1. **Vision** --- one paragraph describing the desired future state
-2. **Problem Statement** --- what pain or gap this project addresses
-3. **Deliverable Map** --- Mermaid flowchart of high-level deliverable dependencies
-4. **Deliverables** --- checkbox list, each linking to its epic
-5. **Constraints** --- time, budget, technology, compliance, or other limitations
-6. **Evaluation Criteria** --- table: Criterion | Weight (High/Medium/Low) | Description
-7. **Related Documents** --- links to domain glossary, architecture, epics
-
-### Domain Glossary
-
-File: `docs/domain-glossary.md`. Created during Discover phase.
-
-Sections:
-
-1. **Entities** --- table: Entity | Description | Key Attributes | Relationships | Rationale
-2. **Value Objects** --- table: Name | Description | Constraints
-3. **Domain Events** --- table: Event | Trigger | Outcome
-4. **Status/State Values** --- allowed states for entities with lifecycles (Mermaid state diagram)
-5. **Entity Relationships** --- Mermaid ER diagram
-6. **Conventions** --- naming, casing, date/time formats
-
-**Competitive Landscape** (populated during Discover):
-
-| Competitor/Alternative | Approach | Strengths | Weaknesses | Relevance |
-| ---------------------- | -------- | --------- | ---------- | --------- |
-
-### Epic
-
-File: `docs/epics/EP{NN}-{slug}.md`. Created during Discover phase, refined during Refine.
-
-Sections:
-
-1. **Summary** --- 2-3 sentences describing the epic's scope
-2. **Business Value** --- why this epic matters to the user/stakeholder
-3. **Domain Flow** --- Mermaid diagram showing the domain-level flow this epic enables
-4. **User Stories** --- checkbox list with priority labels (`Must Have`, `Should Have`, `Could Have`)
-5. **Acceptance Boundaries** --- constraints that apply to ALL stories in this epic
-6. **Related Architecture** --- links to relevant architecture docs
-7. **Related Documents**
-
-### User Story
-
-File: `docs/user-stories/US-{NNN}-{slug}.md`. Created during Refine phase. This is the
-most detailed artifact --- it is the contract between planning and implementation.
-
-Sections (all required unless marked optional):
-
-1. **Metadata** --- epic link, priority (`Must Have` | `Should Have` | `Could Have`), estimation
-   (`S` | `M` | `L`), status
-2. **Story** --- `As a {persona}, I want {action}, so that {value}`
-3. **Definition of Ready** --- checkbox list. Items:
-   - Domain entity contract frozen (fields, types, nullability, constraints)
-   - Interface or API contract frozen (request/response shapes, error formats)
-   - Input validation rules enumerated with exact boundaries
-   - Edge cases identified with boundary behavior defined
-   - Dependencies identified and resolved or deferred
-   - Test plan exists with test names mapped to ACs
-   - Out-of-scope items listed
-
-   > Items referencing API contracts or request/response shapes apply only when the story
-   > touches an API boundary. For non-API stories, mark these as N/A with justification.
-
-4. **Acceptance Criteria** --- numbered with story prefix (AC-{NNN}.1, AC-{NNN}.2, etc.).
-   Each criterion MUST use Given/When/Then format:
-   ```
-   - [ ] **AC-{NNN}.1: {title}**
-     - **Given** {precondition}
-     - **When** {action}
-     - **Then** {expected outcome}
-   ```
-5. **Definition of Done** --- checkbox list. Items:
-   - All ACs pass with automated test evidence
-   - Unit tests green for domain logic and validation
-   - Integration tests green against real dependencies (when applicable)
-   - No regressions in existing test suite
-   - Error responses conform to agreed shape
-   - Code reviewed
-   - INDEX.md updated
-6. **Deliverables** --- two tables:
-   - Files to Create: File Path | Contents
-   - Files to Modify: File Path | Change
-7. **Test Plan** --- table: Test Name | AC | Assertion
-   Every AC must be covered by at least one test. Each test states the specific assertion.
-8. **Validation Rules** --- enumerated constraints per input field with exact boundaries
-   (min, max, required, format, edge cases)
-9. **Risks** --- table: Severity | Risk | Mitigation
-   Severities: `CRITICAL` | `HIGH` | `MEDIUM` | `LOW`
-10. **Out of Scope** --- bullet list of explicit exclusions to prevent scope creep
-11. **Notes** (optional) --- implementation hints, open questions, team decisions
-12. **Related Documents** --- links to epic, architecture, related stories
-13. **Handoff Files** (populated during Plan) --- links to handoff files implementing this story
-14. **Change Log** --- date, change, reason for each modification after initial creation
-
-### Batch Plan
-
-File: `docs/subtasks/{epic}/batch-{N}-plan.md`. Created during Plan phase.
-
-Sections:
-
-1. **Scope** --- what this batch delivers, referencing the engineering addenda
-2. **Task List** --- table: Task ID | Task Name | Persona | Model Tier | Depends On
-3. **Dependency Graph** --- Mermaid DAG showing task dependencies. Solid arrows for hard
-   dependencies, dashed arrows for soft dependencies
-4. **Execution Order** --- numbered waves (parallel wave 1, sequential step 2, etc.)
-5. **Definition of Done --- Batch** --- checkboxes for batch-level completion criteria
-6. **Related Documents**
-
-### Handoff File
-
-File: `docs/subtasks/{epic}/{task-id}-{slug}.md`. Created during Plan phase. The
-12-section structure is defined in the Delegation Contract section above.
-
-Additional rules:
-
-- Quality gates MUST be copy-pasteable shell commands. Use the project's actual commands
-  from `docs/architecture/tech-stack.md` (not placeholders)
-- Context bundle lists EXACT files with line ranges and justification for each
-- Boundaries section lists at least 3 things explicitly OUT OF SCOPE
-- Compact rules are pasted as inline text, never referenced by file path
-- Maximum 300 lines. If exceeded, split the task
-
-### Engineering Addenda
-
-File: `docs/epics/{epic}-batch-{N}-refinement.md`. Created during Refine phase as the
-output of the grooming/refinement ceremony.
-
-Sections:
-
-1. **Batch Info** --- batch number, scope, who refined it
-2. **Prerequisites** --- checkbox list of items that must be resolved before implementation
-3. **Dependencies** --- table: Package/Tool | Version | Target Project/File
-4. **Implementation Order** --- numbered list of files/components in dependency order. When
-   TDD is active, this becomes the test-first order
-5. **Risks** --- subsections by severity (CRITICAL, HIGH, MEDIUM, LOW). Each risk states the
-   problem, why it matters, and the mitigation
-6. **Related Documents**
-
-### Batch Progress
-
-File: `docs/subtasks/{epic}/batch-{N}-progress.md`. Created when the first task in a
-batch is delegated. Updated atomically before and after each delegation.
-
-Sections:
-
-1. **Batch Reference** --- link to batch plan
-2. **Task Status** --- table: Task ID | Status (NOT_STARTED/IN_PROGRESS/BLOCKED/DONE/FAILED) | Worker | Evidence
-3. **Active Wave** --- which wave is currently executing
-4. **Blockers** --- any active blockers with context
-5. **Last Updated** --- timestamp of last status change
-
-This artifact solves crash recovery: a new session reads this file to know exactly
-where execution stopped and which tasks need re-delegation.
-
-### Deferred Backlog
-
-File: `docs/deferred-backlog.md`
-
-Persistent artifact capturing ideas and stories excluded from the current iteration with
-rationale. Initialized during Capture, updated during Discover and Refine, consumed during
-the next iteration's Capture phase.
-
-| Column | Description |
-| ------ | ----------- |
-| ID | Sequential identifier (DF-001, DF-002) |
-| Item | Story or feature title |
-| Originating Phase | Phase where the deferral decision was made |
-| Reason | Human-readable explanation |
-| Category | `time` · `dependency` · `risk` · `low-value` · `scope-creep` |
-| Reconsider When | Condition that would make this item a candidate again |
-| Related Deps | Links to dependency DAG nodes (if category is `dependency`) |
-
-Categories:
-
-- `time` --- valuable but does not fit in this iteration
-- `dependency` --- requires something that does not exist yet
-- `risk` --- requires investigation or spike first
-- `low-value` --- does not justify the cost now
-- `scope-creep` --- not part of the original problem statement
-
-When a blocking dependency is resolved, items with `dependency` category and matching
-`Related Deps` become candidates for the next iteration automatically.
+This selective-read rule applies during artifact creation. The full framework read
+at session start ([Context Recovery Protocol](#context-recovery-protocol)) covers
+this file (AGENTS.md) only --- ARTIFACT-TEMPLATES.md is loaded on demand.
 
 ## Quality Gates Framework
 
@@ -1398,29 +1616,74 @@ Minimum gates required for ANY task (additional gates are added per task):
 | ---- | ------------- | -------------- | ---- |
 | Handoff exists | Handoff file present for this work | `docs/subtasks/{epic}/{task-id}-*.md` exists | EXE |
 | Tests pass | All tests pass | `{test_command}` exits 0 | EXE |
-| No side effects | No unintended file changes | `git diff --stat` shows only expected files | EXE |
+| No side effects | No unintended file changes | `{vcs_diff_command}` (VCS diff showing changed files) shows only expected files | EXE |
 | Echo System green | All applicable Echo stages pass | `{echo_command}` or sequential: `{build_command}` + `{lint_command}` + `{test_command}` + `{e2e_command}` + `{audit_command}` | EXE |
-| Deliverables produced | `git diff --name-only` includes every file listed in handoff Deliverables section | `git diff --name-only` | EXE |
+| Deliverables produced | Changed-files listing includes every file listed in handoff Deliverables section | `{vcs_changed_files_command}` (VCS changed-files listing) | EXE |
 | Red evidence recorded | TDD Red phase log exists for each AC | Test failure output saved in handoff evidence | DOC |
+| No disabled tests | No skipped or pending tests without tracking reference | Scan test files for disabled-test markers (as defined in `docs/architecture/tech-stack.md`); each match must include a tracking reference in its description | EXE |
 
 > The `{test_command}` placeholder is resolved from `docs/architecture/tech-stack.md`
 > during the Plan phase. The orchestrator MUST substitute actual commands before writing
 > handoff files.
 
-## Git Branching Model
+### Contract Truth Gate
 
-```text
-task/{name} --> feature/{epic} --> main
-```
+Tests that verify acceptance criteria and spec constraints MUST be grounded in a
+verifiable contract artifact --- not in ad-hoc mock shapes, prose descriptions, or
+design intent.
 
-- Feature branches: `feature/{epic_or_scope}` (one per epic or logical group)
-- Task branches: `task/{descriptive_name}` (one per handoff, branched from feature branch)
-- When a feature branch is complete, merge into `main` (squash merge recommended)
-- Delete feature branches after merge
-- No direct commits to `main`
+**Contract artifact requirement**: before implementation begins, a typed contract
+must exist for every external interface the story touches (API schema, database
+migration, shared type definition, or equivalent machine-parseable artifact).
+Prose-only contracts do not satisfy this requirement.
 
-The `{name}` in `task/{name}` MUST correspond to an existing handoff file. No handoff, no
-branch.
+**AC-to-assertion mapping**: PDC Step 2 (VERIFY) MUST produce an AC-level mapping
+table, not a gate-level summary. For each acceptance criterion:
 
-Before delegating the first task in an epic, the orchestrator creates the feature branch
-`feature/{epic}` from `main`. Workers branch their task branches from the feature branch.
+| AC ID | Test Name | Assertion (quoted from source) | Counter-example (input that would fail if AC violated) | Falsifiable (YES/NO) |
+| ----- | --------- | ------------------------------ | ------------------------------------------------------- | --------------------- |
+
+The orchestrator MUST open the cited test file and confirm the quoted assertion text
+exists and is semantically relevant to the AC. "Falsifiable" means: would this test
+FAIL if the AC were violated? If NO, the test is tautological and does not satisfy
+the gate. A suite-level exit code is NOT AC-level evidence.
+
+The counter-example column is mandatory: state the specific input or state that
+would cause this assertion to fail if the AC were violated. If the orchestrator
+cannot articulate a counter-example, the row is FAIL by default.
+
+**Mock shape rule**: when tests use mocks or stubs representing responses from
+another system or layer, the mock shape MUST derive from or validate against the
+same typed contract the producer uses at runtime (shared schema, type export,
+migration file, or equivalent). If the full stack is owned and runs locally, prefer
+integration tests against real infrastructure over mocks. A mock whose shape
+diverges from the contract produces tautological tests --- the test verifies the
+mock, not the feature. At minimum, one contract test or schema validation test must
+exist that would FAIL if mock shape diverges from contract.
+
+**Spec constraint verification**: for each declared constraint in the user story
+(field types, length limits, nullability, numeric precision), at least one
+boundary-value test must exist that would FAIL if the constraint were violated.
+
+**Coverage qualification**: coverage percentage alone is not DOD evidence. High
+coverage with wrong mock shapes, tautological assertions, or tests that never fail
+produces false confidence. The AC-to-assertion mapping above is the required DOD
+evidence --- not the coverage number.
+
+## Version Control Model
+
+The version control strategy is resolved during the Architect phase in
+`docs/architecture/tech-stack.md`. The Architect defines:
+
+- Branch naming convention (e.g., `feature/{epic}`, `task/{name}`)
+- Merge strategy (squash, rebase, merge commit)
+- Main/trunk branch name
+- Branch protection rules (if the platform supports them)
+
+**Default recommendation** (override in tech-stack.md if the project's VCS or
+workflow requires a different model):
+
+- One main integration branch
+- Feature branches per epic or story
+- Task branches per handoff (short-lived, merged on completion)
+- Squash merge recommended for clean history
