@@ -48,7 +48,16 @@ version. Reimplementing what the stack already solves, or using patterns from ol
 versions when the declared version supersedes them, is technical debt --- requiring
 documented justification with a remediation path, not a scope decision. This axiom
 applies to ALL solution types (web, CLI, TUI, mobile, desktop, embedded) and ALL
-technology choices without exception.
+technology choices without exception. **Capability verification**: before selecting
+a function, API, or library to satisfy an acceptance criterion, verify that it
+supports the SPECIFIC behavior the AC requires --- not merely that it exists. "The
+stack has function X" is insufficient; "function X supports behavior Y required by
+AC Z" is the standard. Verification means: (a) cite the specific documentation
+section confirming the capability, OR (b) include a minimal proof-of-concept test
+in the Red phase that exercises the specific AC behavior. Reasoning alone ("I
+believe function X supports Y") does not constitute verification. If the native
+capability does not support the required behavior, document the gap and select an
+alternative with justification --- do not discover the gap after implementation.
 
 These axioms are referenced by compact rules ([PROJECT-ANTI-DRIFT](#project-anti-drift),
 [PROJECT-TEST](#project-test), [PROJECT-TDD](#project-tdd)) and enforced through the
@@ -356,11 +365,22 @@ Absorbed DOR/DOD items remain active but are verified by the merge-target role.
 gates survive intact:
 
 - AC-to-assertion traceability ([Contract Truth Gate](#contract-truth-gate))
-- Mock shape and contract validation
+- Mock shape and contract validation + mock-to-production verification (Echo Stage 2)
 - Pre-commit hook enforcement (Build + Test stages minimum)
 - [Scaffold Readiness Gate](#scaffold-readiness-gate)
 - Verify phase independence (no shared Build context)
 - T0 security practices (see [Activation Tiers](#activation-tiers))
+- Source-of-truth anchor and scope boundary list
+- Pre-modification test baseline
+- Minimum-destruction principle (worker defaults)
+- Capability verification (AXIOM-NATIVE)
+
+**Postmortem amendments in Lightweight Mode**: visual verification degrades to MAN
+gate by default (human confirms at Accept). The periodic drift check is replaced by
+per-commit mechanical checks only (mock-to-production in Echo Stage 2, pre-modification
+baseline). Scope proportionality, source-of-truth anchoring, capability verification,
+and minimum-destruction apply identically in all modes --- they are proportionally
+lightweight by design.
 
 These are quality mechanisms, not ceremony. Removing them re-introduces the failure
 modes the framework exists to prevent.
@@ -419,6 +439,13 @@ results, and manages phase transitions. It does NOT execute substantive work its
 | Architecture research or multi-source synthesis | --- | Yes |
 | Present results to human (MIM) | Yes | --- |
 
+**Prompt precision for destructive operations**: when the orchestrator writes delegation
+prompts involving file or resource removal, it MUST use precise language from the
+minimum-destruction precedence chain ("add to .gitignore", "untrack with git rm --cached",
+"move to {path}", "delete from disk") rather than natural-language synonyms ("remove",
+"eliminate", "clean up"). This makes the worker-side minimum-destruction principle a
+second line of defense rather than the only defense.
+
 **Self-detection rule**: if the orchestrator finds itself editing files, writing code, or
 running builds, it is in violation. It must stop, delegate the task, and resume as
 coordinator. (See also: AXIOM-ORCHESTRATOR in [Execution Axioms](#execution-axioms).)
@@ -432,6 +459,14 @@ the handoff. Workers:
 - Execute autonomously within the boundaries defined by the handoff
 - Return structured status (see [Status Protocol](#status-protocol))
 - Follow compact rules injected by the orchestrator (see [Compact Rules](#compact-rules-for-sub-agent-injection))
+- **Minimum-destruction principle**: when a prompt uses ambiguous destructive language
+  ("remove", "eliminate", "clean up", "delete"), workers MUST default to the least
+  destructive reversible action. Precedence: ignore/exclude (`.gitignore`) → untrack
+  (`git rm --cached`) → move/rename → delete from disk. The most destructive option
+  (permanent deletion) requires the prompt to say "delete from disk" or equivalent
+  explicit language. This rule applies to files, branches, configurations, and
+  any persistent state. When uncertain, workers report the ambiguity and ask for
+  clarification rather than choosing the nuclear option
 
 ### Single-Agent Mode
 
@@ -842,6 +877,17 @@ A user story MUST meet every condition below before it can be marked complete.
 - [ ] AXIOM-NATIVE spot-check: at least one implementation decision is verified
       against the Architect-phase native-capability audit table. Deviations from native
       capabilities have documented justification with a remediation path
+- [ ] Visual verification (user-facing stories): the running application was launched,
+      the implemented feature was exercised through the UI (browser, terminal, device,
+      or CLI), and observable evidence was captured (screenshot, terminal output, or
+      command transcript). "Tests green" is functional correctness evidence, not visual
+      correctness evidence --- both are required. When the agent runtime cannot launch
+      the application UI (headless, CI, no browser), visual verification degrades to a
+      MAN gate --- the story cannot be marked DONE without human visual confirmation;
+      do not silently skip. Stories claiming no user-facing output MUST record the
+      specific reason in the progress tracker (e.g., "database migration", "internal
+      refactor"). The orchestrator verifies the claim against the story deliverables
+      list. API endpoints that return user-visible responses are NOT exempt
 
 > **CONDITIONAL** (include when defined in tech-stack.md):
 - [ ] Performance: response time under threshold defined in tech-stack.md
@@ -959,6 +1005,9 @@ receive the text directly --- never file paths or references to read.
   The Architect phase defines the version policy and lockfile enforcement mechanism. The Echo System Stage 4
   (Audit) verifies compliance
 - Scope is defined by the handoff --- work outside the handoff boundaries is a violation
+- AXIOM-NATIVE capability verification: before selecting a function or API to implement an AC, verify it supports the SPECIFIC behavior required --- "it exists" is not "it does what we need"
+- Minimum-destruction principle: ambiguous destructive prompts default to the least destructive reversible action (gitignore → git rm --cached → move → delete). Permanent deletion requires explicit language
+- Source-of-truth anchoring: audit deliverables against the ORIGINAL source, not against derived artifacts. Derived artifacts expand detail but never inflate scope
 - Dead code and unused dependencies MUST be removed --- never conserved "just in case"
 - Prefer technologies and tooling that enable static dead code detection (tree-shaking,
   unused export analysis, dependency audit). This preference is declared during the
@@ -1017,8 +1066,11 @@ All protocols in this document are mandatory. The agent cannot grant itself exce
   document --- paraphrased or approximate citations do not satisfy the requirement
 - **Rationalization signals**: phrases like "this doesn't warrant", "given the simplicity",
   "an exception for", "[inferior pattern] is simpler than [native capability]",
-  "we can add [native capability] later", "for this scope [workaround] is sufficient"
-  indicate the agent is rationalizing. Stop and comply as written
+  "we can add [native capability] later", "for this scope [workaround] is sufficient",
+  "we can use [inferior alternative] as a fallback", "this simpler approach works for now"
+  indicate the agent is rationalizing. The last two are particularly dangerous when the
+  native stack has a proper solution --- they substitute investigation with substitution.
+  Stop and comply as written
 - **Ambiguity → compliance**: ambiguity resolves in favor of MORE compliance, not less
 - **Scale, don't skip**: "scale to the work" means reduce content volume, never omit
   required structural elements
@@ -1119,6 +1171,36 @@ the Deferred Backlog with category and rationale. The PO presents the cut with a
 explicit value justification per story --- "rationale" means a documented reason, not a
 subjective judgment.
 
+**Scope Proportionality Check**: the orchestrator monitors scope inflation at two
+points --- early (Discover exit) and late (post-MVP Cut). If any threshold is exceeded,
+the orchestrator MUST present the signal to the human before proceeding.
+
+**Early signal (Discover exit)**: before investing in full Refine, check absolute scope:
+
+| Metric | Threshold | Signal |
+| ------ | --------- | ------ |
+| Total epics | > 3 for projects classified as small-scope | "Epic count exceeds project scale --- review before Refine investment" |
+| Total stories | > 10 for projects with stated timeline under 1 week | "Story count is disproportionate to timeline" |
+| Total stories | > 2× timeline-days (when timeline is stated) | "Scope exceeds timeline capacity" |
+
+**Late signal (post-MVP Cut)**: check internal ratios before Plan:
+
+| Metric | Threshold | Signal |
+| ------ | --------- | ------ |
+| Stories per epic | > 3 average | "Epics may be too granular --- consider merging" |
+| Total planning files | > 3× story count | "Planning overhead exceeds implementation scope" |
+| Total handoffs | > 2× story count | "Task decomposition may be too fine-grained" |
+
+These checks do NOT block --- they surface proportionality questions for human judgment.
+The human may approve ("proceed as-is") or direct scope reduction. The checks prevent
+the failure mode where process artifacts grow disproportionate to the deliverable,
+producing evidence of automation rather than engineering judgment.
+
+**Project scope classification**: during Capture, the orchestrator classifies project
+scope as `small` (≤ 1 week, ≤ 5 stories expected), `medium` (1-4 weeks), or `large`
+(> 4 weeks). This classification feeds the absolute thresholds above. The classification
+is recorded in `docs/project-brief.md` alongside the project type.
+
 ### Capture
 
 Elicits the core idea from the human and produces the project foundation documents.
@@ -1143,6 +1225,32 @@ Elicits the core idea from the human and produces the project foundation documen
    as placeholders marked `TBD --- populated during {phase name}`
 5. Present both documents at MIM for human approval
 6. Initialize `docs/deferred-backlog.md` with header and empty table (see Deferred Backlog format)
+7. Register the **source-of-truth anchor**: record the original input artifact (PDF,
+   email, brief, conversation transcript, or verbal description) as the immutable
+   reference in `docs/project-brief.md` under a `## Source of Truth` section. Format:
+   `**Original source**: {description} | **Location**: {path or "verbal — captured above"}`
+
+**Source-of-Truth Anchor rule**: all derived artifacts (epics, user stories, ACs,
+architecture docs) are expansions of the original source. The anchor includes a
+**scope boundary list**: a numbered list of explicit capabilities the original source
+authorizes (e.g., "1. CRUD for products, 2. CSV import, 3. Search, 4. Purchase flow").
+Derived requirements not mapping to a numbered item are flagged during Discover,
+not retrospectively during Verify.
+
+For verbal or conversation sources, the human MUST confirm the captured summary as
+the canonical source at MIM before derivation begins. The agent's interpretation of
+a conversation is a draft, not an immutable reference.
+
+**Enforcement timing**: the source-of-truth comparison fires at THREE points:
+1. **Discover exit**: each epic MUST cite the specific scope boundary item that
+   authorizes it. An epic with no citation is flagged for MIM review before Refine
+2. **Verify**: the QA Lead audits deliverables against the scope boundary list
+3. **Accept**: the PO reconciles the delivered increment against the ORIGINAL source
+
+This prevents the closed-loop failure mode where the agent generates requirements,
+implements against them, and audits against its own generated requirements. Catching
+scope inflation at Discover (before Refine investment) is orders of magnitude cheaper
+than catching it at Verify (after implementation).
 
 Team roles and MIM gates for this phase: see [Scrum Team Matrix](#scrum-team-matrix).
 
@@ -1307,6 +1415,16 @@ exact instructions for the human. Silent skip is a violation.
 
 ### TDD Cycle
 
+**Pre-modification test baseline**: before modifying an existing file that has
+associated tests, run the existing test suite to establish a green baseline. If
+existing tests are already failing, report BLOCKED before proceeding --- do not
+entangle pre-existing failures with new changes. This baseline establishes what
+was green BEFORE the change, making regressions immediately detectable at the
+point of damage rather than at commit time when the change is entangled with new
+code. The baseline run is lightweight (existing tests only, not full Echo System)
+and catches the failure mode where a modification breaks existing tests that are
+only discovered at commit time.
+
 The TDD Cycle is the execution methodology for the Build phase. It applies PER acceptance
 criterion --- each AC gets its own Red → Green → Refactor cycle. See AXIOM-TDD.
 
@@ -1409,7 +1527,7 @@ flowchart LR
 | Stage | Name | Scope | Command Placeholder |
 | ----- | ---- | ----- | ------------------- |
 | 1 | Build | Compile/transpile + derived artifacts --- see [Artifact Governance](#artifact-governance) for output taxonomy | `{build_command}` |
-| 2 | Test | Static analysis (`{lint_command}`) + dynamic tests (`{test_command}`) | `{lint_command}` + `{test_command}` |
+| 2 | Test | Static analysis (`{lint_command}`) + dynamic tests (`{test_command}`) + mock-to-production verification | `{lint_command}` + `{test_command}` |
 | 3 | E2E | End-to-end tests (conditional --- only if project defines them) | `{e2e_command}` |
 | 4 | Audit | Dependency security audit + version policy compliance | `{audit_command}` |
 
@@ -1422,6 +1540,13 @@ flowchart LR
   Stage 4 is NON-WAIVABLE --- every project must define `{audit_command}` during the Architect phase
 - Template defines the structure; the Architect phase fills concrete commands in `docs/architecture/tech-stack.md`
 - A "green echo" means all applicable stages pass
+- **Mock-to-production verification** (Stage 2 sub-check): for each test file using
+  mocks, stubs, or spies, verify that the mocked function/method identifier matches
+  the production call site exactly. Extract mocked identifiers from test source and
+  confirm each exists in the production module it claims to mock. A mocked identifier
+  with no matching production call site is a FAIL --- the test verifies the mock, not
+  the feature. This check is deterministic (text matching) and catches the failure mode
+  where tests mock `functionA` but production calls `functionB`
 
 **Relationship to PDC**: the Echo System is what the **worker** runs during execution
 (before committing). The PDC is what the **orchestrator** runs after a worker returns.
@@ -1547,6 +1672,20 @@ since the last INBOUND human message (not outbound status reports). If 4+ tasks
 complete without an explicit human response between them, the safeguard is active.
 An orchestrator's own status report never counts as human presence --- only
 messages originating from the human deactivate the counter.
+
+**Proactive Drift Check**: at the same 4-task cadence, the orchestrator delegates a
+lightweight adversarial check to an INDEPENDENT worker agent (separate context, no
+shared state from the Build orchestrator). Self-audit by the same agent that supervised
+the work is architecturally unsound --- the same context that missed an error during
+Build will miss it again during self-review.
+
+The independent checker receives: the list of completed tasks since the last check,
+the source-of-truth anchor, and the committed code. It does NOT receive Build workers'
+reasoning or the orchestrator's PDC assessments. It returns a brief report:
+`DRIFT-CHECK: {pass_count}/{total} | Issues: {list or "none"}`.
+
+Issues found do NOT auto-fix --- the orchestrator reports them to the human and waits
+for direction. The goal is detection, not autonomous correction.
 
 ### Phase Transition
 
