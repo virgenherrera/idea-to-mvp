@@ -108,6 +108,56 @@ sequenceDiagram
     SM->>SM: Siguiente acción: convocar Dev Lead para completar design.md
 ```
 
+### Fast-Forward Contextual — Gradiente de Certeza
+
+El SM no avanza siempre una fase a la vez. Al recibir un input, evalúa
+**qué tan determinista es la solución dado el contexto existente** y
+avanza proporcionalmente:
+
+```mermaid
+flowchart TD
+    INPUT["Input del MIM"] --> EVAL["SM evalúa gradiente\nde certeza"]
+    EVAL -->|"Baja\n(dominio desconocido)"| LOW["Crea idea.md\n+ formula preguntas"]
+    EVAL -->|"Media\n(estándar con decisiones)"| MED["Idea + spec parcial\n+ preguntas de diseño"]
+    EVAL -->|"Alta\n(estándar determinista)"| HIGH["Hasta handoff\no ejecución"]
+    LOW --> WAIT["⏳ Espera respuestas\ndel MIM"]
+    MED --> WAIT
+    HIGH --> EXEC["▶ Avanza sin preguntar"]
+```
+
+#### Reglas del gradiente
+
+| Certeza | Criterio del SM | Hasta dónde avanza | Ejemplo |
+|---------|-----------------|--------------------|---------| 
+| **Baja** | Dominio desconocido, requisitos ambiguos, no hay app existente | Idea + preguntas | "Hazme el uber de lanchas" |
+| **Media** | Estándar conocido pero con decisiones pendientes | Idea + spec parcial + preguntas específicas | "Agrega auth con JWT" |
+| **Alta** | Estándar abierto, app existente en el RAG, patrones bien definidos | Hasta handoff o ejecución directa | "Crea módulo OTEL" |
+
+#### Quién decide
+
+**El SM decide autónomamente.** No es el MIM quien dice "ve en
+fast-forward" — es el SM quien juzga "aquí puedo avanzar sin preguntar
+porque la solución es determinista." Factores que evalúa:
+
+1. **¿Cuántos artefactos ya existen en el RAG?** — si ya hay spec +
+   design + tasks, el fast-forward es hasta ejecución.
+2. **¿Es un estándar abierto con convenciones conocidas?** — OTEL,
+   i18n, linting → alta certeza.
+3. **¿El input tiene ambigüedad de dominio?** — "uber de lanchas" tiene
+   infinitas interpretaciones → baja certeza.
+4. **¿Hay una app existente como referencia?** — un proyecto con código
+   en el RAG permite inferir stack, patrones, convenciones.
+
+#### Fast-forward también aplica MID-CYCLE
+
+No solo al inicio. Ejemplos:
+
+- **Bug en producción** → MIM dice "esto tronó" → SM orquesta:
+  reproduce → diagnostica → fix → promueve al ambiente apropiado.
+  No pasa por Idea → Spec → Design.
+- **Epic ya groomeado** → todo en el RAG → SM detecta artefactos
+  completos → fast-forward directo a ejecución.
+
 ---
 
 ## Principio

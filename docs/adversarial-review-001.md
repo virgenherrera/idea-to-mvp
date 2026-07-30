@@ -42,138 +42,113 @@ con fire-and-forget.
 
 *Actualizado en: `behavior-scrum-master-routing.md`, sección Supervisión*
 
-### C3. No hay escape hatch
+### ~~C3. No hay escape hatch~~ → RESUELTO (fast-forward contextual)
 
-El SM bloquea avances sin alternativa. Un desarrollador senior que sabe
-exactamente qué quiere construir debe responder 6 preguntas de negocio +
-5 fases de planificación antes de escribir una línea de código. No existe
-`/skip-to-execution` ni `/fast-track` con acknowledgment de riesgos.
+**Resolución**: no es un "skip" global — es **fast-forward contextual**.
+El MIM puede inyectar trabajo en cualquier punto del ciclo según lo que
+ya existe:
 
-*Fuente: producto (#1)*
+- **Bug en producción** → el MIM dice "esto tronó" → SM orquesta:
+  reproducir → diagnosticar → fix → promover al ambiente apropiado.
+  No pasa por Idea → Spec → Design.
+- **Epic ya groomeado** → todo está en el RAG (spec, design, tasks,
+  handoff) → SM detecta artefactos completos → fast-forward directo
+  a ejecución.
+- **Idea vaga** → pasa por todas las fases, sin atajos.
 
-### C4. El modelo de dos modos no cubre 8 etapas
+La regla: el escape hatch NO salta fases, las ACELERA según los
+artefactos que ya existan en el RAG. Si el RAG ya tiene spec + design +
+tasks, no tiene sentido forzar al MIM a responder preguntas que ya
+están respondidas.
 
-Las etapas 6-8 (Verificar, Aceptar, Retrospectiva) son huérfanas: no
-caben en Planificación (que termina en Handoff) ni en Ejecución (que según
-el modelo solo involucra orquestador + minions). Pero el behavior file
-muestra al scrum team completo activo en esas etapas — contradiciendo
-"el scrum team está EN SILENCIO en ejecución."
+**Gradiente de certeza** — el SM evalúa autónomamente hasta dónde
+puede avanzar sin consultar al MIM:
 
-Se necesita: un tercer modo, o redefinir dónde terminan los modos, o
-asignar explícitamente estas etapas.
+| Input | Certeza | FF del SM | Se detiene en... |
+|-------|---------|-----------|------------------|
+| "Hazme el uber de lanchas" | Baja | Crea idea + formula preguntas | Espera respuestas del MIM |
+| "Agrega auth con JWT" | Media | Idea + spec parcial + preguntas de diseño | Decisiones del MIM |
+| "Crea módulo OTEL" | Alta | Hasta handoff o ejecución | Casi sin preguntas |
 
-*Fuente: coherencia (#2, #8, #17)*
+El SM juzga: "¿la solución es determinista dado el contexto que tengo?"
+Si sí → avanza. Si no → formula preguntas precisas y espera.
 
-### C5. El costo de tokens es potencialmente prohibitivo
+*Pendiente: documentar la mecánica de fast-forward y el gradiente de
+certeza en behavior file*
 
-Cada fase invoca SM + 1-3 roles + TPM. Ejemplo conservador: 8 fases × ~5
-agentes = ~40 invocaciones. A ~10K tokens cada una = 400K tokens solo en
-overhead de orquestación, antes de escribir código. Para un "CRUD con auth"
-de 20 líneas, el framework podría costar 10-20x más que un agente único.
+### ~~C4. El modelo de dos modos no cubre 8 etapas~~ → DIFERIDO
 
-*Fuente: viabilidad técnica (#3), producto (#3, #6)*
+**Decisión**: foco actual es definir completamente el modo planificación.
+Las etapas 6-8 (Verificar, Aceptar, Retrospectiva) se reconcilian
+después, cuando el modo planificación esté sólido.
+
+*Fuente: coherencia (#2, #8, #17) — se aborda en fase posterior*
+
+### ~~C5. El costo de tokens es potencialmente prohibitivo~~ → RESUELTO (mitigación por diseño + exploración)
+
+**Resolución**: el diseño del SM + RAG ya mitiga esto por construcción:
+
+1. **Contexto acotado**: los agentes reciben slices del RAG, no archivos
+   completos. Tareas simples con given/when/then + output esperado +
+   criterios de cumplimiento.
+2. **Delegación a modelos económicos**: explorar Ollama (modelos locales)
+   y AI containers de Docker para tareas mecánicas (implementar,
+   investigar, ejecutar tests).
+3. **Evidencia empírica**: proyectos complejos entregados con disciplina
+   de tokens. No es prohibitivo cuando se hace bien.
+
+El costo no se reduce por magia — se reduce porque el SM da tareas bien
+acotadas en vez de dumping de contexto.
+
+*Pendiente: documentar estrategia de delegación multi-modelo*
 
 ---
 
-## HIGH — Requieren especificación significativa
+## HIGH — TBD (pendiente: definir capa de metodología primero)
 
-### H1. El TPM no existe en `operational-model.md`
+> **Nota**: todos los hallazgos HIGH se reevalúan después de definir la
+> capa de abstracción de metodología (Scrum/Kanban/Shape Up/PI Planning).
+> La metodología elegida afecta roles, gates y ceremonia — pero NO el
+> modelo de artefactos del RAG.
 
-El behavior file hace del TPM un componente indispensable (el SM delega
-TODO el acceso al RAG al TPM). El modelo operativo no lo menciona. Un
-implementador que siga solo el modelo operativo no sabe quién gestiona
-el RAG.
+### H1. El TPM no existe en `operational-model.md` — TBD
 
 *Fuente: coherencia (#10)*
 
-### H2. Gate validation es semánticamente vacía
-
-El SM valida gates vía TPM, pero el TPM reporta completitud estructural
-("6/6 secciones"), no calidad semántica. Nadie tiene AMBOS: autoridad para
-bloquear Y visibilidad del contenido. El SM tiene autoridad pero no lee
-contenido. El TPM lee contenido pero no tiene autoridad de proceso.
+### H2. Gate validation es semánticamente vacía — TBD
 
 *Fuente: viabilidad técnica (#4)*
 
-### H3. La escalación ejecución → planificación no tiene protocolo concreto
-
-La state machine muestra flechas `Execution → Spec`, `Execution → Design`,
-pero: ¿cómo comunica el orquestador de ejecución un gap al SM? Pueden ser
-sesiones diferentes, contextos diferentes. No hay formato de gap report,
-no hay trigger definido, no hay mecanismo de recovery.
+### H3. La escalación ejecución → planificación no tiene protocolo — TBD
 
 *Fuente: viabilidad técnica (#5), producto (#8)*
 
-### H4. Tablas de roles inconsistentes entre archivos
-
-Las fases de activación de QA, UX, Dev Lead, DevSecOps y SM difieren entre
-`operational-model.md` y `behavior-scrum-master-routing.md`. Además, el
-mapa de convocatoria (diagrama Mermaid) difiere de la matriz detallada
-dentro del mismo archivo. Tres fuentes, tres respuestas diferentes a "¿a
-quién convoco en fase X?"
+### H4. Tablas de roles inconsistentes entre archivos — TBD
 
 *Fuente: coherencia (#3, #4, #5, #6, #7, #12)*
 
-### H5. Preguntas pre-definidas son rígidas
-
-6 preguntas fijas en Fase 1, 5 en Fase 2, etc. No hay mecanismo para
-detectar que el input ya respondió algunas. El 60% de las preguntas
-podrían estar respondidas en el input original y se preguntan de todas
-formas.
+### H5. Preguntas pre-definidas son rígidas — TBD
 
 *Fuente: producto (#5)*
 
-### H6. Carga cognitiva insostenible para nuevos usuarios
-
-7 roles + RAG + gates + heartbeats + contratos + state machine + handoffs +
-tiers + 2 modos = 15+ conceptos interconectados antes de poder usar la
-herramienta. Los roles deberían ser transparentes (implementation detail),
-no parte de la interfaz visible.
+### H6. Carga cognitiva insostenible para nuevos usuarios — TBD
 
 *Fuente: producto (#4)*
 
-### H7. Terminología SDD residual en modelo operativo
-
-El diagrama de límites usa "explorar, proponer" que no son fases del modelo.
-La tabla del PO referencia "Propuesta" que no existe. Son remanentes de
-SDD que contradicen la propia separación gobernanza/operacional.
+### H7. Terminología SDD residual en modelo operativo — TBD
 
 *Fuente: coherencia (#1, #9)*
 
 ---
 
-## MEDIUM — Fricción de diseño, no bloquean
+## MEDIUM — TBD
 
-### M1. RAG fuera del repo rompe colaboración de equipo
-
-`~/.idea-to-mvp/` es local al usuario. Sin convención de compartir, versionar
-o resolver conflictos en artefactos de planificación entre personas.
-
-### M2. La regla "SM nunca toca archivos" es unenforceable
-
-El SM tiene acceso a Read/Write/Bash. La única restricción es el system
-prompt. Después de compaction puede olvidarla.
-
-### M3. El handoff asume planificación perfecta
-
-"Autocontenido" asume 100% de decisiones capturadas. En la práctica, la
-ejecución siempre descubre info nueva. Falta un "decision budget" para
-que ejecución tome decisiones tácticas sin escalar.
-
-### M4. No hay feedback del usuario sobre el proceso
-
-La Retrospectiva evalúa el producto, no la experiencia con el framework.
-Sin mecanismo para que el usuario diga "DevSecOps fue inútil para este
-proyecto" y que eso persista.
-
-### M5. Path del RAG: `docs/` vs. `artifacts/`
-
-Dos nombres diferentes para el mismo concepto en el modelo operativo.
-
-### M6. Interfaz del adaptador insuficiente
-
-4 operaciones (guardar, leer, buscar, listar) vs. 6 del TPM (incluye
-marcar completo y verificar consistencia). Faltan metadatos.
+### M1. RAG fuera del repo rompe colaboración de equipo — TBD
+### M2. La regla "SM nunca toca archivos" es unenforceable — TBD
+### M3. El handoff asume planificación perfecta — TBD
+### M4. No hay feedback del usuario sobre el proceso — TBD
+### M5. Path del RAG: `docs/` vs. `artifacts/` — TBD
+### M6. Interfaz del adaptador insuficiente — TBD
 
 ---
 
@@ -181,18 +156,15 @@ marcar completo y verificar consistencia). Faltan metadatos.
 
 Los hallazgos convergen en tres temas transversales:
 
-1. **Diseño para estado que no existe**: la state machine, el heartbeat, y
-   la escalación asumen un proceso persistente y bidireccional. El SM es
-   efímero y los sub-agentes son fire-and-forget. Hay que diseñar para la
-   realidad, no para la API deseada.
+1. ~~**Diseño para estado que no existe**~~ → **RESUELTO**. State machine
+   derivada del RAG (C1), supervisión post-hoc en vez de heartbeat (C2).
+   El diseño ahora asume agentes efímeros y fire-and-forget.
 
-2. **Ceremonia desproporcionada**: 8 fases, 7 roles, gates obligatorios,
-   contratos de 6 campos. Funciona para un proyecto complejo con equipo.
-   Destruye la adopción para un solo desarrollador con un fin de semana.
-   Los tiers de activación se mencionan pero nunca se definen
-   concretamente.
+2. **Ceremonia desproporcionada** → **MITIGADO parcialmente**. Fast-forward
+   contextual (C3) evita forzar fases cuando los artefactos ya existen.
+   Delegación a modelos económicos (C5) reduce costo. Pendiente: definir
+   concretamente los tiers de activación.
 
-3. **Dos documentos divergentes**: el modelo operativo y el behavior file
-   evolucionaron en paralelo sin reconciliación. Tablas de roles, fases,
-   modos, y terminología difieren. Se necesita una fuente de verdad única
-   o una reconciliación explícita.
+3. **Dos documentos divergentes** → **TBD**. Se reevalúa después de
+   definir la capa de metodología. La metodología determina roles y
+   ceremonia; el modelo de artefactos del RAG es independiente.
