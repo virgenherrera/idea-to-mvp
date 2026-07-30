@@ -17,3 +17,29 @@ NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
 PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS ON AN "AS IS" BASIS,
 AND THE COPYRIGHT HOLDER HAS NO OBLIGATIONS TO PROVIDE MAINTENANCE, SUPPORT,
 UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+
+--- Scope ---
+
+This license covers the TEMPLATE AS SHIPPED: the framework specification
+(AGENTS.md), artifact templates (ARTIFACT-TEMPLATES.md), contribution
+guidelines (CONTRIBUTING.md), and this license file. These define the
+process framework --- its axioms, pipeline, protocols, roles, quality
+gates, and compact rules as they exist in the original template.
+
+This license does NOT cover and makes NO claim over:
+
+  - Source code, tests, configurations, or any executable artifacts
+    produced by projects that use this template
+  - Project-specific content added to AGENTS.md during execution:
+    resolved placeholder values, project-specific compact rules
+    (PROJECT-{DOMAIN} blocks added during the Architect phase),
+    phase state updates, or amendments introduced via Retrospective
+  - Any file under docs/, src/, or other directories created by the
+    pipeline during project execution
+  - The products, services, or intellectual property built by
+    following this framework
+
+Projects created from this template are the sole property of their
+creators, who may license them under any terms they choose. Using this
+framework to build a product is like using Scrum to build a product:
+the process guide has a copyright holder, the product does not inherit it.

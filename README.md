@@ -69,4 +69,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-PostgreSQL License --- see [LICENSE](LICENSE).
+PostgreSQL License --- see [LICENSE](LICENSE). Covers the framework files only (AGENTS.md,
+ARTIFACT-TEMPLATES.md, CONTRIBUTING.md). Projects built with this template are yours ---
+license them however you want.
