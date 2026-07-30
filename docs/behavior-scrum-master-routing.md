@@ -30,6 +30,7 @@ flowchart LR
 | `escalate(gap)` | Si ejecución detecta un gap, decide a qué fase de planificación se regresa | Error handler con rollback |
 | `getCurrentIteration()` | Sabe en qué iteración/sprint estamos, qué se entregó antes, qué queda | State machine query |
 | `getProjectHistory()` | Consulta al TPM por el historial de artefactos y decisiones | Repository query |
+| `extendTeam(roleContract)` | Define y convoca un rol ad-hoc cuando el equipo default no cubre el expertise necesario. Registra en `idea.md`. | Factory method |
 
 ### Qué ES y qué NO ES
 
@@ -80,6 +81,9 @@ Esto significa:
 | Dos artefactos en estado "in progress" simultáneamente | TPM reporta múltiples artefactos incompletos | SM selecciona el más upstream y se enfoca en completarlo. El otro se marca como "pendiente, bloqueado por {upstream}." |
 | Artefacto marcado completo pero inconsistente con upstream editado | `verifyConsistency` del TPM detecta conflicto post-update | SM notifica: "El artefacto {downstream} puede estar desactualizado respecto a cambios en {upstream}." → Re-convocar rol validador. |
 | RAG vacío pero con historial (proyecto existente, artefactos eliminados) | TPM reporta RAG vacío + historial de operaciones | SM pregunta al MIM: "RAG vacío pero hay historial previo. ¿Empezar de cero o restaurar?" |
+| MIM solicita cambio a artefacto ya completado durante planificación | MIM dice "cambia este AC" mientras estamos en Fase 3+ | SM instruye al TPM para marcar el artefacto como `en revisión`. SM re-convoca al rol productor original con contrato acotado al cambio solicitado. Artefactos downstream se marcan como `posiblemente desactualizados` vía `verifyConsistency`. Fase actual se pausa hasta que el cambio upstream se complete y la cascada se resuelva. |
+| MIM envía edit mientras un sub-agente está en vuelo | SM recibe mensaje del MIM antes de que el sub-agente retorne | SM encola el edit. Cuando el sub-agente retorna, SM aplica PDC normal. Luego evalúa si el edit invalida el resultado recién recibido. Si lo invalida → re-delega con el edit incorporado. Si no → procesa el edit como un cambio separado. |
+| Artefacto creado pero vacío (shell sin contenido) | TPM reporta artefacto con 0 secciones completadas | Se trata como "no existe" para la state machine. El SM permanece en la fase que requiere ese artefacto. El TPM puede eliminar el shell vacío si no tiene utilidad. |
 
 **Definición mecánica de "completo"**: un artefacto está completo cuando
 (1) todas las secciones requeridas por su schema existen (check
@@ -167,6 +171,11 @@ El SM evalúa 4 factores y asigna 0, 1, o 2 puntos a cada uno:
 | **F3. Ambigüedad de dominio** | Infinitas interpretaciones ("uber de X") | Dominio acotado con decisiones pendientes | Dominio determinista (agregar módulo X a app existente) |
 | **F4. Referencia existente** | Sin codebase ni precedentes | Codebase existe pero no cubre este dominio | Codebase con patrones/stack que aplican directamente |
 
+> **Nota F1**: un artefacto que existe pero está incompleto cuenta como
+> 0.5 puntos (redondear el total al entero más cercano). "Incompleto" =
+> el TPM reporta que faltan secciones requeridas. Un artefacto parcial
+> NO equivale a un artefacto completo para scoring.
+
 **Thresholds**:
 
 | Score total | Certeza | Hasta dónde avanza |
@@ -182,6 +191,11 @@ conclusión) para que la decisión sea auditable:
 > (auth es acotado pero hay decisiones), F4=2 (codebase existente
 > con Express). Total: 4 → Media. Avanzo a idea + spec parcial."*
 
+El SM instruye al TPM para persistir el score F1-F4 y el reasoning en
+`idea.md` sección "Decisiones tomadas" como entrada con formato:
+`[FAST-FORWARD] F1={n}, F2={n}, F3={n}, F4={n}. Total={n} → {certeza}.
+Razón: {resumen}.` Esto garantiza auditabilidad cross-session.
+
 #### Ejemplos resueltos de frontera
 
 | Input | F1 | F2 | F3 | F4 | Total | Certeza | Acción |
@@ -191,6 +205,9 @@ conclusión) para que la decisión sea auditable:
 | "Agrega auth con JWT" (codebase Express existente) | 0 | 1 | 1 | 2 | 4 | Media | Idea + spec parcial |
 | "Crea módulo OTEL" (codebase con NestJS) | 0 | 2 | 2 | 2 | 6 | Alta | Hasta handoff |
 | "Epic X ya groomeado" (spec+design+tasks en RAG) | 2 | 2 | 2 | 2 | 8 | Alta | Fast-forward a ejecución |
+| "Implementa pagos con Stripe" (sin codebase) | 0 | 1 | 1 | 0 | 2 | Baja | F2=1: Stripe es estándar PERO tiene variantes (checkout, elements, custom). F3=1: pagos es acotado pero requiere decisiones (moneda, suscripciones, webhooks). |
+| "Agrega logging con Winston" (codebase Node existente) | 0 | 2 | 2 | 2 | 6 | Alta | F2=2: Winston es estándar abierto sin variantes significativas. F3=2: logging es determinista — configuración, transports, formato. |
+| "Migra de REST a GraphQL" (API existente) | 1 | 1 | 0 | 2 | 4 | Media | F2=1: GraphQL es estándar PERO cada migración es diferente. F3=0: infinitas interpretaciones — qué endpoints migrar, schema design, N+1. |
 
 #### Fast-forward también aplica MID-CYCLE
 
@@ -209,15 +226,16 @@ No solo al inicio. Ejemplos:
 El SM NO produce artefactos de contenido. El SM:
 
 1. **Detecta** en qué fase está el proyecto
-2. **Convoca** a los roles del scrum team que corresponden a esa fase
-3. **Acota** la función de cada rol convocado (qué esperamos, qué NO)
-4. **Valida** que el artefacto de salida esté completo (vía TPM)
-5. **Bloquea** el avance si el gate no se cumple
-6. **Desbloquea** la siguiente fase cuando el artefacto es suficiente
-7. **Rastrea** la iteración actual, el historial, y las escalaciones
+2. **Convoca** a los roles del scrum team (default o ad-hoc) que corresponden a esa fase
+3. **Extiende** el equipo con roles ad-hoc cuando el proyecto requiere expertise fuera del equipo default
+4. **Acota** la función de cada rol convocado (qué esperamos, qué NO)
+5. **Valida** que el artefacto de salida esté completo (vía TPM)
+6. **Bloquea** el avance si el gate no se cumple
+7. **Desbloquea** la siguiente fase cuando el artefacto es suficiente
+8. **Rastrea** la iteración actual, el historial, y las escalaciones
 
 El SM es el ÚNICO rol que persiste a lo largo de todas las fases. Los demás
-roles entran y salen según la fase los requiera.
+roles (default y ad-hoc) entran y salen según la fase los requiera.
 
 ---
 
@@ -254,7 +272,9 @@ flowchart TD
 ## Mapa de Convocatoria por Fase
 
 El SM convoca diferentes roles según la fase. Cada rol tiene una función
-acotada y un entregable esperado.
+acotada y un entregable esperado. Los roles listados abajo son el equipo
+**default**. El SM puede agregar roles ad-hoc a cualquier fase cuando el
+proyecto lo requiera (ver `role-profiles.md` seccion "Roles Ad-Hoc").
 
 ```mermaid
 flowchart LR
@@ -309,11 +329,31 @@ Preguntas predefinidas que el PO debe resolver:
 5. ¿Hay restricciones de tiempo o presupuesto?
 6. ¿Quién aprueba el resultado final?
 
-Si la entrada es un **tech challenge**, el SM delega a un sub-agente
-dedicado con contrato de "SM-analista" (Rol: SM-Process, Personalidad:
-extractivo-metódico, Input: archivos del challenge, Output: timebox +
-criterios de evaluación + restricciones de herramientas). El SM NO lee
-los archivos directamente — la regla cardinal no tiene excepciones.
+**Ingesta de input del MIM**: cuando el MIM proporciona archivos,
+capturas, URLs, o cualquier material de contexto (tech challenge,
+brief de producto, wireframes), el SM instruye al TPM para **ingestar**
+el material en el artifact store. El TPM:
+
+1. Lee el material fuente (archivos, capturas, texto)
+2. Sintetiza el contenido relevante (no copia verbatim)
+3. Almacena con **citaciones a la fuente** (path, linea, URL, seccion)
+4. Lo hace queryable para cualquier rol via `search()`
+
+El SM NO lee archivos — la regla cardinal no tiene excepciones. El TPM
+es el unico que toca material fuente. Cualquier rol que necesite
+contexto lo obtiene del artifact store via Pattern B (query directo).
+
+Si la entrada es un **tech challenge**, el TPM ingesta los archivos del
+challenge y extrae: timebox, criterios de evaluacion, restricciones de
+herramientas. El PO usa esa informacion (via query al RAG) para
+formular las preguntas de negocio.
+
+**Requests compuestos del MIM**: si el MIM envía múltiples
+features/ideas en un solo mensaje ("agrega auth Y agrega i18n"), el SM
+los descompone en L1 features independientes. Cada L1 sigue su propio
+ciclo de planificación (idea → handoff). El SM puede ejecutarlos en
+secuencia o, si no tienen dependencias entre sí, planificarlos en
+paralelo. El SM informa al MIM de la descomposición antes de proceder.
 
 #### Fase 2 — Especificar
 
@@ -364,7 +404,7 @@ Preguntas predefinidas:
 | **Función QA** | (Si activo) Validar que cada tarea tenga criterio de verificación |
 | **NO hacen** | NO implementan. NO asignan a personas específicas. |
 | **Artefacto de salida** | `tasks.md` |
-| **Gate** | Tareas ordenadas. Sin dependencias cíclicas. Cada tarea mapeada a un AC. Completitud estructural (TPM) + semántica (Dev Lead aprueba). |
+| **Gate** | Tareas con schema de work items (L3-L4, parent_id, depends_on con tipos FS/SS/FF, traces_to). Sin dependencias cíclicas. Cada tarea mapeada a al menos un AC. Dependency graph completo con lanes asignados. Completitud estructural (TPM) + semántica (QA valida verificabilidad por tarea). |
 
 Preguntas predefinidas:
 
@@ -411,11 +451,124 @@ Si el smoke test falla, el SM instruye al TPM sobre los gaps
 detectados. Se itera hasta que el sub-agente fresco pueda planear
 sin preguntas.
 
+**Contrato del sub-agente de smoke test**:
+
+| Campo | Valor |
+|-------|-------|
+| Rol | Ejecutor fresco (sin contexto previo) |
+| Input | Solo `handoff.md` — ningún otro artefacto ni contexto de conversación |
+| Tarea | Genera un plan de ejecución. Si falta información para tomar una decisión, NO asumas — lista la pregunta explícita en vez de adivinar. |
+| Output | Plan de ejecución + lista de asunciones realizadas (puede ser vacía) |
+| Criterio PASS | 0 preguntas bloqueantes Y 0 asunciones críticas |
+| Criterio FAIL | 1+ preguntas bloqueantes O 1+ asunciones sobre decisiones de arquitectura/stack/scope |
+| Status Report | Obligatorio (Status/Progress/Blocker/Assumptions) |
+
 **Gate de confirmación MIM**: antes de transicionar a Modo Ejecución,
 el SM presenta al MIM un resumen del handoff y pide confirmación
 explícita: "¿Procedemos a ejecución?" El MIM puede aprobar, pedir
 ajustes, o detener. Esta transición NO es automática — el MIM siempre
 tiene la última palabra antes de que se escriba código.
+
+**Rollback de fast-forward**: si el MIM rechaza el resultado de un
+fast-forward ("asumiste demasiado"), el SM: (1) solicita al MIM que
+identifique los artefactos con asunciones incorrectas, (2) instruye al
+TPM para marcar esos artefactos como `en revisión`, (3) re-evalúa el
+score F1-F4 con la nueva información, (4) retoma el ciclo desde la
+fase del primer artefacto afectado, ahora con las preguntas que el
+fast-forward saltó. El MIM tiene la última palabra.
+
+#### Fase 8 — Retrospectiva
+
+| | Detalle |
+|---|---------|
+| **Rol convocado** | Todos los roles que participaron en el ciclo (default + ad-hoc) |
+| **Facilitador** | SM |
+| **Función** | Evaluar el proceso, no el producto. Cerrar el ciclo con acuerdos concretos. |
+| **NO hace** | NO re-abre defectos de producto (eso es Fase 6). NO redefine scope (eso es Fase 1). |
+| **Artefacto de salida** | Seccion "Retrospectiva" en `idea.md` (persistida via TPM) |
+| **Gate** | Al menos 1 acuerdo concreto registrado. MIM confirma cierre del ciclo. |
+
+**Estructura de la sesion** (facilitada por el SM):
+
+1. **Stop doing** — que hicimos este ciclo que no deberiamos repetir.
+   El SM convoca a cada rol activo y pregunta: "Que parte del proceso
+   te freno, te confundio, o produjo desperdicio?"
+
+2. **Start doing** — que no hicimos y deberiamos incorporar.
+   El SM pregunta: "Que falta en el proceso que habria evitado un
+   problema o acelerado el resultado?"
+
+3. **Continue doing** — que funciono bien y debemos mantener.
+   El SM pregunta: "Que parte del proceso fue util, clara, o eficiente?"
+
+4. **Agreements** — compromisos concretos para el siguiente ciclo.
+   Cada acuerdo debe ser: accionable (verbo + objeto), asignable (quien
+   lo ejecuta), y verificable (como se sabe que se cumplio).
+
+**Delegacion por rol** (el SM convoca a cada rol con un prompt
+especifico para su perspectiva):
+
+| Rol | Prompt del SM | Ejemplo de output esperado |
+|-----|---------------|---------------------------|
+| PO | "Evalua si el valor entregado coincide con el valor esperado. El proceso de priorizacion funciono?" | "Start: validar ACs con usuarios antes de Fase 2" |
+| Dev Lead | "Las decisiones arquitectonicas fueron acertadas? El desglose de tareas fue realista?" | "Stop: estimar sin medir complejidad de integraciones" |
+| QA | "La estrategia de testing fue eficaz? Se detectaron defectos a tiempo?" | "Continue: gate semantico en Fase 4" |
+| DevSecOps | "Las medidas de seguridad fueron adecuadas? Algo se descubrio tarde?" | "Start: threat model en Fase 3 en vez de Fase 4" |
+| UX | "El feedback de usabilidad se incorporo a tiempo? El resultado es usable?" | "Stop: diferir feedback de UX hasta Fase 6" |
+| Ad-hoc | "Tu contribucion impacto el resultado? El contrato fue claro?" | "Start: incluir Data Architect desde Fase 3" |
+
+**Persistencia**: el SM instruye al TPM para registrar los resultados
+en `idea.md` seccion "Retrospectiva" con formato:
+
+```
+## Retrospectiva
+
+### Stop doing
+- [item] — reportado por [rol]
+
+### Start doing
+- [item] — reportado por [rol]
+
+### Continue doing
+- [item] — reportado por [rol]
+
+### Agreements
+- [ ] [acuerdo accionable] — responsable: [rol/MIM] — verificable: [criterio]
+```
+
+**Feedback del MIM sobre el proceso**: como cierre, el SM pregunta al
+MIM directamente: "El proceso de planificacion fue util para este
+proyecto? Fue excesivo? Que cambiarias?" La respuesta del MIM se
+registra como item adicional en la seccion correspondiente (stop/start/
+continue). Esto cierra el concern de review-001 M4 — el MIM tiene un
+punto formal para dar feedback sobre el proceso, no solo sobre el
+producto.
+
+**Agreements como meta-configuracion**: los agreements NO son
+entregables del producto — son ajustes al proceso que afinan como
+opera el framework en el siguiente ciclo. Ejemplos:
+
+- "Start: threat model en Fase 3" → el SM agrega DevSecOps como
+  participante obligatorio en Fase 3 para el proximo ciclo.
+- "Stop: estimar sin medir" → el SM agrega un check de complejidad
+  al gate de Fase 4.
+- "Start: incluir Data Architect desde Fase 3" → el SM crea un rol
+  ad-hoc con contrato y lo pre-activa en la convocatoria de Fase 3.
+
+El SM lee los agreements del ciclo anterior (via TPM, de `idea.md`
+seccion "Retrospectiva/Agreements") al iniciar un nuevo ciclo y los
+incorpora como reglas operativas. Esto es el **feedback loop del
+proceso**: la retro no es ceremonial — produce cambios concretos en
+el comportamiento del SM y del equipo.
+
+Si un agreement contradice una regla documentada en behavior.md o
+role-profiles.md, el SM lo escala al MIM: "Este agreement requiere
+modificar una regla del framework. Confirmas?" El MIM decide si es
+un override local (solo este proyecto) o una enmienda permanente.
+
+**Cierre del ciclo**: el SM presenta los agreements al MIM y pregunta:
+"Cerramos este ciclo?" El MIM confirma. El SM instruye al TPM para
+marcar el ciclo como cerrado.
 
 ---
 
@@ -499,6 +652,14 @@ El TPM NO es un embudo tonto de datos. Tiene criterio propio para:
   artefactos necesarios estén completos y consistentes entre sí antes de
   que el SM declare el handoff listo.
 
+Por default, el acceso de lectura sigue el **Patrón B**: el SM no
+intermedia el contenido del RAG hacia el rol convocado. El contrato de
+delegación incluye los `topic_keys` que el rol necesita, y el propio
+sub-agente los lee directamente contra el RAG. El TPM solo interviene
+para persistir (escribir), no para servir lecturas. El Patrón A —el TPM
+sirviendo un slice curado— queda reservado para casos excepcionales (ver
+tabla de operaciones más abajo).
+
 ```mermaid
 sequenceDiagram
     participant MIM as MIM (Humano)
@@ -506,27 +667,18 @@ sequenceDiagram
     participant ROL as Rol Convocado (PO, QA, etc.)
     participant TPM as TPM
 
-    SM->>ROL: Contrato de delegación
+    SM->>ROL: Contrato de delegación\n(incluye topic_keys a leer)
     activate ROL
-    ROL-->>SM: Heartbeat + resultado
+    ROL->>ROL: Lee directamente del RAG\nvía topic_key (Patrón B)
+    ROL-->>SM: Resultado + Status Report
     deactivate ROL
     SM->>TPM: "Persiste este resultado en idea.md"
     activate TPM
     TPM->>TPM: Evalúa: ¿crear, actualizar, o fusionar?
     TPM->>TPM: Aplica estándares de escritura
-    TPM-->>SM: Heartbeat: "idea.md creado, 6/6 secciones"
     TPM->>SM: "idea.md completo en RAG"
     deactivate TPM
     SM->>MIM: "Fase completada. Artefacto: idea.md"
-
-    Note over SM,TPM: Más adelante, un rol necesita contexto...
-
-    SM->>TPM: "Dame el contexto de spec.md para el Dev Lead"
-    activate TPM
-    TPM->>TPM: Extrae slice relevante para el contrato
-    TPM->>SM: Contexto acotado (no el archivo completo)
-    deactivate TPM
-    SM->>ROL: Contrato + contexto acotado del TPM
 ```
 
 | Aspecto | Detalle |
@@ -545,7 +697,8 @@ sequenceDiagram
 | **Crear** | Primera vez que una fase produce un artefacto | `idea.md` no existe → el TPM lo crea con estructura y estándares |
 | **Actualizar** | Una fase completa información faltante o corrige algo | QA identifica un AC ambiguo → el TPM actualiza `spec.md` |
 | **Marcar completo** | El SM valida que el gate de una fase pasó | Todas las preguntas de negocio respondidas → `idea.md` marcado como completo |
-| **Servir contexto** | Un rol necesita información de fases anteriores | Dev Lead necesita ACs → el TPM sirve el slice relevante de `spec.md` |
+| **Leer** | Cuando un agente necesita información | Sub-agente lee directamente vía `topic_key` (Patrón B). El TPM no interviene en lecturas. |
+| **Servir contexto** | Solo para Patrón A (8+ consumidores o búsqueda fuzzy) | Default: los agentes leen directo. El TPM solo sirve slices curados en escenarios excepcionales de alto fan-out. |
 | **Verificar consistencia** | Antes de generar handoff Y después de cualquier Update a un artefacto upstream | El TPM revisa que artefactos downstream no se contradigan con el upstream editado. Reporta stale artifacts al SM. |
 | **Eliminar** | Excepcional. Artefacto obsoleto o duplicado. | Rara vez — el TPM documenta la razón |
 
@@ -559,6 +712,7 @@ sequenceDiagram
 6. **El SM SÍ bloquea** — si el gate no pasa, no hay avance
 7. **El SM SÍ traza** — el TPM le provee el estado de artefactos
 8. **El SM persiste en todas las fases** — es el hilo conductor
+9. **El SM SÍ extiende el equipo** — si el proyecto necesita expertise fuera de los 5 roles default, el SM define roles ad-hoc con contrato completo (ver `role-profiles.md` seccion "Roles Ad-Hoc"). Justificación obligatoria. Registro en `idea.md`.
 
 #### Protocolo cuando el MIM no puede responder
 
@@ -643,12 +797,21 @@ El PDC NO es opcional. No se puede lanzar otro sub-agente sin haber
 completado los 4 pasos del PDC anterior.
 
 **Excepción: Fase 7 (Aceptar) — lanzamiento paralelo.** En Fase 7,
-los 3-5 roles de aceptación votan en paralelo (ver `role-profiles.md`).
-El SM lanza todas las delegaciones simultáneamente y aplica PDC a cada
-resultado conforme llega. Si un voto falta (timeout, crash, sin Status
-Report), se trata como BLOCK implícito y se re-delega solo ese rol.
-El merge de votos requiere mayoría simple; un BLOCK de cualquier rol
-detiene el avance hasta resolución.
+los roles de aceptación votan en paralelo (ver `role-profiles.md`). Esto
+incluye los roles default activos (3-5) más cualquier rol ad-hoc que el
+SM haya declarado como voting member en su contrato. Los roles ad-hoc sin
+declaración de voto participan como **advisory** — emiten opinión que el
+SM considera, pero no tienen poder de BLOCK. El SM lanza todas las
+delegaciones simultáneamente y aplica PDC a cada resultado conforme llega.
+Si un voto falta (timeout, crash, sin Status Report), se trata como BLOCK
+implícito y se re-delega solo ese rol. El merge de votos requiere mayoría
+simple; un BLOCK de cualquier voting member detiene el avance hasta
+resolución.
+
+**Desempate**: si el panel de votación es par y hay empate entre
+APPROVE y REQUEST CHANGES (sin BLOCK), el SM escala al MIM con las
+posiciones de ambos lados. El MIM decide. En ausencia de respuesta del
+MIM, se aplica REQUEST CHANGES como default conservador.
 
 #### 3. Circuit Breaker
 
@@ -658,6 +821,11 @@ Si 3 delegaciones consecutivas al mismo rol fallan (Status: FAILED):
 2. Escala al MIM: "El rol X falló 3 veces consecutivas. Contexto: [...]
    ¿Redefinir el contrato, cambiar de enfoque, o continuar manualmente?"
 3. NO hay reintento automático después del tercer fallo
+
+**Cap para PARTIAL sin progreso**: si 3 re-delegaciones consecutivas al
+mismo rol devuelven PARTIAL con el mismo progreso (X/Y sin cambio), el
+SM trata la tercera como FAILED y aplica el circuit breaker. Progreso
+estancado equivale a fallo.
 
 **Alcance del counter**: el contador de fallos consecutivos es de
 **sesión**. Si hay compaction, crash, o nueva sesión, el counter se
@@ -760,9 +928,11 @@ flowchart TD
 
 ## Matriz Completa: Roles × Etapas
 
-Esta matriz define TODAS las tareas que cada rol PUEDE tomar en cada etapa.
-Si una celda está vacía, ese rol NO participa en esa etapa. Si el SM no
-lo convoca, el rol no se activa.
+Esta matriz define las tareas que cada rol **default** PUEDE tomar en cada
+etapa. Si una celda está vacía, ese rol NO participa en esa etapa. Si el
+SM no lo convoca, el rol no se activa. Los roles ad-hoc no aparecen en
+esta matriz — el SM define sus fases y tareas en el contrato al crearlos
+(ver `role-profiles.md` seccion "Roles Ad-Hoc").
 
 ### Etapas del Ciclo de Planificación
 
@@ -794,15 +964,21 @@ flowchart LR
 
 ### QA (Quality Assurance)
 
+> **Lifecycle**: QA participa desde "three amigos" (Fase 2, co-define
+> ACs con PO) hasta "certificacion" (Fase 7, aprueba o bloquea el
+> entregable). El SM decide cuando convocarlo en fases intermedias
+> segun las necesidades del proyecto — no hay regla rigida de
+> inclusion/exclusion por fase.
+
 | Etapa | Tareas permitidas |
 |-------|-------------------|
 | 1. Definir Idea | — |
-| 2. Especificar | Validar que cada AC sea verificable con una prueba concreta. Identificar ACs ambiguos o no testeables. Proponer criterios de cobertura. |
-| 3. Diseñar | — |
-| 4. Desglosar Tareas | (Condicional) Validar que cada tarea tenga un criterio de verificación. Identificar tareas que necesitan pruebas específicas. |
+| 2. Especificar | **Three amigos**: validar que cada AC sea verificable con una prueba concreta. Identificar ACs ambiguos o no testeables. Proponer criterios de cobertura. |
+| 3. Diseñar | (SM decide) Revisar diseño por testeabilidad. Identificar decisiones que complican testing. |
+| 4. Desglosar Tareas | Validar que cada tarea tenga criterio de verificacion. Identificar tareas que necesitan pruebas especificas. Gate semantico obligatorio. |
 | 5. Generar Handoff | — |
 | 6. Verificar | Validar cobertura de pruebas. Verificar que los tests cubran los ACs. Identificar edge cases no cubiertos. |
-| 7. Aceptar | Dar veredicto sobre la calidad técnica del testing. Aprobar, solicitar cambios, o bloquear. |
+| 7. Aceptar | **Certificacion**: dar veredicto sobre la calidad tecnica del testing. Aprobar, solicitar cambios, o bloquear. |
 | 8. Retrospectiva | Evaluar eficacia de la estrategia de testing. Proponer mejoras al proceso de QA. |
 
 ### Dev Lead
@@ -900,6 +1076,9 @@ No todos los roles se activan siempre. El SM decide según el contexto:
 | Proyecto de un solo desarrollador (tier bajo) | SM + PO en Idea, SM + Dev Lead en Diseño, resto condensado |
 | Tech challenge con timebox | SM extrae reglas de proceso en Fase 1. Todas las fases se comprimen. |
 
-El SM evalúa el contexto del proyecto UNA VEZ (en la Fase 1) y decide qué
-roles son necesarios para el ciclo completo. Esta decisión queda documentada
-en `idea.md` como "roles activos para este proyecto".
+El SM evalúa el contexto del proyecto en Fase 1 y decide qué roles default
+activar y si se necesitan roles ad-hoc. Esta decisión se re-evalúa mid-cycle
+si cambia el scope (ver `role-profiles.md` seccion "Reglas de Activacion"). Todo
+queda documentado en `idea.md` como "roles activos para este proyecto" —
+tanto los roles default activados como cualquier rol ad-hoc con su
+justificación.

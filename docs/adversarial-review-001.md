@@ -73,8 +73,10 @@ puede avanzar sin consultar al MIM:
 El SM juzga: "¿la solución es determinista dado el contexto que tengo?"
 Si sí → avanza. Si no → formula preguntas precisas y espera.
 
-*Pendiente: documentar la mecánica de fast-forward y el gradiente de
-certeza en behavior file*
+*~~Pendiente: documentar la mecanica de fast-forward y el gradiente de
+certeza en behavior file~~ → RESUELTO en review-002 C2 (checklist de
+4 factores con scoring 0/1/2, thresholds numericos, 3 ejemplos de
+frontera)*
 
 ### ~~C4. El modelo de dos modos no cubre 8 etapas~~ → DIFERIDO
 
@@ -100,55 +102,108 @@ después, cuando el modo planificación esté sólido.
 El costo no se reduce por magia — se reduce porque el SM da tareas bien
 acotadas en vez de dumping de contexto.
 
-*Pendiente: documentar estrategia de delegación multi-modelo*
+*Pendiente: documentar estrategia de delegacion multi-modelo — ABIERTO.
+Tiers de activacion mencionados pero no concretados (que modelo para
+que tipo de tarea).*
 
 ---
 
-## HIGH — TBD (pendiente: definir capa de metodología primero)
+## HIGH — Reevaluados post review-002/003
 
-> **Nota**: todos los hallazgos HIGH se reevalúan después de definir la
-> capa de abstracción de metodología (Scrum/Kanban/Shape Up/PI Planning).
-> La metodología elegida afecta roles, gates y ceremonia — pero NO el
-> modelo de artefactos del RAG.
+### ~~H1. El TPM no existe en `operational-model.md`~~ → RESUELTO
 
-### H1. El TPM no existe en `operational-model.md` — TBD
+*Fuente: coherencia (#10) → resuelto en review-002 H9*
 
-*Fuente: coherencia (#10)*
+TPM agregado a `operational-model.md` como capa entre roles y
+adaptadores, con referencia cruzada a `artifact-model.md`.
 
-### H2. Gate validation es semánticamente vacía — TBD
+### ~~H2. Gate validation es semánticamente vacía~~ → RESUELTO
 
-*Fuente: viabilidad técnica (#4)*
+*Fuente: viabilidad técnica (#4) → resuelto en review-002 H4*
 
-### H3. La escalación ejecución → planificación no tiene protocolo — TBD
+Gates separados en completitud estructural (TPM, mecanico) +
+completitud semantica (rol validador, juicio). Ownership Matrix
+ahora asigna validadores independientes a los 6 artefactos.
+
+### H3. La escalación ejecución → planificación no tiene protocolo — PARCIAL
 
 *Fuente: viabilidad técnica (#5), producto (#8)*
 
-### H4. Tablas de roles inconsistentes entre archivos — TBD
+`escalate(gap)` existe en la API del SM con 3 targets (Idea, Spec,
+Design) segun tipo de gap. Protocolo completo depende del diseno
+del Execution Mode (pendiente).
 
-*Fuente: coherencia (#3, #4, #5, #6, #7, #12)*
+### ~~H4. Tablas de roles inconsistentes entre archivos~~ → RESUELTO
 
-### H5. Preguntas pre-definidas son rígidas — TBD
+*Fuente: coherencia (#3, #4, #5, #6, #7, #12) → resuelto en review-002 C6, H8*
+
+QA eliminado de Fase 3, DevSecOps/QA como condicionales en Fase 4,
+tablas reconciliadas entre los 4 documentos.
+
+### H5. Preguntas pre-definidas son rígidas — ABIERTO
 
 *Fuente: producto (#5)*
 
-### H6. Carga cognitiva insostenible para nuevos usuarios — TBD
+Las 6 preguntas de Fase 1 (linea 323 de behavior.md) siguen siendo
+una lista estatica. El fast-forward evalua certeza, pero las preguntas
+del PO al MIM no se adaptan al contexto del proyecto.
+
+### H6. Carga cognitiva insostenible para nuevos usuarios — ABIERTO
 
 *Fuente: producto (#4)*
 
-### H7. Terminología SDD residual en modelo operativo — TBD
+El framework tiene 4 documentos interrelacionados con ~4000 lineas.
+No hay onboarding guide ni quick-start. Concern de producto, no
+auto-fixable.
 
-*Fuente: coherencia (#1, #9)*
+### ~~H7. Terminología SDD residual en modelo operativo~~ → RESUELTO
+
+*Fuente: coherencia (#1, #9) → resuelto en review-002 C7*
+
+"Explorar/Proponer" reemplazado con nombres canonicos (Idea, Spec,
+Design, Tasks, Handoff). Nota: quedan 3 menciones legitimas de "SDD"
+en operational-model.md referentes al artifact store, no a fases.
 
 ---
 
-## MEDIUM — TBD
+## MEDIUM — Reevaluados post review-002/003
 
-### M1. RAG fuera del repo rompe colaboración de equipo — TBD
-### M2. La regla "SM nunca toca archivos" es unenforceable — TBD
-### M3. El handoff asume planificación perfecta — TBD
-### M4. No hay feedback del usuario sobre el proceso — TBD
-### M5. Path del RAG: `docs/` vs. `artifacts/` — TBD
-### M6. Interfaz del adaptador insuficiente — TBD
+### ~~M1. RAG fuera del repo rompe colaboración de equipo~~ → RESUELTO por diseno
+
+La capa de adaptadores de persistencia (artifact-model.md sec
+"Adaptadores de Persistencia") resuelve esto por arquitectura:
+interfaz universal de 8 operaciones con 6 implementaciones (Local,
+Engram, Jira/Asana/Linear, DBMS, Git Repo, MS Project/Basecamp).
+Colaboracion multi-dev = elegir adaptador con soporte de concurrencia
+(Git Repo, Jira, DBMS). El adaptador local es el MVP, no el techo.
+
+### ~~M2. La regla "SM nunca toca archivos" es unenforceable~~ → RESUELTO por diseno
+
+La delegacion via TPM (escritura) y sub-agentes (lectura) ES el
+mecanismo de enforcement. No hay enforcement a nivel de runtime, pero
+el protocolo de delegacion lo hace innecesario si se sigue.
+
+### ~~M3. El handoff asume planificación perfecta~~ → MITIGADO
+
+Smoke test (review-003 C5), verifyConsistency cascading (review-002
+H5), y mid-planning edit protocol (review-003 H4) cubren los paths
+de fallo. No es "planificacion perfecta" — es planificacion validada.
+
+### ~~M4. No hay feedback del usuario sobre el proceso~~ → RESUELTO
+
+Fase 8 (Retrospectiva) ahora tiene contrato completo en behavior.md:
+stop/start/continue doing + agreements. El MIM tiene un punto formal
+para dar feedback sobre el proceso. Los agreements son meta-config
+que afinan el comportamiento del SM en el siguiente ciclo.
+
+### ~~M5. Path del RAG: `docs/` vs. `artifacts/`~~ → RESUELTO
+
+*Resuelto en review-002 M7*. Canonicalizado a `docs/`.
+
+### ~~M6. Interfaz del adaptador insuficiente~~ → RESUELTO
+
+*Resuelto en review-002 M8*. operational-model.md referencia la
+interfaz completa de 7 ops definida en artifact-model.md.
 
 ---
 
@@ -156,15 +211,16 @@ acotadas en vez de dumping de contexto.
 
 Los hallazgos convergen en tres temas transversales:
 
-1. ~~**Diseño para estado que no existe**~~ → **RESUELTO**. State machine
-   derivada del RAG (C1), supervisión post-hoc en vez de heartbeat (C2).
-   El diseño ahora asume agentes efímeros y fire-and-forget.
+1. ~~**Diseno para estado que no existe**~~ → **RESUELTO**. State machine
+   derivada del RAG (C1), supervision post-hoc en vez de heartbeat (C2).
+   El diseno ahora asume agentes efimeros y fire-and-forget.
 
-2. **Ceremonia desproporcionada** → **MITIGADO parcialmente**. Fast-forward
-   contextual (C3) evita forzar fases cuando los artefactos ya existen.
-   Delegación a modelos económicos (C5) reduce costo. Pendiente: definir
-   concretamente los tiers de activación.
+2. **Ceremonia desproporcionada** → **MITIGADO**. Fast-forward contextual
+   (C3) con scoring numerico (review-002 C2), tiers de activacion
+   (condensed contracts), Pattern B reduce dispatches. Pendiente:
+   estrategia de delegacion multi-modelo (C5 pendiente).
 
-3. **Dos documentos divergentes** → **TBD**. Se reevalúa después de
-   definir la capa de metodología. La metodología determina roles y
-   ceremonia; el modelo de artefactos del RAG es independiente.
+3. ~~**Dos documentos divergentes**~~ → **RESUELTO**. operational-model.md
+   reconciliado en review-002 (C7, C9, H9, M7, M8) y review-003 (H10,
+   M1). Regla de propagacion adoptada (review-003 Patron 1) previene
+   recurrencia.

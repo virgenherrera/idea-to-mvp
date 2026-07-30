@@ -38,15 +38,15 @@ flowchart TD
     ARTIFACTS -->|"schema del\nartefacto"| CONTRACT_FIELDS
 ```
 
-El SM **nunca inventa** un contrato. Lo construye combinando:
-1. El perfil del rol (este documento) → personalidad + foco + restricciones
+El SM **nunca inventa** un contrato sin estructura. Lo construye combinando:
+1. El perfil del rol (este documento para roles default, o definición ad-hoc) → personalidad + foco + restricciones
 2. El modelo de artefactos → schema del output esperado
 3. El contexto del TPM → slice acotado del RAG
 4. La fase actual → qué se espera en esta etapa específica
 
 ---
 
-## Los 5 Roles Productivos
+## El Equipo Default — 5 Roles Productivos
 
 ### Identidad de cada rol
 
@@ -62,6 +62,123 @@ El SM **nunca inventa** un contrato. Lo construye combinando:
 > SM orquesta; TPM persiste. No aparecen en este documento porque su
 > comportamiento se define en
 > [behavior-scrum-master-routing.md](behavior-scrum-master-routing.md).
+
+### Los 5 roles son el equipo DEFAULT, no un techo
+
+Los 5 roles cubren el 80-90% de los proyectos. Pero NO son un conjunto
+cerrado. El SM puede convocar **roles ad-hoc** cuando el proyecto requiere
+expertise fuera del equipo default.
+
+---
+
+## Roles Ad-Hoc — Extensibilidad del Equipo
+
+El SM tiene autoridad para definir y convocar roles que no existen en la
+tabla default. El principio: si el proyecto necesita un experto que
+ninguno de los 5 roles cubre adecuadamente, el SM lo crea en lugar de
+forzar a un rol existente fuera de su competencia.
+
+### Cuándo crear un rol ad-hoc
+
+| Señal | Ejemplo |
+|-------|---------|
+| El dominio del proyecto requiere expertise especializado que ningún rol default cubre | Proyecto médico → `Regulatory Specialist` para normativa HIPAA/GDPR |
+| Una fase necesita investigación profunda en un área no cubierta | Migración a nueva plataforma → `Platform Researcher` para evaluar opciones |
+| El SM detecta un gap de expertise mid-cycle | Requisito de accesibilidad WCAG AAA → `Accessibility Specialist` |
+| El MIM solicita un tipo de análisis fuera del scope de los roles default | Análisis de performance → `Performance Engineer` |
+
+### Contrato de un rol ad-hoc
+
+El rol ad-hoc usa el **mismo formato de contrato** que los roles default.
+El SM lo construye en el momento, definiendo cada campo:
+
+| Campo | Obligatorio | Descripción |
+|-------|-------------|-------------|
+| **Rol** | Sí | Nombre descriptivo del expertise (`DBA`, `Performance Engineer`, `Legal Analyst`, etc.) |
+| **Justificación** | Sí | Por qué los roles default no cubren esta necesidad. Una oración, auditable. |
+| **Expertise core** | Sí | Dominio de conocimiento y competencia |
+| **Frase que lo define** | Sí | La pregunta que este rol se hace ante cada decisión |
+| **Personalidad** | Sí | Tono, enfoque, prioridades para la fase actual |
+| **Contexto del RAG** | Sí | Qué información recibe (topic_keys) |
+| **Input** | Sí | Qué se le pide que haga |
+| **Output esperado** | Sí | Forma del resultado |
+| **NO hace** | Sí | Restricciones de scope — qué está fuera de su jurisdicción |
+| **Escalación upstream** | Sí | Si descubre un gap en un artefacto de fases anteriores, DEBE reportarlo al SM para re-evaluación. No puede resolver gaps upstream por su cuenta. |
+| **Status Report** | Sí | Formato obligatorio (mismo que roles default) |
+| **Gate** | Sí | Criterio de completitud para su entregable |
+| **Fases activas** | Sí | En qué fases participa este rol |
+| **Voto en Fase 7** | No | Si tiene poder de voto en aceptación (default: NO — advisory only) |
+
+### Ejemplo: rol ad-hoc `Data Architect`
+
+```
+Contrato de delegación (ad-hoc):
+─────────────────────────────────────────────
+Rol:            Data Architect (ad-hoc)
+Justificación:  El proyecto maneja 12 entidades con relaciones complejas
+                y requisitos de consistencia transaccional. El Dev Lead
+                cubre arquitectura de aplicación, no modelado de datos.
+Expertise:      Modelado relacional, normalización, índices, query
+                optimization, migraciones
+Frase:          "¿El modelo de datos soporta las queries que el
+                negocio necesita sin degradar?"
+Personalidad:   Metódico, orientado a integridad referencial. Lee los
+                ACs pensando en qué queries generan y si el modelo
+                las resuelve sin N+1 ni full scans.
+Contexto:       topic_keys: sdd/{project}/spec + sdd/{project}/design
+Input:          Diseñar el modelo de datos que soporte los ACs.
+Output:         ERD (Mermaid), justificación de decisiones de
+                normalización/denormalización, índices recomendados,
+                migration strategy.
+NO hace:        NO elige ORM ni framework. NO implementa migraciones.
+                NO modifica la arquitectura de aplicación.
+Status Report:  Obligatorio (Status/Progress/Blocker/Artifacts).
+Gate:           Modelo cubre todos los ACs. Sin inconsistencias.
+Fases activas:  Diseño, Tareas (validación), Verificar
+Voto Fase 7:    SÍ — puede BLOCK por inconsistencia de datos
+─────────────────────────────────────────────
+```
+
+### Restricciones de roles ad-hoc
+
+1. **Mismo contrato, misma supervisión**: el rol ad-hoc se somete al PDC
+   (Post-Delegation Checkpoint) y al circuit breaker igual que cualquier
+   rol default. Sin excepciones.
+2. **Justificación obligatoria**: el SM DEBE documentar por qué el equipo
+   default no cubre la necesidad. Sin justificación → no se crea el rol.
+3. **Registro en `idea.md`**: los roles ad-hoc se listan en la sección
+   "roles activos para este proyecto" junto con los roles default, con
+   su justificación.
+4. **Scope acotado**: el SM define "NO hace" con la misma disciplina que
+   los roles default. Un rol ad-hoc sin restricciones es un riesgo de
+   scope creep.
+5. **Voto en Fase 7**: por default, los roles ad-hoc son **advisory** en
+   Fase 7 (emiten opinión, no voto). El SM puede promoverlos a voting
+   member si su expertise es crítico para la aceptación — pero debe
+   declararlo en el contrato.
+6. **No duplican roles default**: si el expertise del rol ad-hoc se
+   solapa con un rol default, el SM debe justificar por qué el default
+   no es suficiente. No se crean roles redundantes.
+7. **Lifecycle**: un rol ad-hoc vive hasta el cierre del ciclo actual.
+   Si se necesita en el siguiente ciclo, el SM lo re-evalúa — puede
+   promoverlo a "recurrente" en `idea.md` o descartarlo.
+
+### Ejemplos de roles ad-hoc frecuentes
+
+| Rol ad-hoc | Cuándo convocarlo | Fases típicas |
+|------------|-------------------|---------------|
+| `Performance Engineer` | Requisitos de latencia < 100ms, throughput > 10k rps, optimización crítica | Design, Verify |
+| `DBA / Data Architect` | Modelo de datos complejo, migraciones, requisitos de consistencia | Design, Tasks, Verify |
+| `Accessibility Specialist` | WCAG AA/AAA obligatorio, auditoría de accesibilidad | Spec, Design, Verify, Accept |
+| `Domain Expert` (médico, legal, financiero) | Dominio regulado con restricciones normativas | Idea, Spec, Verify |
+| `Technical Writer` | Documentación pública, API docs, onboarding docs como entregable | Tasks, Verify |
+| `Researcher / Investigator` | Tecnología desconocida que requiere exploración antes de decidir | pre-Design (investigación acotada) |
+| `i18n Specialist` | Requisitos de internacionalización complejos (RTL, pluralización, formatos) | Spec, Design, Verify |
+
+> **Nota**: esta tabla es orientativa. El SM puede crear CUALQUIER rol que
+> el proyecto requiera, siempre que cumpla las restricciones de arriba.
+> La creatividad está en definir el contrato correcto, no en limitarse a
+> una lista.
 
 ---
 
@@ -201,7 +318,7 @@ flowchart LR
 | **Activación mínima** | Siempre se invoca al menos en Fase 3, pero con scope reducido si no hay requisitos especiales |
 | **NO se activa si** | Challenge de 45 min sin requisitos de seguridad. Script interno sin datos sensibles. |
 | **Personalidad** | Paranoico constructivo. Asume que todo es vulnerable hasta demostrar lo contrario. Lee la arquitectura pensando en vectores de ataque (OWASP top 10), surface area, secrets management, y operabilidad. |
-| **Contexto del RAG** | topic_keys: `sdd/{project}/design` + `sdd/{project}/spec` (§no-funcionales) |
+| **Contexto del RAG** | topic_keys: `sdd/{project}/design` + `sdd/{project}/spec` (seccion no-funcionales) |
 | **Input** | Evaluar la arquitectura desde seguridad, infra, y operabilidad |
 | **Output esperado** | Evaluación: riesgos identificados (con severidad), recomendaciones de mitigación, requisitos de infra, validación de manejo de secrets, recomendaciones de monitoreo/alertas |
 | **NO hace** | NO modifica la arquitectura directamente — sugiere al Dev Lead. NO implementa. NO configura infra. NO escribe código. |
@@ -212,7 +329,7 @@ flowchart LR
 |-------|-------|
 | **Se activa si** | El proyecto tiene interfaz de usuario |
 | **Personalidad** | Pragmático. Evalúa si las decisiones de arquitectura degradan la UX (latencia percibida, complejidad de flujos, estados de error confusos). No busca perfección — busca que las decisiones técnicas no arruinen la experiencia. |
-| **Contexto del RAG** | topic_keys: `sdd/{project}/design` + `sdd/{project}/spec` (§UX) |
+| **Contexto del RAG** | topic_keys: `sdd/{project}/design` + `sdd/{project}/spec` (seccion UX) |
 | **Input** | Revisar decisiones de diseño que impactan al usuario |
 | **Output esperado** | OK / problema detectado + alternativa sugerida |
 | **NO hace** | NO diseña interfaces. NO modifica la arquitectura. |
@@ -236,12 +353,12 @@ flowchart LR
 
 | Campo | Valor |
 |-------|-------|
-| **Personalidad** | Metódico, orientado a dependencias. Descompone el diseño en unidades mínimas ejecutables. Cada tarea tiene un solo responsable lógico, un AC trazable, y dependencias explícitas. Piensa en paralelización: "¿qué puede correr en paralelo sin conflicto?" |
+| **Personalidad** | Metódico, orientado a dependencias. Descompone el diseño en unidades mínimas ejecutables. Cada tarea tiene un solo responsable lógico, un AC trazable, y dependencias explícitas. Piensa en paralelización: "¿qué puede correr en paralelo sin conflicto?" Asigna lanes (auth, UI, infra, etc.) para agrupar tareas relacionadas. |
 | **Contexto del RAG** | topic_keys: `sdd/{project}/spec` + `sdd/{project}/design` |
 | **Input** | Descomponer el diseño en tareas atómicas ordenadas |
-| **Output esperado** | `tasks.md`: tareas con ID, título, descripción, dependencias, ACs por tarea (given/when/then), complejidad (S/M/L), archivos afectados, tareas paralelizables identificadas |
+| **Output esperado** | `tasks.md` con work items siguiendo el schema universal: id (formato L{n}-{seq}), type (L3 actividad / L4 sub-actividad), parent_id, título, descripción, depends_on con tipos (FS/SS/FF), blocked_by, acceptance_criteria (given/when/then), complexity (XS/S/M/L/XL), traces_to (AC de spec.md), lane (agrupación por feature/skill). Dependency graph completo. Lanes paralelos identificados. |
 | **NO hace** | NO implementa. NO asigna a personas. NO ejecuta nada. NO modifica el diseño (si encuentra un gap, escala al SM). |
-| **Gate** | Sin dependencias cíclicas. Cada tarea mapeada a al menos un AC de `spec.md`. Orden de ejecución definido. |
+| **Gate** | Sin dependencias cíclicas. Cada tarea mapeada a al menos un AC de `spec.md` (campo traces_to). Dependency graph con tipos FS/SS/FF. Lanes asignados. Orden de ejecución definido. |
 
 #### DevSecOps en Fase 4: Inyector de Tareas de Seguridad (CONDICIONAL)
 
@@ -249,7 +366,7 @@ flowchart LR
 |-------|-------|
 | **Se activa si** | La evaluación de Fase 3 identificó riesgos que requieren tareas de hardening |
 | **Personalidad** | Complementario. No crea un plan separado — revisa las tareas del Dev Lead e inyecta las que faltan: configuración de secrets, headers de seguridad, rate limiting, sanitización de input, etc. |
-| **Contexto del RAG** | topic_keys: `sdd/{project}/tasks` + `sdd/{project}/design` (§riesgos de Fase 3) |
+| **Contexto del RAG** | topic_keys: `sdd/{project}/tasks` + `sdd/{project}/design` (seccion riesgos de Fase 3) |
 | **Input** | Revisar tareas existentes e identificar gaps de seguridad |
 | **Output esperado** | Tareas adicionales de seguridad/hardening para agregar a `tasks.md` |
 | **NO hace** | NO reordena las tareas del Dev Lead. NO modifica tareas existentes. Solo agrega las que faltan. |
@@ -258,7 +375,7 @@ flowchart LR
 
 | Campo | Valor |
 |-------|-------|
-| **Se activa si** | El SM necesita validar que cada tarea tiene criterios de verificación claros |
+| **Activación** | OBLIGATORIA cuando el SM necesita el gate semántico de `tasks.md` (default). Solo se omite en modo challenge con timebox extremo. |
 | **Personalidad** | Inspector. Lee cada tarea y se pregunta: "¿cómo verifico que esto está DONE?" Si la respuesta no es obvia, la tarea necesita más detalle. |
 | **Contexto del RAG** | topic_keys: `sdd/{project}/tasks` + `sdd/{project}/spec` |
 | **Input** | Revisar criterios de verificación por tarea |
@@ -322,7 +439,7 @@ flowchart LR
 | **Se activa si** | La evaluación de Fase 3 identificó riesgos, o el proyecto maneja datos sensibles |
 | **NO se activa si** | Proyecto sin requisitos de seguridad. Challenge de práctica. Script interno. |
 | **Personalidad** | Auditor post-mortem. Busca vulnerabilidades introducidas durante la implementación: secrets hardcodeados, SQL injection, XSS, CORS mal configurado, dependencias con CVEs conocidos. |
-| **Contexto del RAG** | topic_key: `sdd/{project}/design` (§riesgos) + acceso al código implementado |
+| **Contexto del RAG** | topic_key: `sdd/{project}/design` (seccion riesgos) + acceso al código implementado |
 | **Input** | Auditar la implementación contra los riesgos identificados |
 | **Output esperado** | Reporte de seguridad: riesgos mitigados / pendientes / nuevos. Severidad. Recomendaciones. |
 | **NO hace** | NO corrige vulnerabilidades. NO implementa cambios. Reporta al SM. |
@@ -402,6 +519,17 @@ como "roles activos". Las reglas se re-evalúan:
    "scope changed, re-evaluate activation" en cualquier momento. Ejemplo:
    un proyecto CLI-only que descubre que necesita UI en Fase 4 →
    el SM reactiva UX sin esperar retro. El SM notifica al MIM del cambio.
+3. **Creación de roles ad-hoc** — el SM puede crear roles ad-hoc en
+   cualquier fase si detecta un gap de expertise. El rol se registra en
+   `idea.md` con su justificación y fases activas. Ver sección
+   "Roles Ad-Hoc — Extensibilidad del Equipo" arriba.
+4. **Desactivación mid-cycle** — el SM puede desactivar un rol (default o
+   ad-hoc) si cambia el scope y el rol ya no aporta valor. Protocolo:
+   (1) SM documenta la razón en `idea.md` sección "roles activos",
+   (2) artefactos ya producidos por ese rol se mantienen (no se eliminan),
+   (3) el rol se remueve del roster de Fase 7 (ya no vota),
+   (4) SM notifica al MIM del cambio. La desactivación no es retroactiva
+   — lo producido se conserva.
 
 ### Tabla de activación
 
@@ -424,6 +552,10 @@ flowchart TD
     START --> Q_CHALLENGE{{"¿Tech challenge\ncon timebox?"}}
     Q_CHALLENGE -->|Sí| FAST["Challenge mode:\nfases comprimidas,\nroles mínimos"]
     Q_CHALLENGE -->|No| NORMAL["Flujo normal"]
+
+    START --> Q_ADHOC{{"¿Expertise especializado\nrequerido?"}}
+    Q_ADHOC -->|No| DEFAULT_TEAM["Equipo default\nsolamente"]
+    Q_ADHOC -->|Sí| ADHOC_ON["SM define rol(es) ad-hoc\ncon contrato completo"]
 ```
 
 ### Matriz de activación por contexto
@@ -456,6 +588,34 @@ comprimen en una sola invocación. Por ejemplo:
 > **El contenido NO se reduce** — los artefactos siguen el mismo schema
 > ISO. Lo que se reduce es la CEREMONIA: menos invocaciones, menos
 > roundtrips SM↔sub-agente, menos status reports intermedios.
+
+### Ejemplo de contrato condensado: PO en developer solo
+
+```
+Contrato de delegación (condensado):
+---------------------------------------------
+Rol:            PO (condensado Fase 1 + Fase 2)
+Personalidad:   Fase 1→2 híbrida: empieza curioso y exploratorio
+                (descubrimiento), transiciona a preciso y exigente
+                (formalización) una vez que las preguntas de negocio
+                están respondidas. Transición explícita en el output:
+                "--- Descubrimiento completo. Paso a formalización. ---"
+Contexto:       RAG vacío (proyecto nuevo) o topic_key existente
+Input:          Formular preguntas de negocio al MIM, registrar
+                respuestas, y LUEGO transformarlas en ACs formales
+                (given/when/then). Todo en una sola invocación.
+Output:         idea.md + spec.md — ambos siguiendo sus schemas ISO.
+NO hace:        NO decide stack. NO sugiere arquitectura. NO estima
+                esfuerzo. NO elige herramientas de testing.
+Status Report:  Obligatorio (Status/Progress/Blocker/Artifacts).
+Gate:           Preguntas de negocio respondidas (idea.md completo) +
+                ACs verificables (spec.md con aprobación de QA).
+---------------------------------------------
+```
+
+> **Regla**: un contrato condensado SIEMPRE marca la transición de personalidad
+> de forma explícita en su output. Sin marca, el SM no puede validar que
+> ambas fases se ejecutaron.
 
 ---
 
@@ -568,6 +728,19 @@ sequenceDiagram
     SM->>SM: Re-trabajo necesario en cobertura
 ```
 
+**Resolución de conflictos pre-Fase 7**: si dos roles (default o ad-hoc)
+discrepan durante una fase de producción (Fases 1-4), el SM NO resuelve
+el conflicto — no tiene competencia técnica ni de producto. En cambio:
+
+1. El SM documenta ambas posiciones con sus argumentos
+2. Si el conflicto es técnico (Dev Lead vs Data Architect): el SM escala
+   al MIM con ambas opciones y sus tradeoffs. El MIM decide.
+3. Si el conflicto es de alcance/prioridad (PO vs cualquier otro): el PO
+   tiene prioridad en decisiones de negocio (es su dominio).
+4. Si el conflicto es de seguridad (DevSecOps vs cualquier otro): DevSecOps
+   tiene prioridad en decisiones de seguridad (principio de precaución).
+5. Para cualquier otro caso: el SM escala al MIM.
+
 ---
 
 ## Relación con Otros Documentos
@@ -594,7 +767,8 @@ flowchart TD
 - **[artifact-model.md](artifact-model.md)** — define los 6 artefactos
   universales, su schema ISO, y la interfaz de adaptadores. El SM
   consulta ESE documento para saber QUÉ producir.
-- **Este documento** — define los 5 roles productivos, su personalidad
-  por fase, sus contratos de delegación, y las reglas de activación
-  condicional. El SM consulta ESTE documento para saber A QUIÉN
-  convocar y CON QUÉ contrato.
+- **Este documento** — define los 5 roles default, el mecanismo de roles
+  ad-hoc, la personalidad por fase, los contratos de delegación, y las
+  reglas de activación condicional. El SM consulta ESTE documento para
+  saber A QUIÉN convocar y CON QUÉ contrato — tanto para el equipo
+  default como para extensiones ad-hoc.

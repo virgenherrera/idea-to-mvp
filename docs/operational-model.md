@@ -20,7 +20,7 @@ El framework actualmente mezcla tres concerns en un solo repositorio:
    Son de RUNTIME y no deben estar acoplados a las reglas de gobernanza.
 
 Resultado: los repos adoptantes acumulan archivos `.tmp-*`, directorios
-`openspec/`, documentos de feedback y estado SDD que no tienen nada que ver
+`openspec/`, documentos de feedback y estado del ciclo de planificacion que no tienen nada que ver
 con su codebase.
 
 Cada repo tiene derecho a su propio AGENTS.md. El tooling que ayuda a CREAR
@@ -57,7 +57,7 @@ la procesa:
 | Nivel de entrada | Ejemplo | Rol asignado | Acción |
 |-----------------|---------|-------------|--------|
 | Idea vaga | "Haz el Uber de las lanchas" | PO | Formula preguntas de negocio al MIM para acotar alcance y valor |
-| Archivos de un challenge | README.md + seeds + schema de un tech challenge | PO + SM | PO extrae requisitos y constraints. SM extrae reglas del proceso (timebox, evaluación, restricciones) |
+| Archivos de un challenge | README.md + seeds + schema de un tech challenge | PO + SM | PO extrae requisitos y constraints. SM delega a sub-agente SM-Process la extraccion de reglas del proceso (timebox, evaluacion, restricciones) |
 | Ticket externo | Link a Jira, Linear, Confluence, GitHub Issue | PO | Lee, estructura, identifica ambigüedades (vía adaptador TBD) |
 | Especificación parcial | "API REST con auth JWT y CRUD de productos" | PO | Identifica gaps en los requisitos y pregunta solo lo faltante |
 
@@ -233,7 +233,7 @@ encuentra un gap, el sistema regresa al ciclo de preguntas para esa fase.
 
 **Restricción clave**: el modo ejecución SOLO escribe en el working tree del
 repo destino. NO crea artefactos de planificación, documentos de feedback ni
-archivos de estado SDD en el repo.
+archivos de estado del proceso en el repo.
 
 ---
 
@@ -286,7 +286,7 @@ y es LEÍDO por el modo ejecución.
 | AGENTS.md | Repo destino (raíz) | La gobernanza es por repo. Cada proyecto posee sus reglas. |
 | Artefactos de planificación (propuestas, specs, diseños, tareas) | Artifact store (depende del adaptador) | Informan el trabajo, no son el trabajo. |
 | Documentos de handoff | Artifact store | Contrato entre planificación y ejecución. |
-| Estado SDD (tracking de fases, DAG) | Artifact store | Estado operacional, no estado del proyecto. |
+| Estado del ciclo (tracking de fases, DAG) | Artifact store | Estado operacional, no estado del proyecto. |
 | Feedback de adoptantes | Artifact store (etiquetado al framework fuente) | Input para evolución del framework, no contenido del repo. |
 | Código, pruebas, configs | Repo destino | El entregable real. |
 | Archivos `.tmp-*` | EN NINGÚN LUGAR del repo destino | Eliminados. Los artefactos de planificación van al store. |
@@ -338,8 +338,13 @@ El scrum team es una herramienta de PLANIFICACIÓN, no de ejecución.
 | UX | Spec, Diseño, Verificar, Aceptar, Retro | Valida decisiones que afectan al usuario | Implementar UI |
 | QA | Spec, Tareas(cond), Verificar, Aceptar, Retro | Valida testeabilidad, define estrategia de pruebas, verifica cobertura | Escribir código de producción |
 | DevSecOps | Diseño, Tareas(cond), Verificar, Aceptar, Retro | Valida superficie de seguridad, decisiones de infra, postura de seguridad | Desplegar |
+| *Ad-hoc* | Cualquier fase, segun contrato | Expertise especializado fuera del equipo default (DBA, Performance Engineer, Domain Expert, etc.). El SM los define y convoca con contrato completo. | Depende del contrato |
 
-**Durante ejecución**, el scrum team está en silencio. El orquestador y los
+> **Nota**: los 6 roles de arriba son el equipo **default**. El SM puede
+> extender el equipo con roles ad-hoc cuando el proyecto requiere expertise
+> que ningun rol default cubre. Ver `role-profiles.md` seccion "Roles Ad-Hoc".
+
+**Durante ejecucion**, el scrum team esta en silencio. El orquestador y los
 sub-agentes hacen el trabajo. Si la ejecución revela un gap de planificación,
 el orquestador puede escalar DE VUELTA al modo planificación.
 

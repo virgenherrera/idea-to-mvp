@@ -37,13 +37,13 @@ flowchart TD
     subgraph STANDARDS["Estándares ISO/IEC/IEEE"]
         ISO15288["15288\nCiclo de vida\n(la columna vertebral)"]
         ISO15289["15289\nCatálogo de artefactos\n(qué documentos por proceso)"]
-        ISO29148["29148\nRequisitos\n(StRS, SyRS, SRS, BRS §9.3)"]
+        ISO29148["29148\nRequisitos\n(StRS, SyRS, SRS, BRS sec 9.3)"]
         ISO42010["42010\nDescripción de arquitectura"]
         IEEE1016["IEEE 1016\nDiseño de software"]
         ISO29119["29119-3\nDocumentación de pruebas"]
         ISO20000["20000\nGestión de servicios IT"]
         ITIL["ITIL 4\nTransición de servicios"]
-        ISO21502["21502 §7.6\nSchedule Management"]
+        ISO21502["21502 sec 7.6\nSchedule Management"]
         PMBOK_DA["PMBOK\nDefine Activities"]
     end
 
@@ -58,8 +58,8 @@ flowchart TD
 
     ISO15288 -->|"define la secuencia\nde etapas"| MODEL
     ISO15289 -->|"define contenido\nmínimo por artefacto"| MODEL
-    ISO29148 -->|"respalda §9.3 BRS"| IDEA
-    ISO29148 -->|"respalda §StRS/SRS"| SPEC
+    ISO29148 -->|"respalda sec 9.3 BRS"| IDEA
+    ISO29148 -->|"respalda StRS/SRS"| SPEC
     ISO42010 -->|"respalda"| DESIGN
     IEEE1016 -->|"respalda"| DESIGN
     ISO21502 -->|"respalda mecanismo\nde descomposición"| TASKS
@@ -70,9 +70,9 @@ flowchart TD
 ```
 
 > **Los 6 artefactos tienen respaldo de estándares internacionales.**
-> `idea.md` se respalda con ISO/IEC/IEEE 29148 §9.3 (BRS). `tasks.md` no
+> `idea.md` se respalda con ISO/IEC/IEEE 29148 sec 9.3 (BRS). `tasks.md` no
 > tiene un estándar que defina el artefacto como tal, pero el mecanismo de
-> descomposición que implementa está respaldado por ISO 21502 §7.6 y PMBOK
+> descomposición que implementa está respaldado por ISO 21502 sec 7.6 y PMBOK
 > "Define Activities." Los demás siguen directamente sus estándares ISO.
 
 ---
@@ -137,25 +137,25 @@ quién lo produce, quién lo consume, y reglas de ownership.
 | Atributo | Valor |
 |----------|-------|
 | **Proceso 15288** | Business/Mission Analysis |
-| **Respaldo ISO** | **ISO/IEC/IEEE 29148 §9.3 (BRS)** — tailoring ligero permitido por §9.3.1 |
+| **Respaldo ISO** | **ISO/IEC/IEEE 29148 sec 9.3 (BRS)** — tailoring ligero permitido por sec 9.3.1 |
 | **Respaldo adicional** | IEEE 1362 (ConOps) — absorbido como Annex A/B de 29148 |
 | **Propósito** | Capturar el problema, el valor esperado, las restricciones conocidas, y las preguntas pendientes |
 | **Owner** | Produce: PO (formula y estructura). Co-produce: SM (formula preguntas, no escribe contenido) |
 | **Consumido por** | Fase de spec |
 
-**Mapeo a 29148 §9.3 (BRS)**:
+**Mapeo a 29148 sec 9.3 (BRS)**:
 
 | Sección 29148 BRS | Nuestro equivalente en `idea.md` |
 |-------------------|--------------------------------|
-| §9.3.2 Business purpose | Problema |
-| §9.3.3 Business scope | Valor esperado (alcance) |
-| §9.3.5 Major stakeholders | Usuario final, stakeholders |
-| §9.3.7 Mission, goals, objectives | Valor esperado (objetivos) |
-| §9.3.12 Business operational constraints | Restricciones conocidas |
-| §9.3.16 High-level operational concept | Flujo core del producto |
-| §9.3.19 Project constraints | Timebox, presupuesto, stack obligatorio |
+| sec 9.3.2 Business purpose | Problema |
+| sec 9.3.3 Business scope | Valor esperado (alcance) |
+| sec 9.3.5 Major stakeholders | Usuario final, stakeholders |
+| sec 9.3.7 Mission, goals, objectives | Valor esperado (objetivos) |
+| sec 9.3.12 Business operational constraints | Restricciones conocidas |
+| sec 9.3.16 High-level operational concept | Flujo core del producto |
+| sec 9.3.19 Project constraints | Timebox, presupuesto, stack obligatorio |
 
-**Contenido mínimo** (tailoring de 29148 §9.3 — permitido por §9.3.1:
+**Contenido mínimo** (tailoring de 29148 sec 9.3 — permitido por sec 9.3.1:
 *"Organization of the content such as the order and section structure
 may be selected in accordance with the project's information management
 policies"*):
@@ -163,16 +163,16 @@ policies"*):
 ```
 # Idea: {nombre del proyecto}
 
-## Problema                        ← 29148 §9.3.2 Business purpose
+## Problema                        ← 29148 sec 9.3.2 Business purpose
 Qué se necesita resolver y por qué.
 
-## Valor esperado                  ← 29148 §9.3.7 Mission/goals/objectives
+## Valor esperado                  ← 29148 sec 9.3.7 Mission/goals/objectives
 Para quién y qué beneficio.
 
-## Restricciones conocidas         ← 29148 §9.3.12 + §9.3.19
+## Restricciones conocidas         ← 29148 sec 9.3.12 + sec 9.3.19
 Timebox, presupuesto, stack obligatorio, plataforma, etc.
 
-## Concepto operativo de alto nivel ← 29148 §9.3.16 High-level operational concept
+## Concepto operativo de alto nivel ← 29148 sec 9.3.16 High-level operational concept
 Flujo core del producto, escenarios principales.
 
 ## Decisiones tomadas
@@ -190,7 +190,7 @@ Lo que falta resolver antes de especificar.
 
 > **Corrección**: la versión anterior de este documento declaraba
 > `idea.md` como "territorio libre sin estándar." Esto era **incorrecto**.
-> 29148 §9.3 (BRS) cubre directamente este artefacto. IEEE 1362 (ConOps),
+> 29148 sec 9.3 (BRS) cubre directamente este artefacto. IEEE 1362 (ConOps),
 > que se creía muerto, fue absorbido como Annexes A/B de 29148 y sigue
 > activo. Nuestro formato es un tailoring ligero — más conciso que el
 > BRS completo, pero alineado a sus secciones normativas.
@@ -300,13 +300,13 @@ Cada decisión traza a spec.md (qué requisito resuelve).
 | Atributo | Valor |
 |----------|-------|
 | **Proceso 15288** | Implementation (preparación) |
-| **Respaldo ISO** | **ISO 21502 §7.6** (Schedule Management — descomposición en actividades) |
+| **Respaldo ISO** | **ISO 21502 sec 7.6** (Schedule Management — descomposición en actividades) |
 | **Respaldo adicional** | PMBOK "Define Activities" (Activity List + Activity Attributes). ISO 21511 (WBS) es un nivel ARRIBA — cubre deliverables, no tasks. |
 | **Propósito** | Desglosar el diseño en unidades de trabajo ejecutables, ordenadas por dependencias |
-| **Owner** | Dev Lead (desglose técnico) → SM (secuencia y dependencias) |
+| **Owner** | Dev Lead (desglose técnico, secuencia y dependencias) |
 | **Consumido por** | Fase de handoff, modo ejecución |
 
-**Mapeo a ISO 21502 §7.6 y PMBOK Define Activities**:
+**Mapeo a ISO 21502 sec 7.6 y PMBOK Define Activities**:
 
 | Concepto del estándar | Nuestro equivalente en `tasks.md` |
 |----------------------|----------------------------------|
@@ -322,12 +322,12 @@ Cada decisión traza a spec.md (qué requisito resuelve).
 >
 > ```
 > WBS (deliverable) → Work Package → Activity (nuestra tarea)
-> ISO 21511            PMI WBS        ISO 21502 §7.6 / PMBOK Define Activities
+> ISO 21511            PMI WBS        ISO 21502 sec 7.6 / PMBOK Define Activities
 > ```
 >
 > Nuestro `tasks.md` vive en el nivel de Activity, no de WBS.
 
-**Contenido mínimo** (alineado a ISO 21502 §7.6 + PMBOK Activity List):
+**Contenido mínimo** (alineado a ISO 21502 sec 7.6 + PMBOK Activity List):
 
 ```
 # Tasks: {nombre del proyecto}
@@ -355,7 +355,7 @@ Grafo de dependencias resuelto.
 > **Corrección**: la versión anterior declaraba `tasks.md` como
 > "artefacto nativo ágil sin estándar." Esto era impreciso. El artefacto
 > como documento standalone no tiene estándar propio, pero el MECANISMO
-> de descomposición que implementa SÍ está respaldado por ISO 21502 §7.6
+> de descomposición que implementa SÍ está respaldado por ISO 21502 sec 7.6
 > (Schedule Management) y PMBOK "Define Activities." La estructura de
 > contenido (actividades con dependencias, atributos, estimaciones) está
 > formalmente definida en ambos estándares.
@@ -494,7 +494,7 @@ La jerarquía tiene 5 niveles. La metodología determina los **nombres** y las
 | L4 | **Sub-activity** | Subtask | — | — | Subtask |
 
 > **Respaldo**: la jerarquía L0→L4 refleja la descomposición progresiva
-> de ISO 21502 §7.6 (Schedule Management) y el WBS Dictionary de
+> de ISO 21502 sec 7.6 (Schedule Management) y el WBS Dictionary de
 > PMBOK/ISO 21511. L0-L1 son deliverable-oriented (WBS), L2 es el puente
 > requisito→trabajo, L3-L4 son activity-oriented (Define Activities).
 
@@ -520,6 +520,7 @@ work_item:
   description: string
   parent_id: string?  # Referencia al item padre (jerarquía). null para L0
   artifact_source: string  # Artefacto que lo produjo (idea.md, spec.md, etc.)
+  lane: string          # Agrupación por feature/skill (auth, UI, infra). Asignado por Dev Lead.
 
   # — Dependencias y bloqueos —
   depends_on:         # Otros work items que deben completarse ANTES
@@ -553,7 +554,7 @@ work_item:
 
 ```mermaid
 flowchart LR
-    subgraph DEPS["Tipos de dependencia (ISO 21502 §7.6)"]
+    subgraph DEPS["Tipos de dependencia (ISO 21502 sec 7.6)"]
         FS["<b>Finish-to-Start (FS)</b>\nA termina → B empieza\n<i>El más común (~80%)</i>"]
         SS["<b>Start-to-Start (SS)</b>\nA empieza → B puede empezar\n<i>Paralelismo parcial</i>"]
         FF["<b>Finish-to-Finish (FF)</b>\nA termina → B puede terminar\n<i>Validación cruzada</i>"]
@@ -577,8 +578,9 @@ flowchart LR
 
 ### Detección de paralelismo — la regla
 
-El SM (o el orquestador en modo ejecución) usa el grafo de dependencias
-para identificar **lanes paralelos**:
+El Dev Lead produce el grafo de dependencias como parte de `tasks.md`
+(Fase 4). El orquestador en modo ejecución usa ese grafo para determinar
+**lanes paralelos**:
 
 ```mermaid
 flowchart TD
@@ -609,12 +611,13 @@ flowchart TD
 1. Construir el DAG (Directed Acyclic Graph) de todos los work items con
    estado `ready` o `todo`.
 2. Identificar items sin dependencias pendientes → **ejecutables ahora**.
-3. Agrupar por recurso/skill requerido → **lanes**.
+3. Agrupar por campo `lane` del work item (asignado por Dev Lead en
+   Fase 4) → **lanes**.
 4. Calcular **ruta crítica** (la cadena más larga de dependencias FS).
 5. Items fuera de la ruta crítica tienen **holgura** — pueden retrasarse sin
    afectar la fecha de entrega.
 
-> **Respaldo**: Critical Path Method (CPM) — ISO 21502 §7.6, PMBOK
+> **Respaldo**: Critical Path Method (CPM) — ISO 21502 sec 7.6, PMBOK
 > "Develop Schedule." El DAG + CPM es estándar en gestión de proyectos
 > desde 1957 (DuPont/PERT). Lo que el framework aporta es hacerlo
 > EJECUTABLE por agentes IA.
@@ -762,13 +765,13 @@ el primer momento, sin tener que analizar dependencias en runtime.
 
 ```mermaid
 flowchart TD
-    IDEA["<b>idea.md</b>\n<i>ISO 29148 §9.3 BRS</i>\n\nProblema, valor,\nrestricciones,\npreguntas pendientes"]
+    IDEA["<b>idea.md</b>\n<i>ISO 29148 sec 9.3 BRS</i>\n\nProblema, valor,\nrestricciones,\npreguntas pendientes"]
 
     SPEC["<b>spec.md</b>\n<i>ISO 29148 StRS/SRS</i>\n\nACs, contratos,\nconstraints,\npriorización"]
 
     DESIGN["<b>design.md</b>\n<i>ISO 42010 + IEEE 1016</i>\n\nArquitectura, ADRs,\npatrones, seguridad,\ninfra"]
 
-    TASKS["<b>tasks.md</b>\n<i>ISO 21502 §7.6</i>\n\nDesglose, deps,\nACs por tarea,\norden de ejecución"]
+    TASKS["<b>tasks.md</b>\n<i>ISO 21502 sec 7.6</i>\n\nDesglose, deps,\nACs por tarea,\norden de ejecución"]
 
     HANDOFF["<b>handoff.md</b>\n<i>ISO 15289 transition</i>\n\nContrato autocontenido\npara ejecución"]
 
@@ -837,18 +840,24 @@ flowchart TD
 
 | Artefacto | Produce | Co-produce | Valida (gate) | Consume |
 |-----------|---------|------------|---------------|---------|
-| `idea.md` | PO | SM (preguntas) | SM (completitud vía TPM) | Fase spec |
+| `idea.md` | PO | SM (preguntas) | SM (estructural vía TPM) + QA (verificabilidad de restricciones) | Fase spec |
 | `spec.md` | PO | — | QA (testeabilidad), UX (experiencia), SM (gate) | Fase design |
-| `design.md` | Dev Lead | DevSecOps (seguridad, infra) | UX (experiencia), SM (gate) | Fase tasks |
-| `tasks.md` | Dev Lead | SM (secuencia, deps) | SM (gate) | Fase handoff |
+| `design.md` | Dev Lead | DevSecOps (seguridad, infra) | SM (estructural vía TPM) + DevSecOps (seguridad) + UX (experiencia, condicional) | Fase tasks |
+| `tasks.md` | Dev Lead | QA (verificabilidad por tarea) | SM (estructural vía TPM) + QA (verificabilidad por tarea) | Fase handoff |
 | `handoff.md` | TPM | — | SM (autocontención) | Modo ejecución |
 | `ops-runbook.md` | DevSecOps | Dev Lead (troubleshooting) | SM (gate) | NOC/Ops |
 
 ### Reglas de Ownership
 
 1. **Quien produce NUNCA valida su propio artefacto** — el PO escribe
-   spec, QA valida. Dev Lead escribe design, UX valida. Separación de
-   concerns entre producción y validación.
+   spec, QA valida. Dev Lead escribe design, UX y DevSecOps validan.
+   Separación de concerns entre producción y validación. Casos con
+   validador semántico independiente añadido: `idea.md` (SM estructural
+   vía TPM + QA verifica verificabilidad de restricciones), `design.md`
+   (SM estructural vía TPM + DevSecOps valida seguridad + UX valida
+   experiencia de forma condicional), `tasks.md` (SM estructural vía
+   TPM + QA valida verificabilidad por tarea, en vez de que Dev Lead
+   se autovalide).
 
 2. **El SM nunca produce contenido** — orquesta, valida gates (vía TPM),
    pero no escribe dentro de ningún artefacto. Regla cardinal sin
@@ -865,9 +874,14 @@ flowchart TD
    síntesis de artefactos previos, no contenido nuevo. El TPM aplica
    su criterio editorial para compilar un documento autocontenido.
 
-5. **ops-runbook es POST-ejecución** — se produce después de que el código
-   existe, no durante la planificación. DevSecOps lo escribe porque tiene
-   visibilidad de infraestructura, monitoreo y seguridad.
+5. **ops-runbook se construye incrementalmente** — no es un artefacto de
+   una sola fase. Se va construyendo como parte de los artifacts que
+   apliquen al proyecto que se implementa: si es CLI → documentacion de
+   flags y help, si es API → API docs, si es gRPC → protos, si es
+   infraestructura → runbook de operaciones. DevSecOps contribuye la
+   parte de seguridad y monitoreo; Dev Lead la de troubleshooting y
+   arquitectura operativa. El formato final depende de lo que el
+   proyecto SEA, no de una plantilla rigida.
 
 ---
 
@@ -913,6 +927,19 @@ flowchart TD
     SM_EXT["SM"] -->|"instrucciones"| CRUD
     SM_EXT -->|"consulta estado"| SERVE
 ```
+
+### Estándares de escritura del TPM
+
+**Estándares de escritura del TPM** (checklist concreto):
+
+1. Cada requisito o tarea es una oración única y completa (no listas
+   anidadas de fragmentos).
+2. Sin TODOs, TBDs, o placeholders sin resolver en artefactos marcados
+   como completos.
+3. Referencias cruzadas entre artefactos usan IDs trazables (no "ver
+   arriba" o "como se dijo").
+4. Formato Markdown consistente con el schema del artefacto definido
+   en este documento.
 
 ### Operaciones del TPM sobre el modelo
 
@@ -1003,7 +1030,7 @@ flowchart TD
 | Situación | Pattern | Por qué |
 |-----------|---------|---------|
 | **Fase normal**: Dev Lead necesita `spec.md` para diseñar | **B** (topic_key) | Target determinista. El agente fetcha solo lo que necesita. 6x más barato. |
-| **Verificación**: QA necesita `spec.md` + resultados de ejecución | **B** (topic_keys) | Targets conocidos. El agente puede hacer queries incrementales (primero §3, luego §3.2 si necesita detalle). |
+| **Verificación**: QA necesita `spec.md` + resultados de ejecución | **B** (topic_keys) | Targets conocidos. El agente puede hacer queries incrementales (primero seccion 3, luego seccion 3.2 si necesita detalle). |
 | **Búsqueda exploratoria**: SM busca "qué decisiones se tomaron sobre auth" | **A** (SM inyecta) | Búsqueda fuzzy. Los resultados pueden ser ruidosos. Mejor que el SM cure una vez a que 5 agentes hagan la misma búsqueda vaga. |
 | **Fan-out alto**: 8+ agentes o búsqueda fuzzy compartida | **A** (SM inyecta) | Justificación principal: **calidad, no costo**. Cuando N agentes hacen la misma búsqueda fuzzy independientemente, obtienen resultados ruidosos y divergentes. El SM cura una vez y distribuye. Nota: Fase 7 tiene 5 roles → Pattern B aplica (bajo el umbral). Pattern A se reserva para escenarios reales de alto fan-out (multi-team reviews, custom roles). |
 | **Mid-task discovery**: sub-agente descubre que necesita más contexto | **B** (agente fetcha) | El SM no puede anticipar qué necesitará el agente a mitad de tarea. El agente hace queries precisas conforme razona. |
@@ -1052,7 +1079,7 @@ sequenceDiagram
     AGENT->>RAG: mem_search("sdd/project/idea")
     RAG->>AGENT: observation_id: 1230
     AGENT->>RAG: mem_get_observation(1230)
-    RAG->>AGENT: idea.md §restricciones (500 tokens)
+    RAG->>AGENT: idea.md seccion restricciones (500 tokens)
 
     AGENT->>SM: design.md + Status Report
     deactivate AGENT
@@ -1071,8 +1098,8 @@ manejo de errores. Con Pattern B, el agente hace queries incrementales
 conforme avanza:
 
 1. Lee `spec.md` completo → identifica ACs principales
-2. Descubre que necesita detalle de restricciones → lee `idea.md` §restricciones
-3. Nota que hay un AC sobre rate limiting → re-lee `spec.md` §no-funcionales
+2. Descubre que necesita detalle de restricciones → lee `idea.md` seccion restricciones
+3. Nota que hay un AC sobre rate limiting → re-lee `spec.md` seccion no-funcionales
 
 Cada query es precisa y acotada. Con Pattern A, el SM tendría que
 adivinar TODO lo que el agente va a necesitar de antemano — y por
@@ -1091,7 +1118,7 @@ Status Report:
   Artifacts: design.md
   Sources:                          ← NUEVO
     - sdd/project/spec (obs:1234)
-    - sdd/project/idea (obs:1230, §restricciones)
+    - sdd/project/idea (obs:1230, seccion restricciones)
 ```
 
 Esto da al SM un audit trail sin pagar el costo de leer el contenido.
@@ -1125,6 +1152,7 @@ y servir estos items puede ser un adaptador.
 flowchart TD
     subgraph INTERFACE["Interfaz del Adaptador (universal)"]
         direction TB
+        INGEST["ingest(source[], synthesize?)"]
         SAVE["save(artifact, content, metadata)"]
         READ_OP["read(artifact, section?)"]
         SEARCH["search(query, scope?)"]
@@ -1133,6 +1161,7 @@ flowchart TD
         VERIFY["verifyConsistency(artifact[])"]
         DELETE["delete(artifact, reason)"]
         HISTORY["history(artifact)"]
+        TRANSITION["transition(artifact, newState, reason?)"]
     end
 
     subgraph ADAPTERS["Implementaciones"]
@@ -1229,21 +1258,268 @@ Los demás adaptadores son **TBD**. El modelo de artefactos los habilita
 por diseño, pero la implementación es futura. El adaptador local es el
 MVP de persistencia.
 
+### Contrato de Comportamiento del Adaptador
+
+> **TODO: refinar este contrato con tipos concretos del lenguaje de
+> implementacion, codigos de error exhaustivos, y tests de conformance
+> para cada adaptador. Lo que sigue es el borrador de requisitos
+> comportamentales — suficiente para disenar, no para implementar.**
+
+#### ingest(source[], synthesize?)
+
+| Aspecto | Contrato |
+|---------|----------|
+| Precondicion | `source` es un array no vacio. Cada source tiene `type` (file, url, text, image) y `content` o `path`. |
+| Postcondicion | El material fuente esta disponible en el store, sintetizado y con citaciones a la fuente original (path, linea, URL, seccion). Queryable via `search()`. |
+| Idempotencia | Si — ingestar el mismo material dos veces no duplica contenido. |
+| `synthesize` | Default `true`. Si `true`, el TPM extrae y condensa el contenido relevante con citaciones. Si `false`, almacena verbatim (para materiales cortos o ya estructurados). |
+| Given | MIM proporciona 3 archivos de un tech challenge |
+| When | `ingest([{type: "file", path: "challenge/rules.md"}, {type: "file", path: "challenge/rubric.md"}, {type: "file", path: "challenge/starter.zip"}])` |
+| Then | El store contiene el contenido sintetizado con citas: "Timebox: 4h [rules.md:12]", "Criterio: test coverage > 80% [rubric.md:5]". Cualquier rol puede `search("timebox")` y obtener el dato con su fuente. |
+| Given | MIM pega un screenshot de un wireframe |
+| When | `ingest([{type: "image", content: <base64>}])` |
+| Then | El store contiene una descripcion sintetizada del wireframe. Si el adaptador no soporta imagenes, retorna UNSUPPORTED_SOURCE. |
+| Error: EMPTY_SOURCE | El array esta vacio o todas las fuentes tienen contenido vacio. |
+| Error: UNSUPPORTED_SOURCE | El tipo de fuente no es soportado por este adaptador. |
+
+> **Nota**: `ingest` es la puerta de entrada del material del MIM al
+> artifact store. El SM NUNCA lee fuentes directamente — instruye al
+> TPM para ingestar. El TPM sintetiza y cita. Cualquier rol accede al
+> resultado via `search()` o `read()`.
+
+#### save(artifact, content, metadata)
+
+| Aspecto | Contrato |
+|---------|----------|
+| Precondicion | `artifact` es un slug valido (idea, spec, design, tasks, handoff, ops-runbook). `content` no es vacio. `metadata` incluye al menos `producer` y `timestamp`. |
+| Postcondicion | El artefacto existe en el store con el contenido y metadata proporcionados. Si ya existia, se reemplaza (upsert). |
+| Idempotencia | Si — llamar dos veces con los mismos argumentos produce el mismo estado. |
+| Given | Un adaptador con `idea` ya guardado |
+| When | `save("idea", nuevo_contenido, {producer: "PO", timestamp: T2})` |
+| Then | El contenido de `idea` es `nuevo_contenido`, metadata actualizada, version anterior accesible via `history()`. |
+| Error: INVALID_ARTIFACT | El slug no pertenece al set de artefactos validos. |
+| Error: EMPTY_CONTENT | El contenido es vacio o solo whitespace. |
+| Error: CONFLICT | (Solo adaptadores con concurrencia) Otro writer modifico el artefacto desde la ultima lectura. Retorna ambas versiones. |
+
+#### read(artifact, section?)
+
+| Aspecto | Contrato |
+|---------|----------|
+| Precondicion | `artifact` es un slug valido. |
+| Postcondicion | Retorna el contenido completo, o la seccion solicitada si `section` se proporciona. |
+| Idempotencia | Si — read puro, sin efectos secundarios. |
+| Given | `spec` existe con secciones "Requisitos funcionales" y "No funcionales" |
+| When | `read("spec", "Requisitos funcionales")` |
+| Then | Retorna solo el contenido de esa seccion. |
+| Given | `design` no existe |
+| When | `read("design")` |
+| Then | Error NOT_FOUND. |
+| Error: NOT_FOUND | El artefacto no existe en el store. |
+| Error: SECTION_NOT_FOUND | El artefacto existe pero la seccion solicitada no. |
+
+#### search(query, scope?)
+
+| Aspecto | Contrato |
+|---------|----------|
+| Precondicion | `query` es un string no vacio. `scope` es opcional (default: todos los artefactos). |
+| Postcondicion | Retorna lista de matches con: `artifact`, `section`, `snippet`, `relevance_score`. Lista vacia si no hay matches (NO es error). |
+| Idempotencia | Si. |
+| Given | `spec` contiene "autenticacion JWT con refresh tokens" |
+| When | `search("JWT")` |
+| Then | Retorna al menos un match en `spec` con snippet relevante. |
+| Given | Scope limitado a `["design"]` |
+| When | `search("JWT", {scope: ["design"]})` |
+| Then | Solo busca en `design`. Si no hay match, retorna lista vacia. |
+
+#### list(filters?)
+
+| Aspecto | Contrato |
+|---------|----------|
+| Precondicion | Ninguna (lista vacia es valida). |
+| Postcondicion | Retorna lista de artefactos con: `artifact`, `status` (draft/complete), `last_modified`, `producer`. |
+| Filtros | `status`, `producer`, `modified_after`, `modified_before`. |
+| Given | Store con `idea` (complete) y `spec` (draft) |
+| When | `list({status: "complete"})` |
+| Then | Retorna solo `idea`. |
+
+#### markComplete(artifact)
+
+| Aspecto | Contrato |
+|---------|----------|
+| Precondicion | El artefacto existe y su status es `draft`. |
+| Postcondicion | Status cambia a `complete`. Timestamp de completitud registrado. |
+| Idempotencia | Si — marcar un artefacto ya completo es no-op. |
+| Given | `idea` con status `draft` |
+| When | `markComplete("idea")` |
+| Then | `idea.status` es `complete`. `list()` lo refleja. |
+| Error: NOT_FOUND | El artefacto no existe. |
+
+#### verifyConsistency(artifact[])
+
+| Aspecto | Contrato |
+|---------|----------|
+| Precondicion | Al menos un artefacto en el array. Todos deben existir. |
+| Postcondicion | Retorna lista de inconsistencias: `{source, target, type, description}`. Lista vacia = consistente. |
+| Tipos de inconsistencia | `MISSING_TRACE` (referencia rota), `STALE_DEPENDENCY` (upstream modificado despues del downstream), `SCHEMA_VIOLATION` (seccion requerida faltante). |
+| Given | `spec` referencia `idea` requisito R1, pero R1 fue eliminado de `idea` |
+| When | `verifyConsistency(["idea", "spec"])` |
+| Then | Retorna `{source: "spec", target: "idea", type: "MISSING_TRACE", description: "R1 referenciado en spec no existe en idea"}`. |
+
+#### delete(artifact, reason)
+
+| Aspecto | Contrato |
+|---------|----------|
+| Precondicion | `artifact` existe. `reason` no es vacio (audit trail obligatorio). |
+| Postcondicion | El artefacto deja de aparecer en `list()` y `read()`. `history()` conserva el registro con la razon de eliminacion. |
+| Idempotencia | No — eliminar un artefacto inexistente es NOT_FOUND. |
+| Given | `ops-runbook` existe |
+| When | `delete("ops-runbook", "proyecto cancelado")` |
+| Then | `read("ops-runbook")` retorna NOT_FOUND. `history("ops-runbook")` muestra el registro con razon. |
+
+#### history(artifact)
+
+| Aspecto | Contrato |
+|---------|----------|
+| Precondicion | `artifact` es un slug valido (puede o no existir actualmente). |
+| Postcondicion | Retorna lista ordenada (mas reciente primero) de: `{version, timestamp, producer, action, content_hash}`. Lista vacia si el artefacto nunca existio. |
+| Acciones | `created`, `updated`, `completed`, `deleted`, `reopened`. |
+| Given | `idea` fue creado, actualizado 2 veces, y marcado completo |
+| When | `history("idea")` |
+| Then | Retorna 4 entradas: completed → updated → updated → created. |
+
+#### transition(artifact, newState, reason?)
+
+| Aspecto | Contrato |
+|---------|----------|
+| Precondicion | El artefacto existe. `newState` es un estado valido. La transicion desde el estado actual a `newState` es permitida por la state machine configurada. |
+| Postcondicion | El artefacto esta en `newState`. `history()` registra la transicion con timestamp, actor, y reason. |
+| Idempotencia | Si — transicionar al estado actual es no-op. |
+| Given | `spec` en estado `draft` con transiciones permitidas: `draft → review, draft → cancelled` |
+| When | `transition("spec", "review", "PO terminó ACs")` |
+| Then | `spec.state` es `review`. `history()` registra la transicion. |
+| Given | `spec` en estado `review` con transiciones permitidas: `review → approved, review → draft` |
+| When | `transition("spec", "draft", "QA encontró ambiguedades")` |
+| Then | `spec.state` es `draft` (transicion hacia atras permitida). |
+| Given | `tasks` en estado `approved` sin transicion permitida a `draft` |
+| When | `transition("tasks", "draft")` |
+| Then | Error INVALID_TRANSITION. |
+| Error: NOT_FOUND | El artefacto no existe. |
+| Error: INVALID_STATE | `newState` no es un estado reconocido. |
+| Error: INVALID_TRANSITION | La transicion del estado actual a `newState` no esta permitida. |
+
+**State machine configurable**: cada proyecto define su propia state
+machine (que estados existen y que transiciones son validas). El
+framework proporciona un **default** basado en el patron universal:
+
+```
+                    ┌──────────┐
+              ┌────→│  review  │────┐
+              │     └──────────┘    │
+              │          │          │
+              │          ▼          ▼
+┌─────────┐   │   ┌──────────┐  ┌──────────┐
+│  draft  │───┘   │ approved │  │ rejected │
+└─────────┘       └──────────┘  └──────────┘
+     │                 │
+     │                 ▼
+     │          ┌──────────┐
+     └────────→ │cancelled │
+                └──────────┘
+```
+
+Estados default: `draft`, `review`, `approved`, `rejected`, `cancelled`.
+
+Transiciones default:
+
+| Desde | Hacia | Quien puede |
+|-------|-------|-------------|
+| draft | review | Productor (solicita revision) |
+| draft | cancelled | SM o MIM |
+| review | approved | Validador del gate |
+| review | rejected | Validador del gate |
+| review | draft | Validador (devuelve para correcciones) |
+| rejected | draft | Productor (corrige y reintenta) |
+| approved | draft | SM (reopen — via mid-planning edit protocol) |
+
+> **TODO**: permitir que el MIM defina state machines custom durante
+> setup (Fase 0/1) o via acuerdo de retrospectiva. El adaptador valida
+> transiciones contra la state machine configurada. Formato sugerido:
+> adjacency list en metadata del proyecto.
+
+#### Garantias transversales — ACID
+
+El artifact store es la **fuente de la verdad** del proceso. Las
+operaciones deben cumplir garantias ACID:
+
+| Garantia | Descripcion | Ejemplo |
+|----------|-------------|---------|
+| **Atomicidad** | Una transaccion multi-operacion se aplica completa o no se aplica. No hay estado intermedio visible. | `save(spec) + markComplete(spec) + verifyConsistency([idea, spec])` — si verify falla, spec no se marca complete y el save se revierte. |
+| **Consistencia** | El store siempre esta en un estado valido. No existen referencias rotas, artefactos sin metadata, ni estados invalidos. | No se puede `markComplete(design)` si `spec` no esta complete (cadena de dependencias). |
+| **Aislamiento** | Operaciones concurrentes no producen estados corruptos. Nivel minimo: read-committed. | Dos agentes leyendo `spec` simultaneamente ven la misma version. Un `save` en progreso no es visible hasta commit. |
+| **Durabilidad** | Despues de un commit exitoso, el contenido sobrevive a crash, compaction, o perdida de sesion. | Para local: flush a disco. Para DBMS: commit SQL. Para engram: observation persistida. |
+
+**Transacciones**: el TPM puede agrupar operaciones en una transaccion.
+Si cualquier operacion falla, todas se revierten.
+
+```
+transaction {
+  save("spec", contenido, metadata)
+  verifyConsistency(["idea", "spec"])
+  markComplete("spec")
+}
+// Si verifyConsistency detecta inconsistencias → rollback del save
+// Si markComplete falla (precondicion) → rollback del save + verify
+```
+
+**Nivel de soporte por adaptador**:
+
+| Adaptador | Atomicidad | Consistencia | Aislamiento | Durabilidad |
+|-----------|-----------|--------------|-------------|-------------|
+| Local (files) | Operacion individual | Validacion pre-write | Sesion unica (sin concurrencia) | Flush a disco |
+| Engram | Operacion individual | Validacion pre-save | Backend-dependent | Persistido cross-session |
+| DBMS | Transacciones SQL nativas | Constraints + triggers | Read-committed o superior | WAL + commit |
+| Jira/Asana | API-level (eventual consistency) | Webhooks + validacion | Optimistic locking | Cloud-managed |
+| Git Repo | Commit atomico | Pre-commit hooks | Branch isolation | Git objects |
+
+> **TODO**: definir transaccion como primitiva de la interfaz del
+> adaptador (`begin()`, `commit()`, `rollback()`). Para adaptadores sin
+> soporte nativo de transacciones (local, engram), implementar como
+> write-ahead log o copy-on-write.
+
+> **TODO**: definir tests de conformance que un adaptador debe pasar
+> para ser considerado compatible. Formato sugerido: suite ejecutable
+> con los given/when/then de arriba como casos de prueba.
+
 ---
 
 ## Metodología como Capa Intercambiable
 
-La metodología define CÓMO se organiza el trabajo. Los artefactos definen
-QUÉ se produce. Son capas independientes.
+La metodología define COMO se organiza el trabajo. Los artefactos definen
+QUE se produce. Son capas independientes.
 
-> **Alcance del claim**: la intercambiabilidad está **implementada a
-> nivel de artefactos** — los 6 artifacts son idénticos sin importar la
-> metodología. A nivel de **orquestación (routing, gates, convocatoria)**,
+> **Alcance del claim**: la intercambiabilidad esta **implementada a
+> nivel de artefactos** — los 6 artifacts son identicos sin importar la
+> metodología. A nivel de **orquestacion (routing, gates, convocatoria)**,
 > el framework implementa **Scrum como default**. El routing para
-> Kanban, Shape Up, y SAFe es extensible pero **no está implementado
-> aún** — requiere routing tables alternativas (ej: WIP-limit checks
+> Kanban, Shape Up, y SAFe es extensible pero **no esta implementado
+> aun** — requiere routing tables alternativas (ej: WIP-limit checks
 > en vez de sprint gates). Los roles (PO, SM, Dev Lead, QA, DevSecOps,
 > UX) son funciones constantes con nombres methodology-specific.
+
+**Metodología como meta-artifact**: la eleccion de metodología se
+almacena en el artifact store como configuracion del proyecto. No es
+un artefacto de producto — es un **meta-artifact** que configura el
+comportamiento del SM.
+
+- **Cuando se define**: el SM pregunta al MIM durante setup (Fase 0/1):
+  "Que metodología prefieres? Default: Scrum."
+- **Donde se almacena**: en el artifact store, seccion de metadata del
+  proyecto (no en un artefacto de producto).
+- **Cuando se revisa**: durante la retrospectiva (Fase 8), como
+  candidato natural para "start doing" o "stop doing" — ej: "Start:
+  usar Kanban en vez de Scrum para el proximo ciclo."
+- **Que afecta**: routing tables, gates, convocatoria, state machine
+  de work items, ceremonia. Los artefactos no cambian.
 
 ```mermaid
 flowchart TD
@@ -1594,10 +1870,10 @@ Scrum sin ningún problema, porque ambos siguen el mismo schema ISO.
 | ISO/IEC/IEEE 15288 | System Life Cycle Processes | La columna vertebral: secuencia de etapas del ciclo de vida |
 | ISO/IEC/IEEE 12207 | Software Life Cycle Processes | Overlay específico para software (procesos técnicos + organizacionales) |
 | ISO/IEC/IEEE 15289 | Content of Life-Cycle Information Items | El catálogo: qué documentos produce cada proceso, contenido mínimo |
-| ISO/IEC/IEEE 29148 | Requirements Engineering | Contenido de `idea.md` (§9.3 BRS) y `spec.md` (StRS, SyRS, SRS) |
+| ISO/IEC/IEEE 29148 | Requirements Engineering | Contenido de `idea.md` (sec 9.3 BRS) y `spec.md` (StRS, SyRS, SRS) |
 | ISO/IEC/IEEE 42010 | Architecture Description | Contenido de `design.md`: viewpoints, stakeholders, concerns |
 | IEEE 1016 | Software Design Descriptions | Contenido de `design.md`: design entities, rationale |
-| ISO 21502 | Project Management Guidance (§7.6) | Mecanismo de descomposición de `tasks.md`: actividades, dependencias, duración |
+| ISO 21502 | Project Management Guidance (sec 7.6) | Mecanismo de descomposición de `tasks.md`: actividades, dependencias, duración |
 | PMBOK 7th ed. | Define Activities (process) | Respaldo de `tasks.md`: Activity List, Activity Attributes, Milestones |
 | IEEE 828 | Configuration Management | Trazabilidad entre artefactos (transversal) |
 | ISO/IEC/IEEE 29119-3 | Test Documentation | Contenido de pruebas en `handoff.md`: test plan, strategy |

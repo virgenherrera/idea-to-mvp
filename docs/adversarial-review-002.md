@@ -31,7 +31,7 @@
 | ID | Hallazgo | Corrección |
 |----|----------|-----------|
 | FIX-1 | TPM read/write contradice Pattern B | Regla #3 reescrita: TPM = SOLO escritura, lectura libre via Pattern B |
-| FIX-2 | Diagrama cadena con "territorio libre" stale | Etiquetas actualizadas a ISO 29148 §9.3 / ISO 21502 §7.6 |
+| FIX-2 | Diagrama cadena con "territorio libre" stale | Etiquetas actualizadas a ISO 29148 sec 9.3 / ISO 21502 sec 7.6 |
 | FIX-3 | Jerarquía de work items ausente | Nueva sección completa: 5 niveles (L0-L4), schema, dependencias, DAG, paralelismo |
 | FIX-4 | Sin procedimiento de selección de metodología | Regla explícita: MIM elige → Scrum default → informa → cambiable en boundary |
 
@@ -52,8 +52,12 @@ challenge requiere leer archivos — exactamente lo prohibido.
   `role-profiles.md` (diagrama Fase 1)
 - **Impacto**: un agente implementador enfrenta dos directivas
   mutuamente excluyentes en el mismo archivo
-- **Resolución**: → **CORREGIDO** — reescrito como delegación explícita
-  a sub-agente con contrato SM-analista
+- **Resolución v1**: ~~delegación a sub-agente SM-analista~~ (insuficiente)
+- **Resolución v2**: → **CORREGIDO** — el TPM ingesta el material del
+  MIM (archivos, capturas, URLs) via `ingest()`. Sintetiza y almacena
+  con citaciones a la fuente (path, linea, seccion). Cualquier rol
+  accede via `search()`. El SM no lee archivos — el TPM es el unico
+  que toca material fuente.
 
 ### C2. Fast-forward sin algoritmo evaluable — solo adjetivos
 
@@ -67,8 +71,13 @@ resueltos de frontera.
 - **Docs afectados**: `behavior-scrum-master-routing.md` (Fast-Forward)
 - **Impacto**: dos corridas del mismo modelo con el mismo input pueden
   clasificar diferente. Decisiones no reproducibles ni auditables.
-- **Resolución**: → **CORREGIDO** — checklist de 4 factores con scoring
-  0/1/2, thresholds numéricos, y 3 ejemplos resueltos de frontera
+- **Resolución v1**: ~~checklist de 4 factores con scoring 0/1/2~~ (heuristico)
+- **Resolución v2**: → **CORREGIDO** — state machine configurable para
+  artefactos/work items con estados y transiciones validas (draft →
+  review → approved/rejected). El fast-forward se determina por ESTADOS
+  del RAG, no por heuristicas subjetivas. Si el artefacto esta en estado
+  `approved`, la fase correspondiente se puede saltar. State machine
+  default proporcionada; customizable por proyecto.
 
 ### C3. State reconstruction indefinida para RAG inconsistente
 
@@ -81,8 +90,13 @@ editado después.
 
 - **Docs afectados**: `behavior-scrum-master-routing.md` (State Machine)
 - **Impacto**: crash, compaction, o corrupción producen estado indefinido
-- **Resolución**: → **CORREGIDO** — tabla de anomalías con branch
-  CORRUPT → escalación a MIM + definición mecánica de "completo"
+- **Resolución v1**: ~~tabla de anomalias con CORRUPT branch~~ (parcial)
+- **Resolución v2**: → **CORREGIDO** — subsumido por C2. La state
+  machine define estados validos y transiciones. Si el RAG dice que un
+  artefacto esta en estado X, solo puede moverse a estados permitidos.
+  State reconstruction = leer estados actuales del RAG + validar contra
+  la state machine configurada. Estado invalido = transicion ilegal =
+  escalacion a MIM.
 
 ### C4. Circuit breaker sin hogar de persistencia
 
@@ -96,9 +110,13 @@ silenciosamente — contradice el claim de "context resilience."
 - **Docs afectados**: `behavior-scrum-master-routing.md` (Supervisión)
 - **Impacto**: circuit breaker no funciona cross-session como se
   documenta
-- **Resolución**: → **CORREGIDO** — alcance explícito: counter es
-  de sesión. Cross-session, el TPM trackea historial de fallos como
-  metadata del artefacto.
+- **Resolución v1**: ~~counter de sesion, TPM trackea cross-session~~ (parcial)
+- **Resolución v2**: → **CORREGIDO** — el RAG es la fuente de verdad.
+  El circuit breaker counter se persiste en el artifact store como
+  metadata operacional del artefacto afectado. Transacciones ACID
+  agregadas al contrato del adaptador: atomicidad, consistencia,
+  aislamiento, durabilidad. El counter sobrevive a crash/compaction
+  porque esta en el store, no en memoria.
 
 ### C5. Methodology swap: claim aspiracional, routing Scrum-only
 
@@ -114,11 +132,12 @@ pero el SM persiste como "ÚNICO rol constante."
   `behavior-scrum-master-routing.md` (state machine completa)
 - **Impacto**: la abstracción funciona a nivel de artefactos pero es
   aspiracional a nivel de orquestación
-- **Resolución**: → **CORREGIDO** — claim acotado: "artefactos son
-  metodología-agnostic; routing default es Scrum; routing para Kanban/
-  Shape Up/SAFe es extensible pero no implementado aún." Tabla de
-  roles corregida: roles son funciones constantes con nombres
-  methodology-específicos.
+- **Resolución v1**: ~~claim acotado + tabla de roles corregida~~ (documentacion)
+- **Resolución v2**: → **CORREGIDO** — metodología es un meta-artifact
+  almacenado en el RAG. Se define durante setup (SM pregunta al MIM),
+  se revisa en la retrospectiva (Fase 8, "start/stop doing"). Afecta
+  routing, gates, convocatoria, state machine. Los artefactos no
+  cambian. Claim sigue acotado: Scrum es default, otros extensibles.
 
 ### C6. QA en Fase 3 (Design): afirmado y negado en el mismo archivo
 
@@ -131,8 +150,12 @@ Matriz Completa invocaría QA sin contrato definido.
 - **Docs afectados**: `behavior-scrum-master-routing.md` (Matriz
   Completa vs Mapa de Convocatoria)
 - **Impacto**: delegación sin contrato = output impredecible
-- **Resolución**: → **CORREGIDO** — QA eliminado de Fase 3 en Matriz
-  Completa, consistente con las otras 3 fuentes
+- **Resolución v1**: ~~QA eliminado de Fase 3~~ (regla rigida incorrecta)
+- **Resolución v2**: → **CORREGIDO** — QA tiene lifecycle completo de
+  "three amigos" (Fase 2, co-define ACs con PO) a "certificacion"
+  (Fase 7, aprueba o bloquea). En fases intermedias (3, 4, 5) el SM
+  decide cuando convocarlo segun necesidades del proyecto. Fase 3 ahora
+  dice "(SM decide)" en vez de excluir rigidamente.
 
 ### C7. operational-model.md usa vocabulario SDD huérfano
 
@@ -144,8 +167,12 @@ ni como artefactos. Son residuos de los skills SDD (`/sdd-explore`,
 
 - **Docs afectados**: `operational-model.md` (Límites, problem statement)
 - **Impacto**: un lector buscaría fases Explorar/Proponer que no existen
-- **Resolución**: → **CORREGIDO** — reemplazado con nombres canónicos
-  (Idea, Spec, Design, Tasks, Handoff)
+- **Resolución v1**: ~~reemplazado con nombres canonicos~~ (parcial)
+- **Resolución v2**: → **CORREGIDO** — todo vocabulario SDD eliminado
+  de los docs de comportamiento. Se usan palabras reservadas del
+  framework (fases, artefactos, operaciones). La forma de distribucion
+  (skills, CLIs, tools) no se define aqui — estamos definiendo
+  COMPORTAMIENTO, no implementacion.
 
 ### C8. ops-runbook.md sin fase ni trigger en la state machine
 
@@ -157,9 +184,13 @@ fase del SM lo produce, ningún contrato de rol lo cubre.
 - **Docs afectados**: `behavior-scrum-master-routing.md`,
   `role-profiles.md`, `artifact-model.md` (Pregunta Abierta #1)
 - **Impacto**: artefacto estructuralmente huérfano
-- **Resolución**: → **CORREGIDO** — ops-runbook explícitamente
-  post-ejecución. Se produce en Verify/Accept cuando ya hay código.
-  Pregunta abierta #1 resuelta.
+- **Resolución v1**: ~~ops-runbook post-ejecucion en Verify/Accept~~ (rigido)
+- **Resolución v2**: → **CORREGIDO** — ops-runbook se construye
+  incrementalmente como parte de los artifacts que apliquen al proyecto:
+  CLI → help/flags, API → API docs, gRPC → protos, infra → runbook
+  operativo. No es un artefacto de una sola fase ni de un solo trigger.
+  DevSecOps contribuye seguridad/monitoreo, Dev Lead troubleshooting.
+  El formato depende de lo que el proyecto SEA.
 
 ### C9. Verify/Accept/Retro contradicen operational-model.md
 
@@ -173,10 +204,10 @@ contradictorias para el mismo punto del flujo.
 - **Docs afectados**: `operational-model.md` (two-mode model)
 - **Impacto**: un agente leyendo solo operational-model.md concluye que
   el scrum team muere después del handoff
-- **Resolución**: → **CORREGIDO** — operational-model.md actualizado:
-  V/A/R son fases del modo planificación que operan POST-ejecución.
-  El scrum team se reactiva para review, no se mantiene activo
-  durante ejecución.
+- **Resolución**: → **TBD** — fuera de scope actual. Estamos en fase
+  de definicion del modo planificacion (Idea → Handoff). El modo
+  ejecucion y las fases post-ejecucion (Verify/Accept/Retro) se
+  reconcilian cuando se disene ese modo.
 
 ---
 
@@ -517,11 +548,13 @@ que el happy path.
 | Severidad | Total | Corregidos | Diferidos | Pendientes |
 |-----------|-------|------------|-----------|------------|
 | Ya corregidos (pre-review) | 4 | 4 | — | — |
-| CRITICAL | 9 | 9 | — | 0 |
+| CRITICAL | 9 | 8 | — | 1 (C9 TBD) |
 | HIGH | 9 | 8 | 1 (H3) | 0 |
 | MEDIUM | 14 | 10 | 3 (M3, M13, M14) | 1 (M6) |
 | LOW | 6 | 0 | 0 | 6 |
 | **TOTAL** | **42** | **31** | **4** | **7** |
 
-Los 9 CRITICAL y 8/9 HIGH se corrigen en esta sesión.
-Los LOW quedan como polish para la próxima iteración.
+Los 9 CRITICAL y 8/9 HIGH corregidos en sesion.
+Los 4 DIFERIDOS (H3, M3, M13, M14) + M6 consolidados en
+**review-003 → Pendientes Unificados** como D2, D3, D5, D6, D4
+respectivamente. Los 6 LOW como cosmeticos L1-L6.
