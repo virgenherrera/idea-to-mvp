@@ -756,23 +756,272 @@ flowchart TD
 
 ---
 
-## Configuración de Metodología
+## Gobierno de Metodología — Lock, Cambio y Trazabilidad
 
-La metodología se configura en la fase de inicio del proyecto (cuando el
-SM inicializa el contexto). Se guarda como metadata en `idea.md`.
+### Principio: la metodología se LOCKEA por iteración
+
+La metodología vigente **no se puede cambiar a medio ciclo**. Se lockea
+al inicio de cada iteración y solo se puede cambiar cuando el ciclo
+cierra. Esto previene:
+
+- Compromisos rotos a mitad de sprint/bet/PI
+- Métricas invalidadas (velocity, cycle time, throughput)
+- Confusión sobre qué reglas aplican
+- Artefactos en estados ambiguos
+
+```mermaid
+stateDiagram-v2
+    [*] --> Configurar: inicio del proyecto
+    Configurar --> Lockeada: SM elige metodología
+    Lockeada --> EnCiclo: iteración arranca
+    EnCiclo --> EnCiclo: trabajo en progreso\n(metodología NO cambia)
+    EnCiclo --> CierreCiclo: boundary natural alcanzado
+    CierreCiclo --> Retrospectiva: evaluar proceso
+    Retrospectiva --> Lockeada: mantener metodología
+    Retrospectiva --> Cambio: cambiar metodología
+    Cambio --> Lockeada: nueva metodología elegida\n(siguiente iteración)
+```
+
+### Boundary natural por metodología
+
+Cada metodología tiene su propio concepto de "ciclo cerrado". El SM
+detecta el boundary y solo ahí habilita el cambio:
+
+| Metodología | Boundary natural | Cuándo se puede cambiar | Duración típica |
+|-------------|-----------------|------------------------|-----------------|
+| **Scrum** | Fin del sprint (Sprint Review + Retro) | Antes del siguiente Sprint Planning | 1-4 semanas |
+| **Kanban** | Replenishment meeting o WIP = 0 | En el siguiente replenishment | Continuo (boundary artificial) |
+| **Shape Up** | Fin del bet cycle + cooldown | En la siguiente betting table | 6 + 2 semanas |
+| **PI Planning** | Fin del Program Increment | En el siguiente PI Planning | 8-12 semanas |
+| **SAFe** | Fin del PI (System Demo + I&A) | En el siguiente PI Planning | 8-12 semanas |
+
+> **Caso especial — Kanban**: no tiene sprints, así que el boundary es
+> más difuso. Opciones: (1) el SM declara un "review point" cada N días,
+> (2) cuando el WIP llega a cero, (3) en el replenishment meeting
+> periódico. Cualquiera es válido — lo que importa es que exista un
+> boundary explícito.
+
+```mermaid
+flowchart LR
+    subgraph SCRUM_CYCLE["Scrum"]
+        S1["Sprint 1\n🔒 Scrum"] --> S2["Sprint 2\n🔒 Scrum"]
+        S2 --> S3["Sprint 3\n🔒 Kanban"]
+    end
+
+    subgraph BOUNDARY["Boundary"]
+        B1["Sprint Review\n+ Retro"]
+        B2["Sprint Review\n+ Retro\n+ CAMBIO"]
+    end
+
+    S1 -.->|"lock"| B1
+    S2 -.->|"lock + cambio"| B2
+    B2 -.->|"nueva metodología"| S3
+```
+
+### Cambio de metodología — protocolo
+
+```mermaid
+sequenceDiagram
+    participant MIM as MIM
+    participant SM as SM
+    participant TPM as TPM
+
+    Note over SM: Boundary natural detectado
+    SM->>MIM: "Ciclo cerrado. ¿Cambiar metodología?"
+    MIM->>SM: "Sí, cambiar a Kanban"
+
+    SM->>SM: Valida: ¿hay trabajo en progreso?
+    alt WIP > 0
+        SM->>MIM: "Hay N items en progreso.\n¿Completarlos primero o migrarlos?"
+        MIM->>SM: "Migrar"
+    end
+
+    SM->>TPM: "Registra cambio de metodología.\nDe: Scrum. A: Kanban.\nRazón: {razón del MIM}.\nItems migrados: [lista]"
+    TPM->>TPM: Actualiza metadata del proyecto\nRegistra en historial de cambios
+    TPM->>SM: "Confirmado. Metodología: Kanban"
+
+    SM->>SM: Ajusta comportamiento:\n- Sin sprints\n- WIP limits activos\n- Flujo continuo
+    Note over SM: Siguiente ciclo inicia con Kanban
+```
+
+### Lo que pasa con los artefactos cuando cambia la metodología
+
+**Respuesta corta: NADA.** Los artefactos son los mismos. Solo cambia
+la ceremonia alrededor de su producción.
+
+Esto está validado por múltiples frameworks de la industria:
+
+| Framework | Qué dice sobre artefactos y cambio de metodología |
+|-----------|--------------------------------------------------|
+| **Disciplined Agile (PMI)** | El goal es constante; la práctica/artefacto que lo implementa es la opción variable. Cambiar de WoW no requiere re-crear artefactos. |
+| **Scrumban** | "Start with what you have" — el backlog y sus items sobreviven la transición. Solo cambian sprints → flujo y velocity → cycle time. |
+| **SAFe** | Epic → Feature → Story mantiene el mismo formato cruzando niveles con diferentes metodologías. La identidad del artefacto es constante. |
+| **PMBOK 7** | Artifacts son "tools you select per context" — independientes del delivery approach. |
+| **Práctica real (Jira)** | Migrar de Scrum board a Kanban board no reescribe issues. Se desactivan sprints, se agregan WIP limits. Los items quedan intactos. |
+| **ISO 15288/12207** | Proceso outcomes son fijos; life-cycle model es variable y tailorable. Los information items que produce un proceso no dependen del modelo de ciclo de vida. |
+
+```mermaid
+flowchart TD
+    subgraph BEFORE["Antes del cambio (Scrum)"]
+        direction LR
+        B_IDEA["idea.md ✅"]
+        B_SPEC["spec.md ✅"]
+        B_DESIGN["design.md\n(en progreso)"]
+    end
+
+    CAMBIO["🔄 Cambio a Kanban\n(en el boundary)"]
+
+    subgraph AFTER["Después del cambio (Kanban)"]
+        direction LR
+        A_IDEA["idea.md ✅\n(sin cambios)"]
+        A_SPEC["spec.md ✅\n(sin cambios)"]
+        A_DESIGN["design.md\n(continúa en progreso)"]
+        A_TASKS["tasks.md\n(se produce en Kanban)"]
+    end
+
+    BEFORE --> CAMBIO
+    CAMBIO --> AFTER
+```
+
+### Metadata — estampa de metodología por artefacto
+
+Cada artefacto registra BAJO QUÉ metodología fue producido. Esto no
+cambia el contenido — es metadata de trazabilidad.
 
 ```
-## Metadata del proyecto
-- Metodología: scrum (default) | kanban | shapeup | piplanning | safe | custom
-- Cadencia: sprint de 2 semanas | flujo continuo | bet de 6 semanas | PI de 10 semanas
-- Roles activos: [PO, SM, Dev Lead, QA, UX, DevSecOps] (ajustable por tier)
+## Metadata
+- Fecha de creación: 2026-07-15
+- Estado: completo
+- Iteración: Sprint 3
+- Metodología vigente: scrum
+- Revisores: [PO, QA]
 ```
 
-**El SM lee la metodología y ajusta su comportamiento**:
-- En Scrum: agrupa trabajo en sprints, usa ceremonias
-- En Kanban: flujo continuo, sin sprints, WIP limits
-- En Shape Up: bets, cooldown, pitches
-- En cualquiera: **produce los mismos 6 artefactos**
+Si la metodología cambia y un artefacto nuevo se produce después:
+
+```
+## Metadata
+- Fecha de creación: 2026-08-02
+- Estado: borrador
+- Iteración: Kanban cycle 1
+- Metodología vigente: kanban
+- Revisores: [Dev Lead]
+```
+
+**El TPM estampa esto automáticamente.** Los roles no necesitan saberlo
+ni preocuparse — el TPM es el DBMS y la estampa es metadata, no
+contenido.
+
+### Metadata del proyecto — historial de metodología
+
+El proyecto mantiene un historial de cambios de metodología en el RAG.
+Esto es metadata del PROYECTO, no de un artefacto individual.
+
+```
+# Metadata del Proyecto: {nombre}
+
+## Metodología vigente
+- Actual: kanban
+- Desde: 2026-08-01
+- Boundary: replenishment cada 5 días
+
+## Historial de cambios
+| Fecha | De | A | Razón | Boundary |
+|-------|------|--------|-------|----------|
+| 2026-07-01 | — | scrum | Inicio de proyecto | Sprint 2 semanas |
+| 2026-08-01 | scrum | kanban | Equipo prefiere flujo continuo post-MVP | Replenishment 5 días |
+
+## Roles activos
+- [PO, SM, Dev Lead, QA] (UX desactivado: proyecto CLI)
+```
+
+### Artefactos mixtos — el caso real
+
+En la práctica, un proyecto puede tener artefactos producidos bajo
+diferentes metodologías. Esto NO es un problema porque el contenido
+es universal (ISO-backed). Lo que varía es solo el contexto ceremonial
+en que fue producido:
+
+```mermaid
+flowchart TD
+    subgraph TIMELINE["Línea de tiempo del proyecto"]
+        direction LR
+        IT1["Iteración 1\n🔒 Scrum\nSprints de 2 sem"]
+        IT2["Iteración 2\n🔒 Scrum\nSprints de 2 sem"]
+        IT3["Iteración 3\n🔒 Kanban\nFlujo continuo"]
+        IT4["Iteración 4\n🔒 Shape Up\nBet de 6 sem"]
+    end
+
+    subgraph ARTIFACTS["Artefactos producidos"]
+        A1["idea.md\n<i>Sprint 1 (Scrum)</i>"]
+        A2["spec.md\n<i>Sprint 2 (Scrum)</i>"]
+        A3["design.md\n<i>Kanban cycle 1</i>"]
+        A4["tasks.md\n<i>Kanban cycle 2</i>"]
+        A5["handoff.md\n<i>Bet 1 (Shape Up)</i>"]
+    end
+
+    IT1 -->|"produce"| A1
+    IT2 -->|"produce"| A2
+    IT3 -->|"produce"| A3
+    IT3 -->|"produce"| A4
+    IT4 -->|"produce"| A5
+
+    A1 -->|"required params"| A2
+    A2 -->|"required params"| A3
+    A3 -->|"required params"| A4
+    A4 -->|"required params"| A5
+```
+
+**La cadena de dependencias (required params) no se rompe.** Un
+`design.md` producido bajo Kanban consume el `spec.md` producido bajo
+Scrum sin ningún problema, porque ambos siguen el mismo schema ISO.
+
+### Reglas del SM para gobierno de metodología
+
+1. **LOCK al inicio** — el SM establece la metodología al inicio de cada
+   iteración. Durante la iteración, la metodología NO cambia.
+
+2. **Solo cambia en boundary** — el SM solo propone cambio de metodología
+   cuando detecta el boundary natural del ciclo vigente.
+
+3. **El MIM decide** — el SM puede RECOMENDAR un cambio basándose en
+   métricas o fricción observada, pero la decisión es del MIM.
+
+4. **WIP se resuelve primero** — si hay trabajo en progreso, el SM
+   pregunta: ¿completar o migrar? No se abandona trabajo.
+
+5. **El TPM registra TODO** — cada cambio queda en el historial con:
+   fecha, metodología anterior, nueva, razón, items afectados.
+
+6. **Sin efecto retroactivo** — los artefactos ya producidos conservan
+   su metadata original. No se re-estampan.
+
+7. **Emergencia como excepción** — si el MIM declara una emergencia
+   (producción caída, deadline movido), el SM puede hacer un "emergency
+   break" del lock. Se registra como excepción en el historial con
+   justificación.
+
+### Contribución novel del framework
+
+> **Nota importante**: la granularidad de "metodología como metadata por
+> artefacto" es una **extensión genuina** más allá de la literatura PM
+> existente. Los frameworks establecidos (DA, SAFe, PMBOK) operan a
+> nivel de equipo, nivel de programa, o por deliverable — no por
+> artefacto individual.
+>
+> Nuestro modelo lleva esto un paso más allá: cada artefacto sabe
+> bajo qué metodología fue producido, permitiendo trazabilidad completa
+> incluso cuando la metodología cambia múltiples veces durante un
+> proyecto. Esto es posible porque el modelo de artefactos es universal
+> (ISO-backed) y la metodología es solo metadata, no estructura.
+>
+> **Precedente de validación**: SAFe demuestra que artefactos cruzan
+> boundaries de metodología sin conversión (Epic → Feature → Story
+> sobrevive Scrum ↔ Kanban en diferentes equipos). Disciplined Agile
+> demuestra que el goal es constante y la práctica es variable.
+> Scrumban demuestra que los items sobreviven la transición. Nuestro
+> modelo generaliza estos patrones a una metadata explícita por
+> artefacto.
 
 ---
 
@@ -792,6 +1041,16 @@ SM inicializa el contexto). Se guarda como metadata en `idea.md`.
 | ISO/IEC 20000-1/2 | IT Service Management | Contenido de `ops-runbook.md`: SLAs, monitoreo, procedimientos |
 | ITIL 4 | Service Transition | Checklist práctico de transición a operaciones |
 | Google SRE PRR | Production Readiness Review | Gate práctico: ¿listo para producción? |
+
+### Frameworks de referencia para gobierno de metodología
+
+| Framework | Qué valida |
+|-----------|-----------|
+| Disciplined Agile (PMI) | WoW variable por equipo, evolucionable via GCI. Goal constante, práctica variable. |
+| Scrumban (Ladas) | Transición gradual Scrum→Kanban. Items sobreviven sin conversión. |
+| SAFe | Diferentes metodologías por nivel. Artefactos cruzan boundaries sin cambio de formato. |
+| PMBOK 7th ed. | Tailoring: approach seleccionable por deliverable, no solo por proyecto. |
+| ISO 15288/12207 | Proceso outcomes fijos, life-cycle model tailorable. Information items independientes del modelo. |
 
 ---
 
