@@ -37,12 +37,14 @@ flowchart TD
     subgraph STANDARDS["Estándares ISO/IEC/IEEE"]
         ISO15288["15288\nCiclo de vida\n(la columna vertebral)"]
         ISO15289["15289\nCatálogo de artefactos\n(qué documentos por proceso)"]
-        ISO29148["29148\nRequisitos\n(StRS, SyRS, SRS)"]
+        ISO29148["29148\nRequisitos\n(StRS, SyRS, SRS, BRS §9.3)"]
         ISO42010["42010\nDescripción de arquitectura"]
         IEEE1016["IEEE 1016\nDiseño de software"]
         ISO29119["29119-3\nDocumentación de pruebas"]
         ISO20000["20000\nGestión de servicios IT"]
         ITIL["ITIL 4\nTransición de servicios"]
+        ISO21502["21502 §7.6\nSchedule Management"]
+        PMBOK_DA["PMBOK\nDefine Activities"]
     end
 
     subgraph MODEL["Modelo Universal de Artefactos"]
@@ -56,20 +58,22 @@ flowchart TD
 
     ISO15288 -->|"define la secuencia\nde etapas"| MODEL
     ISO15289 -->|"define contenido\nmínimo por artefacto"| MODEL
-    ISO29148 -->|"respalda"| SPEC
+    ISO29148 -->|"respalda §9.3 BRS"| IDEA
+    ISO29148 -->|"respalda §StRS/SRS"| SPEC
     ISO42010 -->|"respalda"| DESIGN
     IEEE1016 -->|"respalda"| DESIGN
+    ISO21502 -->|"respalda mecanismo\nde descomposición"| TASKS
+    PMBOK_DA -->|"respalda Activity List\n+ Activity Attributes"| TASKS
     ISO29119 -->|"respalda"| HANDOFF
     ISO20000 -->|"respalda"| OPS
     ITIL -->|"respalda"| OPS
-
-    style IDEA fill:#ffd,stroke:#aa0
-    style TASKS fill:#ffd,stroke:#aa0
 ```
 
-> Los artefactos en amarillo (`idea.md`, `tasks.md`) no tienen respaldo ISO
-> — son territorio libre que el framework define. El resto tiene contenido
-> mínimo respaldado por estándares internacionales.
+> **Los 6 artefactos tienen respaldo de estándares internacionales.**
+> `idea.md` se respalda con ISO/IEC/IEEE 29148 §9.3 (BRS). `tasks.md` no
+> tiene un estándar que defina el artefacto como tal, pero el mecanismo de
+> descomposición que implementa está respaldado por ISO 21502 §7.6 y PMBOK
+> "Define Activities." Los demás siguen directamente sus estándares ISO.
 
 ---
 
@@ -133,27 +137,46 @@ quién lo produce, quién lo consume, y reglas de ownership.
 | Atributo | Valor |
 |----------|-------|
 | **Proceso 15288** | Business/Mission Analysis |
-| **Respaldo ISO** | Sin estándar formal (territorio libre) |
+| **Respaldo ISO** | **ISO/IEC/IEEE 29148 §9.3 (BRS)** — tailoring ligero permitido por §9.3.1 |
+| **Respaldo adicional** | IEEE 1362 (ConOps) — absorbido como Annex A/B de 29148 |
 | **Propósito** | Capturar el problema, el valor esperado, las restricciones conocidas, y las preguntas pendientes |
 | **Owner** | SM (orquesta la captura) → PO (formula y estructura) |
 | **Consumido por** | Fase de spec |
 
-**Contenido mínimo**:
+**Mapeo a 29148 §9.3 (BRS)**:
+
+| Sección 29148 BRS | Nuestro equivalente en `idea.md` |
+|-------------------|--------------------------------|
+| §9.3.2 Business purpose | Problema |
+| §9.3.3 Business scope | Valor esperado (alcance) |
+| §9.3.5 Major stakeholders | Usuario final, stakeholders |
+| §9.3.7 Mission, goals, objectives | Valor esperado (objetivos) |
+| §9.3.12 Business operational constraints | Restricciones conocidas |
+| §9.3.16 High-level operational concept | Flujo core del producto |
+| §9.3.19 Project constraints | Timebox, presupuesto, stack obligatorio |
+
+**Contenido mínimo** (tailoring de 29148 §9.3 — permitido por §9.3.1:
+*"Organization of the content such as the order and section structure
+may be selected in accordance with the project's information management
+policies"*):
 
 ```
 # Idea: {nombre del proyecto}
 
-## Problema
+## Problema                        ← 29148 §9.3.2 Business purpose
 Qué se necesita resolver y por qué.
 
-## Valor esperado
+## Valor esperado                  ← 29148 §9.3.7 Mission/goals/objectives
 Para quién y qué beneficio.
 
-## Restricciones conocidas
+## Restricciones conocidas         ← 29148 §9.3.12 + §9.3.19
 Timebox, presupuesto, stack obligatorio, plataforma, etc.
 
+## Concepto operativo de alto nivel ← 29148 §9.3.16 High-level operational concept
+Flujo core del producto, escenarios principales.
+
 ## Decisiones tomadas
-Roles activos para este proyecto, tier de activación, etc.
+Roles activos para este proyecto, tier de activación, metodología.
 
 ## Preguntas pendientes
 Lo que falta resolver antes de especificar.
@@ -162,13 +185,15 @@ Lo que falta resolver antes de especificar.
 - Fecha de creación
 - Fuente del input (idea vaga, challenge, ticket, spec parcial)
 - Estado: borrador | completo
+- Iteración y metodología vigente
 ```
 
-> **Por qué no tiene estándar**: ISO 15288 produce un "Business/Mission
-> Analysis Report" para este proceso, pero su contenido asume un contexto
-> organizacional complejo. Para un framework ágil de desarrollo asistido
-> por IA, un formato más ligero es más práctico. El estándar valida la
-> NECESIDAD del artefacto, no el formato exacto.
+> **Corrección**: la versión anterior de este documento declaraba
+> `idea.md` como "territorio libre sin estándar." Esto era **incorrecto**.
+> 29148 §9.3 (BRS) cubre directamente este artefacto. IEEE 1362 (ConOps),
+> que se creía muerto, fue absorbido como Annexes A/B de 29148 y sigue
+> activo. Nuestro formato es un tailoring ligero — más conciso que el
+> BRS completo, pero alineado a sus secciones normativas.
 
 ---
 
@@ -275,42 +300,65 @@ Cada decisión traza a spec.md (qué requisito resuelve).
 | Atributo | Valor |
 |----------|-------|
 | **Proceso 15288** | Implementation (preparación) |
-| **Respaldo ISO** | Sin estándar formal (artefacto nativo ágil) |
+| **Respaldo ISO** | **ISO 21502 §7.6** (Schedule Management — descomposición en actividades) |
+| **Respaldo adicional** | PMBOK "Define Activities" (Activity List + Activity Attributes). ISO 21511 (WBS) es un nivel ARRIBA — cubre deliverables, no tasks. |
 | **Propósito** | Desglosar el diseño en unidades de trabajo ejecutables, ordenadas por dependencias |
 | **Owner** | Dev Lead (desglose técnico) → SM (secuencia y dependencias) |
 | **Consumido por** | Fase de handoff, modo ejecución |
 
-**Contenido mínimo**:
+**Mapeo a ISO 21502 §7.6 y PMBOK Define Activities**:
+
+| Concepto del estándar | Nuestro equivalente en `tasks.md` |
+|----------------------|----------------------------------|
+| Activity (unidad de trabajo programable) | Tarea con ID único |
+| Activity Attributes (descripción, tipo, predecessors) | Descripción + dependencias + archivos afectados |
+| Activity Dependencies (FS/FF/SS/SF) | Dependencias (IDs de tareas previas) |
+| Milestone (punto de verificación) | Gate implícito en el grafo de dependencias |
+| Duration estimate | Estimación de complejidad (S/M/L) |
+
+> **Distinción clave**: el WBS (PMI Practice Standard, ISO 21511)
+> descompone **deliverables** — "qué se entrega". `tasks.md` descompone
+> **actividades** — "qué se ejecuta". Son niveles diferentes:
+>
+> ```
+> WBS (deliverable) → Work Package → Activity (nuestra tarea)
+> ISO 21511            PMI WBS        ISO 21502 §7.6 / PMBOK Define Activities
+> ```
+>
+> Nuestro `tasks.md` vive en el nivel de Activity, no de WBS.
+
+**Contenido mínimo** (alineado a ISO 21502 §7.6 + PMBOK Activity List):
 
 ```
 # Tasks: {nombre del proyecto}
 
 ## Tareas
 Cada tarea con:
-- ID único
-- Título
-- Descripción (qué hacer)
-- Dependencias (IDs de tareas previas)
-- Criterios de aceptación (given/when/then)
-- Estimación de complejidad (S/M/L)
-- Archivos afectados (si se conocen)
+- ID único                               ← Activity ID
+- Título                                 ← Activity name
+- Descripción (qué hacer)               ← Activity Attributes
+- Dependencias (IDs de tareas previas)   ← Activity Dependencies
+- Criterios de aceptación (given/when/then) ← Verification criteria
+- Estimación de complejidad (S/M/L)      ← Duration estimate
+- Archivos afectados (si se conocen)     ← Activity Attributes (resources)
 
-## Orden de ejecución
+## Orden de ejecución                    ← Schedule (dependency graph)
 Grafo de dependencias resuelto.
 
 ## Metadata
 - Fecha de creación
 - Estado: borrador | revisado | aprobado
 - Total de tareas, estimación agregada
+- Iteración y metodología vigente
 ```
 
-> **Por qué no tiene estándar**: el concepto de "tarea" es nativo ágil.
-> ISO 15288 cubre *Implementation* como proceso, pero no prescribe cómo
-> desglosar el trabajo en unidades discretas — eso lo define la metodología.
-> Sin embargo, el ARTEFACTO (la lista de tareas) es universal: existe en
-> Scrum (backlog items), Kanban (cards), Shape Up (scopes), y PI Planning
-> (features). Lo que cambia es cómo se agrupan y secuencian, no qué
-> contienen.
+> **Corrección**: la versión anterior declaraba `tasks.md` como
+> "artefacto nativo ágil sin estándar." Esto era impreciso. El artefacto
+> como documento standalone no tiene estándar propio, pero el MECANISMO
+> de descomposición que implementa SÍ está respaldado por ISO 21502 §7.6
+> (Schedule Management) y PMBOK "Define Activities." La estructura de
+> contenido (actividades con dependencias, atributos, estimaciones) está
+> formalmente definida en ambos estándares.
 
 ---
 
@@ -1219,9 +1267,11 @@ Scrum sin ningún problema, porque ambos siguen el mismo schema ISO.
 | ISO/IEC/IEEE 15288 | System Life Cycle Processes | La columna vertebral: secuencia de etapas del ciclo de vida |
 | ISO/IEC/IEEE 12207 | Software Life Cycle Processes | Overlay específico para software (procesos técnicos + organizacionales) |
 | ISO/IEC/IEEE 15289 | Content of Life-Cycle Information Items | El catálogo: qué documentos produce cada proceso, contenido mínimo |
-| ISO/IEC/IEEE 29148 | Requirements Engineering | Contenido de `spec.md`: StRS, SyRS, SRS |
+| ISO/IEC/IEEE 29148 | Requirements Engineering | Contenido de `idea.md` (§9.3 BRS) y `spec.md` (StRS, SyRS, SRS) |
 | ISO/IEC/IEEE 42010 | Architecture Description | Contenido de `design.md`: viewpoints, stakeholders, concerns |
 | IEEE 1016 | Software Design Descriptions | Contenido de `design.md`: design entities, rationale |
+| ISO 21502 | Project Management Guidance (§7.6) | Mecanismo de descomposición de `tasks.md`: actividades, dependencias, duración |
+| PMBOK 7th ed. | Define Activities (process) | Respaldo de `tasks.md`: Activity List, Activity Attributes, Milestones |
 | IEEE 828 | Configuration Management | Trazabilidad entre artefactos (transversal) |
 | ISO/IEC/IEEE 29119-3 | Test Documentation | Contenido de pruebas en `handoff.md`: test plan, strategy |
 | IEEE 1063 | Software User Documentation | Documentación de usuario (si aplica) |
