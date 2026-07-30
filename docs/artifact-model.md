@@ -140,7 +140,7 @@ quién lo produce, quién lo consume, y reglas de ownership.
 | **Respaldo ISO** | **ISO/IEC/IEEE 29148 §9.3 (BRS)** — tailoring ligero permitido por §9.3.1 |
 | **Respaldo adicional** | IEEE 1362 (ConOps) — absorbido como Annex A/B de 29148 |
 | **Propósito** | Capturar el problema, el valor esperado, las restricciones conocidas, y las preguntas pendientes |
-| **Owner** | SM (orquesta la captura) → PO (formula y estructura) |
+| **Owner** | Produce: PO (formula y estructura). Co-produce: SM (formula preguntas, no escribe contenido) |
 | **Consumido por** | Fase de spec |
 
 **Mapeo a 29148 §9.3 (BRS)**:
@@ -462,17 +462,313 @@ Quién es responsable, cadena de escalación.
 
 ---
 
+## Jerarquía de Work Items — Sprints, Epics, Stories, Tasks
+
+Los 6 artefactos producen **unidades de trabajo** a diferentes niveles de
+granularidad. Esta sección define la jerarquía universal de work items, sus
+dependencias, y cómo habilitan el paralelismo en modo ejecución.
+
+### Por qué es necesario
+
+Sin jerarquía explícita, los equipos (humanos o IA) enfrentan tres
+problemas recurrentes:
+
+1. **No hay paralelismo** — sin dependencias formales, todo se ejecuta en
+   serie porque no se sabe qué es seguro paralelizar.
+2. **No hay visibilidad de bloqueos** — los impedimentos se descubren tarde,
+   cuando ya bloquearon la ruta crítica.
+3. **No hay trazabilidad vertical** — no se puede responder "¿qué tareas
+   implementan este requisito?" ni "¿qué épica cubre esta idea de negocio?"
+
+### Niveles universales
+
+La jerarquía tiene 5 niveles. La metodología determina los **nombres** y las
+**ceremonias**, pero los niveles son constantes:
+
+| Nivel | Nombre universal | Scrum | Kanban | Shape Up | SAFe |
+|-------|-----------------|-------|--------|----------|------|
+| L0 | **Initiative** | Theme / Initiative | — | Bet (appetite) | Epic |
+| L1 | **Feature** | Epic | Category | Scope | Feature |
+| L2 | **Requirement** | User Story | Card | Task (Shape Up) | Story |
+| L3 | **Activity** | Task | Sub-card | Sub-task | Task |
+| L4 | **Sub-activity** | Subtask | — | — | Subtask |
+
+> **Respaldo**: la jerarquía L0→L4 refleja la descomposición progresiva
+> de ISO 21502 §7.6 (Schedule Management) y el WBS Dictionary de
+> PMBOK/ISO 21511. L0-L1 son deliverable-oriented (WBS), L2 es el puente
+> requisito→trabajo, L3-L4 son activity-oriented (Define Activities).
+
+### Quién produce qué nivel
+
+| Nivel | Artefacto origen | Rol productor | Ejemplo |
+|-------|-----------------|---------------|---------|
+| L0 Initiative | `idea.md` | PO | "Sistema de autenticación" |
+| L1 Feature | `idea.md` / `spec.md` | PO | "Login con OAuth2" |
+| L2 Requirement | `spec.md` | PO + QA (ACs) | "Como usuario puedo logearme con Google" |
+| L3 Activity | `tasks.md` | Dev Lead | "Implementar callback handler OAuth2" |
+| L4 Sub-activity | `tasks.md` | Dev Lead | "Parsear token JWT del provider" |
+
+### Schema universal de Work Item
+
+Cada work item, independientemente de su nivel, tiene este schema:
+
+```yaml
+work_item:
+  id: string          # Único. Formato: {nivel}-{secuencial}. Ej: L2-003
+  type: L0|L1|L2|L3|L4
+  title: string
+  description: string
+  parent_id: string?  # Referencia al item padre (jerarquía). null para L0
+  artifact_source: string  # Artefacto que lo produjo (idea.md, spec.md, etc.)
+
+  # — Dependencias y bloqueos —
+  depends_on:         # Otros work items que deben completarse ANTES
+    - item_id: string
+      type: FS|SS|FF  # Finish-to-Start, Start-to-Start, Finish-to-Finish
+  blocked_by:         # Impedimentos EXTERNOS (no son work items)
+    - id: string
+      description: string
+      owner: string   # Quién puede resolverlo
+      since: date
+
+  # — Estado —
+  state: todo|ready|in_progress|review|blocked|done|cancelled
+  iteration: string?  # Sprint N, Cycle N, PI N (según metodología)
+
+  # — Criterios —
+  acceptance_criteria:
+    - given: string
+      when: string
+      then: string
+  complexity: XS|S|M|L|XL
+
+  # — Trazabilidad —
+  traces_to: string[] # IDs de items en otros niveles (trazabilidad vertical)
+  methodology_stamp:
+    name: string
+    iteration: string
+```
+
+### Tipos de dependencia
+
+```mermaid
+flowchart LR
+    subgraph DEPS["Tipos de dependencia (ISO 21502 §7.6)"]
+        FS["<b>Finish-to-Start (FS)</b>\nA termina → B empieza\n<i>El más común (~80%)</i>"]
+        SS["<b>Start-to-Start (SS)</b>\nA empieza → B puede empezar\n<i>Paralelismo parcial</i>"]
+        FF["<b>Finish-to-Finish (FF)</b>\nA termina → B puede terminar\n<i>Validación cruzada</i>"]
+    end
+
+    subgraph BLOCK["Bloqueo externo"]
+        BLK["<b>Blocked-by</b>\nImpedimento fuera del proyecto\n<i>SM escala al MIM</i>"]
+    end
+```
+
+**Reglas de dependencia**:
+
+1. Las dependencias pueden ser **cross-level** — un L3 puede depender de un L1 completo.
+2. Las dependencias **circulares son un error** — el SM debe detectarlas al
+   construir el grafo y escalar al MIM.
+3. Un **blocker** es un impedimento externo (API de tercero caída, decisión
+   pendiente del stakeholder, licencia). No es un work item — es metadata
+   que congela el item hasta resolverse.
+4. Las dependencias de tipo SS habilitan **paralelismo parcial** — B puede
+   empezar cuando A empieza, no cuando A termina.
+
+### Detección de paralelismo — la regla
+
+El SM (o el orquestador en modo ejecución) usa el grafo de dependencias
+para identificar **lanes paralelos**:
+
+```mermaid
+flowchart TD
+    subgraph LANE_A["Lane A (auth)"]
+        A1["L3: Setup OAuth config"] --> A2["L3: Implement callback"]
+        A2 --> A3["L3: Token refresh logic"]
+    end
+
+    subgraph LANE_B["Lane B (UI)"]
+        B1["L3: Login page component"] --> B2["L3: Auth state management"]
+    end
+
+    subgraph LANE_C["Lane C (infra)"]
+        C1["L3: Redis session store"]
+    end
+
+    A3 --> MERGE["L2: Login con OAuth2 — DONE"]
+    B2 --> MERGE
+    C1 --> MERGE
+
+    style LANE_A fill:#e8f5e9,stroke:#2e7d32
+    style LANE_B fill:#e3f2fd,stroke:#1565c0
+    style LANE_C fill:#fff3e0,stroke:#e65100
+```
+
+**Algoritmo de paralelismo**:
+
+1. Construir el DAG (Directed Acyclic Graph) de todos los work items con
+   estado `ready` o `todo`.
+2. Identificar items sin dependencias pendientes → **ejecutables ahora**.
+3. Agrupar por recurso/skill requerido → **lanes**.
+4. Calcular **ruta crítica** (la cadena más larga de dependencias FS).
+5. Items fuera de la ruta crítica tienen **holgura** — pueden retrasarse sin
+   afectar la fecha de entrega.
+
+> **Respaldo**: Critical Path Method (CPM) — ISO 21502 §7.6, PMBOK
+> "Develop Schedule." El DAG + CPM es estándar en gestión de proyectos
+> desde 1957 (DuPont/PERT). Lo que el framework aporta es hacerlo
+> EJECUTABLE por agentes IA.
+
+### Estado de un Work Item — máquina de estados
+
+```mermaid
+stateDiagram-v2
+    [*] --> todo: Creado
+    todo --> ready: Dependencias resueltas
+    ready --> in_progress: Asignado a iteración + ejecutor
+    in_progress --> review: Trabajo completo, pendiente validación
+    in_progress --> blocked: Blocker detectado
+    blocked --> in_progress: Blocker resuelto
+    review --> done: Gate passed
+    review --> in_progress: Gate failed (rework)
+    todo --> cancelled: Descartado
+    in_progress --> cancelled: Scope eliminado
+    done --> [*]
+    cancelled --> [*]
+```
+
+**Transiciones automáticas del SM**:
+
+| Evento | Transición | Quién decide |
+|--------|-----------|-------------|
+| Todas las dependencias FS de un item están `done` | `todo` → `ready` | SM (automático) |
+| Item `ready` asignado a iteración activa | `ready` → `in_progress` | SM |
+| Sub-agente reporta trabajo completo | `in_progress` → `review` | SM (vía Status Report) |
+| Blocker reportado por sub-agente o MIM | `in_progress` → `blocked` | SM |
+| Gate de QA/UX/DevSecOps aprueba | `review` → `done` | SM (vía PDC) |
+| Gate rechaza | `review` → `in_progress` | SM (con feedback) |
+| MIM cancela scope | cualquier estado → `cancelled` | MIM → SM |
+
+### Trazabilidad vertical
+
+La trazabilidad vertical conecta niveles y permite responder preguntas como:
+
+- "¿Qué tareas implementan la story L2-003?" → `traces_to` de L3 items
+- "¿Está completa la feature L1-001?" → verificar que TODOS sus hijos
+  estén `done`
+- "¿Cuál es el progreso del initiative L0-001?" → porcentaje de
+  descendientes `done` / total
+
+```
+L0-001: Sistema de autenticación
+├── L1-001: Login con OAuth2
+│   ├── L2-001: Como usuario puedo logearme con Google
+│   │   ├── L3-001: Setup OAuth config ✓
+│   │   ├── L3-002: Implement callback handler [in_progress]
+│   │   └── L3-003: Token refresh logic [ready]
+│   └── L2-002: Como usuario puedo logearme con GitHub
+│       ├── L3-004: GitHub OAuth provider [todo]
+│       └── L3-005: Unify token handling [todo] (depends_on: L3-003)
+└── L1-002: Gestión de sesiones
+    └── L2-003: Como usuario mi sesión persiste 30 días
+        ├── L3-006: Redis session store [ready]
+        └── L3-007: Session refresh middleware [todo] (depends_on: L3-006)
+```
+
+### Iteraciones — el contenedor temporal
+
+Las iteraciones son el **contenedor temporal** donde se asignan work items.
+El nombre y la duración dependen de la metodología:
+
+| Metodología | Contenedor | Duración | Capacidad |
+|------------|-----------|----------|-----------|
+| Scrum | Sprint | Fija (1-4 semanas) | Velocity-based |
+| Kanban | — (flujo continuo) | — | WIP limits |
+| Shape Up | Cycle | Fija (6 semanas) | Appetite-based |
+| SAFe | PI / Iteration | PI: 8-12 semanas, Iteration: 2 semanas | Capacity allocation |
+
+**Lo que el framework trackea por iteración**:
+
+```yaml
+iteration:
+  id: string          # sprint-1, cycle-2, pi-1-iter-3
+  methodology: string # La que esté vigente (locked per iteration)
+  state: planning|active|review|closed
+  work_items: string[] # IDs asignados
+  capacity: string    # Methodology-specific (story points, appetite, slots)
+  goal: string        # Objetivo de la iteración
+  start_date: date?
+  end_date: date?
+```
+
+> En Kanban no hay iteración formal — el framework usa un pseudo-contenedor
+> "continuous" que agrupa items por período de reporte (semanal, quincenal).
+> Las métricas (cycle time, throughput) reemplazan velocity.
+
+### Impacto en `tasks.md` — evolución del artefacto
+
+Con la jerarquía definida, `tasks.md` evoluciona de "lista plana de tareas"
+a "vista materializada del DAG de actividades (L3-L4)":
+
+```
+# Tasks: {nombre del proyecto}
+
+## Work Items (L3-L4)
+Cada item con schema universal: id, type, parent_id, depends_on,
+blocked_by, state, iteration, acceptance_criteria, complexity.
+
+## Dependency Graph
+DAG completo con tipos (FS/SS/FF).
+Parallelism lanes identificados.
+Ruta crítica marcada.
+
+## Blockers activos
+Items bloqueados con impedimento, owner, antigüedad.
+
+## Resumen de iteración
+Items por estado. Progreso de features padre.
+Lanes paralelos disponibles para ejecución.
+
+## Metadata
+- Fecha de creación
+- Total items por nivel y estado
+- Iteración y metodología vigente
+```
+
+### Impacto en `idea.md` y `spec.md`
+
+- `idea.md` produce items L0 (initiatives) y opcionalmente L1 (features)
+  cuando el MIM los identifica desde el input inicial.
+- `spec.md` produce items L2 (requirements/stories) con acceptance criteria
+  formales. Cada L2 traza a su L1 padre.
+
+Estos items se crean DENTRO de los artefactos respectivos y se referencian
+en `tasks.md` mediante `traces_to`.
+
+### Impacto en `handoff.md`
+
+El handoff incluye:
+- El DAG completo de work items con sus dependencias
+- Los lanes paralelos pre-calculados
+- La ruta crítica identificada
+- Los blockers conocidos (para que el modo ejecución sepa qué evitar)
+
+Esto permite al orquestador de ejecución iniciar trabajo en paralelo desde
+el primer momento, sin tener que analizar dependencias en runtime.
+
+---
+
 ## Cadena de Artefactos — Flujo Completo
 
 ```mermaid
 flowchart TD
-    IDEA["<b>idea.md</b>\n<i>territorio libre</i>\n\nProblema, valor,\nrestricciones,\npreguntas pendientes"]
+    IDEA["<b>idea.md</b>\n<i>ISO 29148 §9.3 BRS</i>\n\nProblema, valor,\nrestricciones,\npreguntas pendientes"]
 
-    SPEC["<b>spec.md</b>\n<i>ISO 29148</i>\n\nACs, contratos,\nconstraints,\npriorización"]
+    SPEC["<b>spec.md</b>\n<i>ISO 29148 StRS/SRS</i>\n\nACs, contratos,\nconstraints,\npriorización"]
 
     DESIGN["<b>design.md</b>\n<i>ISO 42010 + IEEE 1016</i>\n\nArquitectura, ADRs,\npatrones, seguridad,\ninfra"]
 
-    TASKS["<b>tasks.md</b>\n<i>territorio libre</i>\n\nDesglose, deps,\nACs por tarea,\norden de ejecución"]
+    TASKS["<b>tasks.md</b>\n<i>ISO 21502 §7.6</i>\n\nDesglose, deps,\nACs por tarea,\norden de ejecución"]
 
     HANDOFF["<b>handoff.md</b>\n<i>ISO 15289 transition</i>\n\nContrato autocontenido\npara ejecución"]
 
@@ -558,9 +854,12 @@ flowchart TD
    pero no escribe dentro de ningún artefacto. Regla cardinal sin
    excepciones.
 
-3. **El TPM es el ÚNICO que toca el RAG** — todos los artefactos pasan
-   por el TPM para persistencia. Los roles producen contenido; el TPM
-   lo persiste con criterio editorial (formato, completitud, consistencia).
+3. **El TPM es el ÚNICO que ESCRIBE en el RAG** — todas las operaciones
+   de escritura (create, update, delete, mark-complete) pasan por el TPM
+   con criterio editorial (formato, completitud, consistencia). Las
+   **lecturas son libres** — cualquier rol puede consultar el RAG
+   directamente vía Pattern B (topic_keys) sin intermediario. Ver
+   sección "Estrategia de Retrieval."
 
 4. **El handoff lo compila el TPM, no un rol productivo** — es una
    síntesis de artefactos previos, no contenido nuevo. El TPM aplica
@@ -619,7 +918,7 @@ flowchart TD
 
 | Operación | Qué hace | Quién la invoca | Ejemplo |
 |-----------|----------|-----------------|---------|
-| **Create** | Crea un artefacto nuevo con metadata inicial | SM (instrucción) | "Crea idea.md para el proyecto X" |
+| **Create** | Crea un artefacto nuevo con metadata inicial. **Precondición**: verifica que todos los artefactos upstream estén marcados como `completo` antes de crear. Si un upstream falta o está incompleto, rechaza y reporta al SM. | SM (instrucción) | "Crea idea.md para el proyecto X" |
 | **Read** | Retorna un slice acotado del artefacto | SM, Roles | "Dame la sección de ACs de spec.md" |
 | **Update** | Modifica contenido existente, mantiene trazabilidad | SM (instrucción) | "Actualiza el ADR #3 en design.md" |
 | **Delete** | Elimina contenido obsoleto (raro, con justificación) | SM (instrucción) | "Elimina la tarea T-07, fue descartada" |
@@ -694,8 +993,8 @@ flowchart TD
 
     NEED --> Q2{{"¿Cuántos sub-agentes\nnecesitan el MISMO artifact?"}}
 
-    Q2 -->|"1-6"| PATTERN_B_USE
-    Q2 -->|"7+"| PATTERN_A_USE
+    Q2 -->|"1-7"| PATTERN_B_USE
+    Q2 -->|"8+ o búsqueda fuzzy"| PATTERN_A_USE
 
     style PATTERN_B_USE fill:#bfb,stroke:#080
     style PATTERN_A_USE fill:#ffb,stroke:#880
@@ -706,7 +1005,7 @@ flowchart TD
 | **Fase normal**: Dev Lead necesita `spec.md` para diseñar | **B** (topic_key) | Target determinista. El agente fetcha solo lo que necesita. 6x más barato. |
 | **Verificación**: QA necesita `spec.md` + resultados de ejecución | **B** (topic_keys) | Targets conocidos. El agente puede hacer queries incrementales (primero §3, luego §3.2 si necesita detalle). |
 | **Búsqueda exploratoria**: SM busca "qué decisiones se tomaron sobre auth" | **A** (SM inyecta) | Búsqueda fuzzy. Los resultados pueden ser ruidosos. Mejor que el SM cure una vez a que 5 agentes hagan la misma búsqueda vaga. |
-| **Fan-out alto**: 6+ roles votan en Fase 7 sobre el mismo artifact | **A** (SM inyecta) | Un fetch compartido entre 7 agentes es más barato que 7 fetches independientes. Breakeven ≈ N=7 para un artifact de 2K tokens. |
+| **Fan-out alto**: 8+ agentes o búsqueda fuzzy compartida | **A** (SM inyecta) | Justificación principal: **calidad, no costo**. Cuando N agentes hacen la misma búsqueda fuzzy independientemente, obtienen resultados ruidosos y divergentes. El SM cura una vez y distribuye. Nota: Fase 7 tiene 5 roles → Pattern B aplica (bajo el umbral). Pattern A se reserva para escenarios reales de alto fan-out (multi-team reviews, custom roles). |
 | **Mid-task discovery**: sub-agente descubre que necesita más contexto | **B** (agente fetcha) | El SM no puede anticipar qué necesitará el agente a mitad de tarea. El agente hace queries precisas conforme razona. |
 
 ### Cómo funciona Pattern B en la práctica
@@ -832,6 +1131,7 @@ flowchart TD
         LIST["list(filters?)"]
         MARK["markComplete(artifact)"]
         VERIFY["verifyConsistency(artifact[])"]
+        DELETE["delete(artifact, reason)"]
         HISTORY["history(artifact)"]
     end
 
@@ -920,6 +1220,10 @@ flowchart LR
 - **Ventajas**: cero dependencias, legible por humanos, versionable con git
 - **Desventaja**: sin acceso cross-machine, sin búsqueda semántica
 - **Suficiente para**: proyectos individuales, challenges, MVPs
+- **Concurrencia**: sesión activa única asumida. No hay locking ni
+  merge conflict handling. Si dos sesiones escriben al mismo artefacto,
+  la última gana. Concurrent-write safety es responsabilidad de
+  adaptadores futuros (DBMS, Jira, Git repo).
 
 Los demás adaptadores son **TBD**. El modelo de artefactos los habilita
 por diseño, pero la implementación es futura. El adaptador local es el
@@ -931,6 +1235,15 @@ MVP de persistencia.
 
 La metodología define CÓMO se organiza el trabajo. Los artefactos definen
 QUÉ se produce. Son capas independientes.
+
+> **Alcance del claim**: la intercambiabilidad está **implementada a
+> nivel de artefactos** — los 6 artifacts son idénticos sin importar la
+> metodología. A nivel de **orquestación (routing, gates, convocatoria)**,
+> el framework implementa **Scrum como default**. El routing para
+> Kanban, Shape Up, y SAFe es extensible pero **no está implementado
+> aún** — requiere routing tables alternativas (ej: WIP-limit checks
+> en vez de sprint gates). Los roles (PO, SM, Dev Lead, QA, DevSecOps,
+> UX) son funciones constantes con nombres methodology-specific.
 
 ```mermaid
 flowchart TD
@@ -974,7 +1287,7 @@ flowchart TD
 | **En qué orden se producen** | NO — la cadena idea→spec→design→tasks→handoff→ops es lógica, no metodológica | No puedes diseñar sin requisitos, sin importar la metodología |
 | **Cómo se agrupa el trabajo** | SÍ | Scrum: sprints. Kanban: flujo. Shape Up: bets |
 | **Qué ceremonia acompaña la producción** | SÍ | Scrum: sprint planning. Kanban: replenishment. Shape Up: betting table |
-| **Qué roles participan y cómo** | SÍ (parcialmente) | Scrum: PO + SM + Dev Team. Kanban: sin roles fijos. Shape Up: shapers + builders |
+| **Qué roles participan y cómo** | NO — las funciones son constantes; los **nombres** son methodology-specific | Scrum: PO + SM + Dev Team. Kanban: mismas funciones sin títulos formales. Shape Up: shapers (≈PO+SM) + builders (≈Dev Lead+QA). Las 6 funciones (PO, SM, Dev Lead, QA, DevSecOps, UX) existen en todas las metodologías; lo que cambia es cómo se nombran y cuánta ceremonia acompaña su invocación. |
 | **Cadencia de revisión** | SÍ | Scrum: cada sprint. Kanban: continua. PI Planning: cada PI |
 | **Cómo se gestionan las tareas** | SÍ | Scrum: sprint backlog. Kanban: board con WIP. Shape Up: hill chart |
 
@@ -992,6 +1305,20 @@ flowchart TD
 ---
 
 ## Gobierno de Metodología — Lock, Cambio y Trazabilidad
+
+### Selección inicial de metodología
+
+En el primer ciclo del proyecto, el SM debe determinar la metodología:
+
+1. **Si el MIM la especifica** → usar la especificada.
+2. **Si el MIM no la especifica** → el SM aplica **Scrum como default**
+   e informa al MIM: *"Se usará Scrum como metodología. Puedes cambiar
+   a Kanban/Shape Up/PI Planning al cierre del primer sprint."*
+3. **Si el MIM tiene dudas** → el SM presenta la tabla comparativa
+   (sección "Mapeo rápido") y pregunta explícitamente.
+
+La decisión se registra en `idea.md` → sección "Decisiones tomadas" →
+campo `methodology_stamp`.
 
 ### Principio: la metodología se LOCKEA por iteración
 
@@ -1305,9 +1632,13 @@ Scrum sin ningún problema, porque ambos siguen el mismo schema ISO.
 
 ## Preguntas Abiertas
 
-1. **¿Debe `ops-runbook.md` producirse en modo planificación o
-   post-ejecución?** — el contenido depende de que el código exista, pero
-   la estructura puede anticiparse desde el diseño.
+1. ~~**¿Debe `ops-runbook.md` producirse en modo planificación o
+   post-ejecución?**~~ **RESUELTO**: post-ejecución. El ops-runbook
+   se produce en Fase 6 (Verificar) o Fase 7 (Aceptar), cuando ya
+   existe código desplegable. DevSecOps lo escribe con input del
+   design.md (infra) y los resultados de ejecución (métricas, configs).
+   La estructura puede anticiparse en Fase 3 (Design), pero el
+   contenido requiere código existente.
 
 2. **¿Cómo escala el modelo hacia abajo?** — para un challenge de 45 min,
    ¿se omiten artefactos o se comprimen en uno solo? Los tiers de

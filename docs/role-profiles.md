@@ -394,8 +394,14 @@ concreta para el siguiente ciclo.
 
 ## Reglas de Activación Condicional
 
-El SM evalúa estas reglas UNA VEZ en Fase 1 y las persiste en `idea.md`
-como "roles activos". Las reglas pueden revisarse en retrospectiva.
+El SM evalúa estas reglas en Fase 1 y las persiste en `idea.md`
+como "roles activos". Las reglas se re-evalúan:
+
+1. **En retrospectiva** (Fase 8) — revisión programada.
+2. **Mid-cycle por escalación** — cualquier rol o el SM puede flaggear
+   "scope changed, re-evaluate activation" en cualquier momento. Ejemplo:
+   un proyecto CLI-only que descubre que necesita UI en Fase 4 →
+   el SM reactiva UX sin esperar retro. El SM notifica al MIM del cambio.
 
 ### Tabla de activación
 

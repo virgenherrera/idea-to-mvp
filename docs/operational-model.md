@@ -11,9 +11,9 @@ El framework actualmente mezcla tres concerns en un solo repositorio:
 
 1. **Reglas de gobernanza** — axiomas de AGENTS.md, compact rules, fases del
    pipeline. Estas SÍ PERTENECEN a cada repo que adopta el framework.
-2. **Tooling de planificación** — fases SDD (explorar, proponer, especificar,
-   diseñar, tareas), roles del scrum team, persistencia de artefactos
-   (engram, openspec, híbrido). Son OPERACIONALES y no deben contaminar los
+2. **Tooling de planificación** — fases del ciclo (idea, spec, diseño,
+   tareas, handoff), roles del scrum team, persistencia de artefactos
+   (engram, local, híbrido). Son OPERACIONALES y no deben contaminar los
    repos adoptantes.
 3. **Tooling de ejecución** — patrón orquestador-minion, delegación a
    sub-agentes, inyección de personalidad/contexto, resolución de skills.
@@ -244,7 +244,7 @@ flowchart TD
     subgraph PLAN["MODO PLANIFICACIÓN"]
         direction TB
         P_IN["Entrada: idea, problema, feature request"]
-        P_TOOLS["Herramientas: explorar, proponer, spec, diseño, tareas"]
+        P_TOOLS["Herramientas: idea, spec, diseño, tareas, handoff"]
         P_WHO["Participantes: scrum team como lentes de revisión"]
         P_OUT["Escribe en: artifact store — NUNCA en el repo destino"]
     end
@@ -296,13 +296,17 @@ y es LEÍDO por el modo ejecución.
 ## Adaptadores del Artifact Store
 
 El framework necesita una capa de persistencia pluggable. Cada adaptador
-implementa la misma interfaz (guardar, leer, buscar, listar) pero almacena
-de forma diferente.
+implementa la misma interfaz universal de 8 operaciones (ver
+`artifact-model.md` → "Adaptadores de Persistencia" para la definición
+completa: `save`, `read`, `search`, `list`, `markComplete`,
+`verifyConsistency`, `delete`, `history`). Todas las operaciones de
+escritura son mediadas por el TPM (ver `artifact-model.md` → "TPM como
+DBMS"); las lecturas pueden ser directas vía Pattern B.
 
 ### Adaptador local (por defecto)
 - Almacena artefactos como archivos markdown en un directorio designado
   FUERA del repo destino.
-- Ejemplo: `~/.idea-to-mvp/projects/{nombre-proyecto}/artifacts/`
+- Ejemplo: `~/.idea-to-mvp/projects/{nombre-proyecto}/docs/`
 - Ventajas: sin dependencias externas, trackeable con git si se desea,
   legible por humanos.
 - Desventaja: sin acceso cross-machine.
@@ -328,17 +332,23 @@ El scrum team es una herramienta de PLANIFICACIÓN, no de ejecución.
 
 | Rol | Cuándo se activa | Qué hace | Qué NO hace |
 |-----|-----------------|----------|-------------|
-| PO | Propuesta, Spec | Valida alcance, prioriza, define ACs | Escribir código, revisar PRs |
-| Dev Lead | Diseño, Tareas | Valida arquitectura, estima, secuencia | Ejecutar tareas |
-| SM | Todas las fases de planificación | Facilita, remueve bloqueos, valida proceso | Hacer cumplir en runtime |
-| UX | Spec, Diseño | Valida decisiones que afectan al usuario | Implementar UI |
-| QA | Spec, Tareas | Valida testeabilidad, define estrategia de pruebas | Escribir código de producción |
-| DevSecOps | Diseño, Tareas | Valida superficie de seguridad, decisiones de infra | Desplegar |
+| PO | Idea, Spec, Verificar, Aceptar, Retro | Valida alcance, prioriza, define ACs, acepta entregables | Escribir código, revisar PRs |
+| Dev Lead | Diseño, Tareas, Verificar, Aceptar, Retro | Valida arquitectura, estima, secuencia, revisa calidad técnica | Ejecutar tareas (eso es modo ejecución) |
+| SM | Todas las fases | Facilita, remueve bloqueos, valida proceso, orquesta gates | Producir contenido, leer archivos |
+| UX | Spec, Diseño, Verificar, Aceptar, Retro | Valida decisiones que afectan al usuario | Implementar UI |
+| QA | Spec, Tareas(cond), Verificar, Aceptar, Retro | Valida testeabilidad, define estrategia de pruebas, verifica cobertura | Escribir código de producción |
+| DevSecOps | Diseño, Tareas(cond), Verificar, Aceptar, Retro | Valida superficie de seguridad, decisiones de infra, postura de seguridad | Desplegar |
 
-En modo ejecución, el scrum team está EN SILENCIO. El orquestador y los
+**Durante ejecución**, el scrum team está en silencio. El orquestador y los
 sub-agentes hacen el trabajo. Si la ejecución revela un gap de planificación,
-el orquestador puede escalar DE VUELTA al modo planificación — pero el scrum
-team nunca aparece dentro de la ejecución.
+el orquestador puede escalar DE VUELTA al modo planificación.
+
+**Post-ejecución** (Verificar, Aceptar, Retrospectiva), el scrum team se
+RE-ACTIVA como panel de revisión. Estas fases son parte del modo
+planificación — operan sobre los resultados de la ejecución, no sobre
+código directamente. Ver `behavior-scrum-master-routing.md` Fases 6-8 y
+`role-profiles.md` para los contratos de delegación de cada rol en estas
+fases.
 
 ---
 
@@ -360,7 +370,7 @@ hacerlo verdad.
 
 ## Qué NO Va en AGENTS.md
 
-- Definiciones de fases SDD (explorar, proponer, spec, etc.)
+- Definiciones de fases del ciclo de planificación (idea, spec, diseño, etc.)
 - Configuración del artifact store
 - Patrones de delegación del orquestador
 - Templates de personalidad de sub-agentes
@@ -398,9 +408,8 @@ gobernanza.
    revisión de 6 roles. ¿Cómo escala hacia abajo el modo planificación de
    forma elegante?
 
-6. **¿Verificación en modo ejecución — quién la hace?**
-   Actualmente `sdd-verify` y `sdd-accept` difuminan la línea. Verify
-   revisa implementación contra spec (concern de ejecución). Accept es una
-   revisión scrum (concern de planificación aplicado post-ejecución).
-   ¿Debería accept moverse a una "revisión post-ejecución" que alimente
-   DE VUELTA a planificación?
+6. ~~**¿Verificación en modo ejecución — quién la hace?**~~
+   **RESUELTO**: Verify (Fase 6) y Accept (Fase 7) son fases
+   POST-ejecución del modo planificación. El scrum team se reactiva
+   como panel de revisión. Retro (Fase 8) cierra el ciclo y alimenta
+   el siguiente. Ver `behavior-scrum-master-routing.md` Fases 6-8.

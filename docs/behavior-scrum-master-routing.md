@@ -43,9 +43,12 @@ flowchart LR
 
 ### State Machine del Proyecto — Estado Derivado del RAG
 
-El SM NO mantiene estado interno. **El estado se DERIVA de los artefactos
-en el RAG**, igual que un SM humano deriva el estado del proyecto abriendo
-Jira.
+El SM no persiste estado **cross-session**. El estado del proyecto se
+DERIVA de los artefactos en el RAG, igual que un SM humano abre Jira para
+saber en qué va. **Dentro de una sesión continua**, el SM puede cachear
+el último status report del TPM y re-consultar solo cuando el estado puede
+haber cambiado (por ejemplo, después de una delegación que produce o
+modifica un artefacto).
 
 Al inicio de cualquier sesión (nueva, post-compaction, post-crash), el SM
 le pregunta al TPM: "¿qué artefactos existen y cuál es su estado?" La
@@ -69,6 +72,20 @@ Esto significa:
 - **Crash** → mismo mecanismo, cero pérdida de estado de proceso
 - **Múltiples sesiones** → cualquier sesión puede retomar donde otra dejó
 
+#### Anomalías de estado — qué pasa si el RAG es inconsistente
+
+| Anomalía | Cómo la detecta el SM | Acción |
+|----------|----------------------|--------|
+| Artefacto downstream existe pero upstream falta (ej: `spec.md` sin `idea.md`) | TPM reporta artefactos existentes; SM detecta gap en la cadena | Escalar al MIM: "El RAG está en estado inconsistente. Falta {upstream}. ¿Reconstruir o descartar {downstream}?" |
+| Dos artefactos en estado "in progress" simultáneamente | TPM reporta múltiples artefactos incompletos | SM selecciona el más upstream y se enfoca en completarlo. El otro se marca como "pendiente, bloqueado por {upstream}." |
+| Artefacto marcado completo pero inconsistente con upstream editado | `verifyConsistency` del TPM detecta conflicto post-update | SM notifica: "El artefacto {downstream} puede estar desactualizado respecto a cambios en {upstream}." → Re-convocar rol validador. |
+| RAG vacío pero con historial (proyecto existente, artefactos eliminados) | TPM reporta RAG vacío + historial de operaciones | SM pregunta al MIM: "RAG vacío pero hay historial previo. ¿Empezar de cero o restaurar?" |
+
+**Definición mecánica de "completo"**: un artefacto está completo cuando
+(1) todas las secciones requeridas por su schema existen (check
+estructural, TPM), Y (2) el rol validador aprobó la calidad semántica
+del contenido (check semántico, vía PDC).
+
 ```mermaid
 stateDiagram-v2
     [*] --> Idea: entrada del usuario
@@ -76,7 +93,8 @@ stateDiagram-v2
     Spec --> Design: TPM reporta spec.md completo
     Design --> Tasks: TPM reporta design.md completo
     Tasks --> Handoff: TPM reporta tasks.md completo
-    Handoff --> Execution: TPM reporta handoff.md completo
+    Handoff --> MIM_GATE: TPM reporta handoff.md completo
+    MIM_GATE --> Execution: MIM confirma inicio de ejecución
     Execution --> Verify: implementación completada
     Verify --> Accept: verificación aprobada
     Accept --> Retro: aceptación aprobada
@@ -135,18 +153,44 @@ flowchart TD
 
 #### Quién decide
 
-**El SM decide autónomamente.** No es el MIM quien dice "ve en
-fast-forward" — es el SM quien juzga "aquí puedo avanzar sin preguntar
-porque la solución es determinista." Factores que evalúa:
+**El SM decide autónomamente** usando un checklist de 4 factores.
+No es el MIM quien dice "ve en fast-forward" — el SM evalúa y decide.
 
-1. **¿Cuántos artefactos ya existen en el RAG?** — si ya hay spec +
-   design + tasks, el fast-forward es hasta ejecución.
-2. **¿Es un estándar abierto con convenciones conocidas?** — OTEL,
-   i18n, linting → alta certeza.
-3. **¿El input tiene ambigüedad de dominio?** — "uber de lanchas" tiene
-   infinitas interpretaciones → baja certeza.
-4. **¿Hay una app existente como referencia?** — un proyecto con código
-   en el RAG permite inferir stack, patrones, convenciones.
+#### Checklist de certeza (obligatorio, auditable)
+
+El SM evalúa 4 factores y asigna 0, 1, o 2 puntos a cada uno:
+
+| Factor | 0 puntos | 1 punto | 2 puntos |
+|--------|----------|---------|----------|
+| **F1. Artefactos existentes** | RAG vacío | 1-2 artefactos upstream | spec + design + tasks completos |
+| **F2. Estandarización** | Dominio custom sin estándar | Estándar con variantes (auth, API) | Estándar abierto puro (OTEL, i18n, linting) |
+| **F3. Ambigüedad de dominio** | Infinitas interpretaciones ("uber de X") | Dominio acotado con decisiones pendientes | Dominio determinista (agregar módulo X a app existente) |
+| **F4. Referencia existente** | Sin codebase ni precedentes | Codebase existe pero no cubre este dominio | Codebase con patrones/stack que aplican directamente |
+
+**Thresholds**:
+
+| Score total | Certeza | Hasta dónde avanza |
+|-------------|---------|-------------------|
+| 0–2 | **Baja** | Idea + preguntas al MIM |
+| 3–5 | **Media** | Idea + spec parcial + preguntas específicas |
+| 6–8 | **Alta** | Hasta handoff o ejecución directa |
+
+**El SM DEBE registrar el score en su reasoning** (no solo la
+conclusión) para que la decisión sea auditable:
+
+> *"F1=0 (RAG vacío), F2=1 (JWT es estándar con variantes), F3=1
+> (auth es acotado pero hay decisiones), F4=2 (codebase existente
+> con Express). Total: 4 → Media. Avanzo a idea + spec parcial."*
+
+#### Ejemplos resueltos de frontera
+
+| Input | F1 | F2 | F3 | F4 | Total | Certeza | Acción |
+|-------|----|----|----|----|-------|---------|--------|
+| "Hazme el uber de lanchas" | 0 | 0 | 0 | 0 | 0 | Baja | Idea + preguntas |
+| "Agrega auth con JWT" (sin codebase) | 0 | 1 | 1 | 0 | 2 | Baja | Idea + preguntas |
+| "Agrega auth con JWT" (codebase Express existente) | 0 | 1 | 1 | 2 | 4 | Media | Idea + spec parcial |
+| "Crea módulo OTEL" (codebase con NestJS) | 0 | 2 | 2 | 2 | 6 | Alta | Hasta handoff |
+| "Epic X ya groomeado" (spec+design+tasks en RAG) | 2 | 2 | 2 | 2 | 8 | Alta | Fast-forward a ejecución |
 
 #### Fast-forward también aplica MID-CYCLE
 
@@ -236,6 +280,8 @@ flowchart LR
     end
     subgraph F4["Desglosar Tareas"]
         F4_DEV["Dev Lead"]
+        F4_SEC["DevSecOps\n(condicional)"]
+        F4_QA["QA\n(condicional)"]
     end
     subgraph F5["Generar Handoff"]
         F5_SM["TPM\n(instruido por SM)"]
@@ -263,9 +309,11 @@ Preguntas predefinidas que el PO debe resolver:
 5. ¿Hay restricciones de tiempo o presupuesto?
 6. ¿Quién aprueba el resultado final?
 
-Si la entrada es un **tech challenge**, el SM también se convoca a sí mismo
-para extraer reglas de proceso: timebox, criterios de evaluación,
-restricciones de herramientas.
+Si la entrada es un **tech challenge**, el SM delega a un sub-agente
+dedicado con contrato de "SM-analista" (Rol: SM-Process, Personalidad:
+extractivo-metódico, Input: archivos del challenge, Output: timebox +
+criterios de evaluación + restricciones de herramientas). El SM NO lee
+los archivos directamente — la regla cardinal no tiene excepciones.
 
 #### Fase 2 — Especificar
 
@@ -310,11 +358,13 @@ Preguntas predefinidas:
 
 | | Detalle |
 |---|---------|
-| **Rol convocado** | Dev Lead |
-| **Función** | Descomponer el diseño en tareas ordenadas por dependencia |
-| **NO hace** | NO implementa. NO asigna a personas específicas. |
+| **Rol convocado** | Dev Lead + DevSecOps (condicional) + QA (condicional) |
+| **Función Dev Lead** | Descomponer el diseño en tareas ordenadas por dependencia |
+| **Función DevSecOps** | (Si activo) Inyectar tareas de seguridad/hardening faltantes |
+| **Función QA** | (Si activo) Validar que cada tarea tenga criterio de verificación |
+| **NO hacen** | NO implementan. NO asignan a personas específicas. |
 | **Artefacto de salida** | `tasks.md` |
-| **Gate** | Tareas ordenadas. Sin dependencias cíclicas. Cada tarea mapeada a un AC. |
+| **Gate** | Tareas ordenadas. Sin dependencias cíclicas. Cada tarea mapeada a un AC. Completitud estructural (TPM) + semántica (Dev Lead aprueba). |
 
 Preguntas predefinidas:
 
@@ -338,13 +388,34 @@ El SM instruye al TPM sobre qué debe incluir el handoff:
 1. Contexto del proyecto (de `idea.md`)
 2. Criterios de aceptación (de `spec.md`)
 3. Decisiones de arquitectura (de `design.md`)
-4. Tareas ordenadas (de `tasks.md`)
-5. Qué NO hacer (restricciones explícitas)
-6. Cómo se ve el éxito (definición de done)
+4. Tareas ordenadas con dependency graph (de `tasks.md`)
+5. Estrategia de pruebas (de `spec.md` requisitos no funcionales + QA)
+6. Qué NO hacer (restricciones explícitas)
+7. Cómo se ve el éxito (definición de done)
 
-El TPM compila y aplica estándares de escritura. El SM valida completitud.
-Si falta algo, el SM instruye al TPM para que lo agregue — nunca lo agrega
-él mismo.
+El TPM compila y aplica estándares de escritura.
+
+**Validación de autocontención** (adversarial smoke test):
+
+Después de que el TPM produce `handoff.md`, el SM NO lo valida
+leyéndolo directamente (regla cardinal). En vez de eso, lanza un
+sub-agente fresco que recibe **SOLO** `handoff.md` (sin acceso a ningún
+otro artefacto ni contexto de conversación) con este contrato:
+
+- **Input**: solo `handoff.md`
+- **Tarea**: "Genera un plan de ejecución a partir de este documento."
+- **Criterio**: si el sub-agente puede generar el plan sin hacer
+  preguntas → handoff es autocontenido. Si necesita preguntar → falla.
+
+Si el smoke test falla, el SM instruye al TPM sobre los gaps
+detectados. Se itera hasta que el sub-agente fresco pueda planear
+sin preguntas.
+
+**Gate de confirmación MIM**: antes de transicionar a Modo Ejecución,
+el SM presenta al MIM un resumen del handoff y pide confirmación
+explícita: "¿Procedemos a ejecución?" El MIM puede aprobar, pedir
+ajustes, o detener. Esta transición NO es automática — el MIM siempre
+tiene la última palabra antes de que se escriba código.
 
 ---
 
@@ -475,7 +546,7 @@ sequenceDiagram
 | **Actualizar** | Una fase completa información faltante o corrige algo | QA identifica un AC ambiguo → el TPM actualiza `spec.md` |
 | **Marcar completo** | El SM valida que el gate de una fase pasó | Todas las preguntas de negocio respondidas → `idea.md` marcado como completo |
 | **Servir contexto** | Un rol necesita información de fases anteriores | Dev Lead necesita ACs → el TPM sirve el slice relevante de `spec.md` |
-| **Verificar consistencia** | Antes de generar handoff | El TPM revisa que `spec.md`, `design.md` y `tasks.md` no se contradigan |
+| **Verificar consistencia** | Antes de generar handoff Y después de cualquier Update a un artefacto upstream | El TPM revisa que artefactos downstream no se contradigan con el upstream editado. Reporta stale artifacts al SM. |
 | **Eliminar** | Excepcional. Artefacto obsoleto o duplicado. | Rara vez — el TPM documenta la razón |
 
 ### Reglas generales
@@ -488,6 +559,22 @@ sequenceDiagram
 6. **El SM SÍ bloquea** — si el gate no pasa, no hay avance
 7. **El SM SÍ traza** — el TPM le provee el estado de artefactos
 8. **El SM persiste en todas las fases** — es el hilo conductor
+
+#### Protocolo cuando el MIM no puede responder
+
+Si el MIM responde "no sé" o "tú decide" a una pregunta de gate:
+
+1. El PO (o rol activo) formula una **asunción explícita** basada en
+   el contexto disponible y mejores prácticas.
+2. La asunción se registra en el artefacto correspondiente → sección
+   "Decisiones tomadas" con flag `[ASUNCIÓN — pendiente validación]`.
+3. El gate se satisface con la asunción documentada — el flujo NO se
+   bloquea indefinidamente.
+4. En Fase 6 (Verificar), el QA revisa las asunciones flaggeadas y
+   valida si fueron correctas post-implementación.
+5. Si la asunción resultó incorrecta → el SM escala al MIM con
+   evidencia concreta: "Asumimos X, pero la implementación mostró Y.
+   Decisión requerida."
 
 ---
 
@@ -555,6 +642,14 @@ sequenceDiagram
 El PDC NO es opcional. No se puede lanzar otro sub-agente sin haber
 completado los 4 pasos del PDC anterior.
 
+**Excepción: Fase 7 (Aceptar) — lanzamiento paralelo.** En Fase 7,
+los 3-5 roles de aceptación votan en paralelo (ver `role-profiles.md`).
+El SM lanza todas las delegaciones simultáneamente y aplica PDC a cada
+resultado conforme llega. Si un voto falta (timeout, crash, sin Status
+Report), se trata como BLOCK implícito y se re-delega solo ese rol.
+El merge de votos requiere mayoría simple; un BLOCK de cualquier rol
+detiene el avance hasta resolución.
+
 #### 3. Circuit Breaker
 
 Si 3 delegaciones consecutivas al mismo rol fallan (Status: FAILED):
@@ -563,6 +658,15 @@ Si 3 delegaciones consecutivas al mismo rol fallan (Status: FAILED):
 2. Escala al MIM: "El rol X falló 3 veces consecutivas. Contexto: [...]
    ¿Redefinir el contrato, cambiar de enfoque, o continuar manualmente?"
 3. NO hay reintento automático después del tercer fallo
+
+**Alcance del counter**: el contador de fallos consecutivos es de
+**sesión**. Si hay compaction, crash, o nueva sesión, el counter se
+resetea a 0. Esto es intencional: cross-session, el TPM mantiene un
+historial de delegaciones fallidas como metadata del artefacto
+afectado, y el SM puede consultarlo al inicio de sesión para ajustar
+la estrategia. El circuit breaker NO es context-resilient en el
+sentido de sobrevivir compaction — es un mecanismo de protección
+intra-sesión.
 
 ```mermaid
 stateDiagram-v2
@@ -694,8 +798,8 @@ flowchart LR
 |-------|-------------------|
 | 1. Definir Idea | — |
 | 2. Especificar | Validar que cada AC sea verificable con una prueba concreta. Identificar ACs ambiguos o no testeables. Proponer criterios de cobertura. |
-| 3. Diseñar | Validar que la arquitectura propuesta sea testeable. Identificar puntos ciegos de testing. |
-| 4. Desglosar Tareas | Validar que cada tarea tenga un criterio de verificación. Identificar tareas que necesitan pruebas específicas. |
+| 3. Diseñar | — |
+| 4. Desglosar Tareas | (Condicional) Validar que cada tarea tenga un criterio de verificación. Identificar tareas que necesitan pruebas específicas. |
 | 5. Generar Handoff | — |
 | 6. Verificar | Validar cobertura de pruebas. Verificar que los tests cubran los ACs. Identificar edge cases no cubiertos. |
 | 7. Aceptar | Dar veredicto sobre la calidad técnica del testing. Aprobar, solicitar cambios, o bloquear. |
@@ -744,7 +848,7 @@ flowchart LR
 
 | Etapa | Tareas permitidas |
 |-------|-------------------|
-| 1. Definir Idea | Convocar PO. Si es challenge: extraer reglas de proceso (timebox, evaluación, restricciones). Validar gate. |
+| 1. Definir Idea | Convocar PO. Si es challenge: delegar extracción de reglas de proceso a sub-agente SM-Process (timebox, evaluación, restricciones). Validar gate. |
 | 2. Especificar | Convocar PO + QA. Facilitar resolución de ambigüedades. Validar gate. |
 | 3. Diseñar | Convocar Dev Lead + DevSecOps (+ UX si aplica). Facilitar decisiones. Validar gate. |
 | 4. Desglosar Tareas | Convocar Dev Lead. Validar que no haya dependencias cíclicas. Validar estimaciones. Validar gate. |
@@ -770,7 +874,7 @@ flowchart TB
     subgraph STAGES["Etapas donde participa cada rol"]
         direction TB
         S_PO["PO: Idea → Spec → Verificar → Aceptar → Retro"]
-        S_QA["QA: Spec → Diseño → Tareas → Verificar → Aceptar → Retro"]
+        S_QA["QA: Spec → Tareas(cond) → Verificar → Aceptar → Retro"]
         S_DEV["Dev Lead: Diseño → Tareas → Verificar → Aceptar → Retro"]
         S_SEC["DevSecOps: Diseño → Tareas → Verificar → Aceptar → Retro"]
         S_UX["UX: Spec → Diseño → Verificar → Aceptar → Retro"]
