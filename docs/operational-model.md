@@ -28,6 +28,14 @@ y HACER CUMPLIR ese AGENTS.md debe vivir en otro lugar.
 
 ---
 
+## Comportamiento Global
+
+Ver [behavior-scrum-master-routing.md](behavior-scrum-master-routing.md) —
+el SM actúa como router de fases, convoca roles, valida gates, y bloquea
+avances prematuros.
+
+---
+
 ## Dos Modos
 
 ### Modo 1 — Planificación (idea → handoffs)
@@ -39,18 +47,47 @@ como lentes de revisión — no como agentes que escriben código.
 
 #### Entradas aceptadas
 
-El modo planificación arranca desde cualquier nivel de definición:
+El modo planificación arranca desde cualquier nivel de definición.
+**En esta etapa NO se detecta stack, arquitectura ni tecnologías.** Lo
+único que ocurre es: crear la entrada inicial del proyecto en el RAG.
 
-| Nivel de entrada | Ejemplo | Qué hace el sistema |
-|-----------------|---------|---------------------|
-| Idea vaga | "Haz el Uber de las lanchas" | Guía al MIM con preguntas para acotar |
-| Archivos de un challenge | README.md + seeds + schema de un tech challenge | Extrae requisitos, constraints, stack |
-| Ticket externo | Link a Jira, Linear, Confluence, GitHub Issue | Lee y estructura (vía adaptador TBD) |
-| Especificación parcial | "API REST con auth JWT y CRUD de productos" | Identifica gaps y pregunta solo lo faltante |
+El sistema detecta el tipo de entrada y elige qué rol del agile team
+la procesa:
+
+| Nivel de entrada | Ejemplo | Rol asignado | Acción |
+|-----------------|---------|-------------|--------|
+| Idea vaga | "Haz el Uber de las lanchas" | PO | Formula preguntas de negocio al MIM para acotar alcance y valor |
+| Archivos de un challenge | README.md + seeds + schema de un tech challenge | PO + SM | PO extrae requisitos y constraints. SM extrae reglas del proceso (timebox, evaluación, restricciones) |
+| Ticket externo | Link a Jira, Linear, Confluence, GitHub Issue | PO | Lee, estructura, identifica ambigüedades (vía adaptador TBD) |
+| Especificación parcial | "API REST con auth JWT y CRUD de productos" | PO | Identifica gaps en los requisitos y pregunta solo lo faltante |
+
+```mermaid
+flowchart TD
+    INPUT["Entrada del usuario"]
+    DETECT["Detectar tipo de entrada"]
+    ROUTE["Elegir rol(es) del agile team"]
+
+    DETECT --> ROUTE
+    INPUT --> DETECT
+
+    ROUTE -->|idea vaga| PO_ONLY["PO: preguntas de negocio"]
+    ROUTE -->|challenge| PO_SM["PO: requisitos\nSM: reglas de proceso"]
+    ROUTE -->|ticket| PO_TICKET["PO: estructurar y desambiguar"]
+    ROUTE -->|spec parcial| PO_GAPS["PO: identificar gaps"]
+
+    PO_ONLY --> CREATE["Crear entrada inicial\nen RAG (docs/)"]
+    PO_SM --> CREATE
+    PO_TICKET --> CREATE
+    PO_GAPS --> CREATE
+```
 
 El punto es: **no importa qué tan vago o preciso sea el input**. El sistema
-detecta el nivel de definición y genera las preguntas necesarias para llegar
-al siguiente nivel.
+detecta el nivel de definición, elige el rol correcto, y produce UNA cosa:
+la entrada inicial del proyecto en el RAG (`idea.md`). Nada más.
+
+Las decisiones técnicas (stack, arquitectura, patrones) NO pertenecen a
+esta etapa. Llegan después, cuando el Dev Lead y DevSecOps entran en las
+fases de diseño.
 
 #### Flujo: de idea a handoff
 
