@@ -941,6 +941,20 @@ flowchart TD
 4. Formato Markdown consistente con el schema del artefacto definido
    en este documento.
 
+**Regla anti-drift**: las ediciones del TPM se clasifican en dos niveles:
+
+- **Nivel 1 — formato**: whitespace, Markdown, renumeracion, ordenamiento.
+  El TPM las aplica sin notificar. No cambian semantica.
+- **Nivel 2 — estructura/contenido**: reescritura de oraciones, eliminacion
+  de secciones, reorganizacion de requisitos, cambio de IDs. El TPM
+  DEBE notificar al productor original antes de aplicar. Si el productor
+  no esta disponible (sesion cerrada), el TPM registra la edicion pendiente
+  como metadata y la presenta al productor en la proxima sesion.
+
+El SM verifica en el ECHO del PDC: si el TPM reporta ediciones nivel 2,
+el SM confirma con el productor antes de marcar el artefacto como
+completo.
+
 ### Operaciones del TPM sobre el modelo
 
 | Operación | Qué hace | Quién la invoca | Ejemplo |
@@ -952,6 +966,28 @@ flowchart TD
 | **Mark complete** | Cambia el estado del artefacto a `completo` | SM (vía gate) | "spec.md pasó el gate, marcar completo" |
 | **Verify consistency** | Verifica integridad referencial entre artefactos | SM (pre-gate) | "¿Todos los ACs de spec trazan a ideas?" |
 | **Serve context** | Sirve el contexto ACOTADO que un agente necesita | SM o sub-agente directo | "Dame solo las tareas T-01..T-03" |
+
+### Optimizacion: batch writes por fase
+
+Para reducir dispatches del TPM en proyectos con timebox (challenges,
+spikes), el SM puede agrupar operaciones por fase:
+
+| Tier | Dispatches por fase | Cuando aplica |
+|------|---------------------|---------------|
+| Normal | 1 Create + N Updates + 1 MarkComplete | Proyectos sin timebox. Cada interaccion es un dispatch. |
+| Comprimido | 1 Create-with-content + 1 MarkComplete | Challenges con timebox. El sub-agente produce el artefacto completo en una delegacion; el TPM lo recibe y persiste en un solo dispatch. |
+| Ultra-comprimido | 1 transaction (Create + MarkComplete) | Artefactos triviales o fast-forward con alta certeza. Una sola transaccion atomica. |
+
+**Regla para Pattern B + batch**: cuando el sub-agente lee directo del
+RAG (Pattern B) y produce un artefacto completo, el dispatch al TPM es
+solo el write final. No hay dispatches intermedios de read. Esto reduce
+el overhead a ~2 dispatches por fase en el tier comprimido.
+
+**Threshold para artefactos pequenos** (M14): si el artefacto tiene
+menos de ~500 tokens, el overhead de reasoning del agente para decidir
+queries (Pattern B) puede dominar el costo. En ese caso, Pattern A
+(SM inyecta directo) es mas eficiente. El SM decide automaticamente:
+artefacto < 500 tokens → Pattern A, >= 500 tokens → Pattern B.
 
 ---
 
@@ -1244,15 +1280,20 @@ flowchart LR
 
 ### Adaptador por defecto: `docs/` como RAG local
 
-- **Path**: `~/.idea-to-mvp/projects/{nombre-proyecto}/`
+- **Path**: `~/.idea-to-mvp/projects/{project-slug}/`
+- **Slugificacion**: `lowercase(replace(trim(nombre), /[^a-z0-9]+/g, '-'))`.
+  Colisiones: si el slug ya existe, append `-N` (e.g. `mi-app-2`).
+  Maximo 64 caracteres. El slug se persiste como metadata del proyecto.
 - **Formato**: archivos markdown, uno por artefacto
 - **Ventajas**: cero dependencias, legible por humanos, versionable con git
 - **Desventaja**: sin acceso cross-machine, sin búsqueda semántica
 - **Suficiente para**: proyectos individuales, challenges, MVPs
-- **Concurrencia**: sesión activa única asumida. No hay locking ni
-  merge conflict handling. Si dos sesiones escriben al mismo artefacto,
-  la última gana. Concurrent-write safety es responsabilidad de
-  adaptadores futuros (DBMS, Jira, Git repo).
+- **Concurrencia**: sesion activa unica asumida. Last-write-wins.
+  Adaptadores con concurrencia (DBMS, Jira, Git repo) implementan
+  ACID completo (ver seccion "Garantias transversales"). El contrato
+  del adaptador define CONFLICT error en `save` cuando otro writer
+  modifico desde el ultimo `read` — esto aplica a TODOS los adaptadores
+  con soporte de aislamiento, no solo "futuros."
 
 Los demás adaptadores son **TBD**. El modelo de artefactos los habilita
 por diseño, pero la implementación es futura. El adaptador local es el
@@ -1382,7 +1423,7 @@ MVP de persistencia.
 |---------|----------|
 | Precondicion | `artifact` es un slug valido (puede o no existir actualmente). |
 | Postcondicion | Retorna lista ordenada (mas reciente primero) de: `{version, timestamp, producer, action, content_hash}`. Lista vacia si el artefacto nunca existio. |
-| Acciones | `created`, `updated`, `completed`, `deleted`, `reopened`. |
+| Acciones | `created`, `updated`, `completed`, `deleted`, `reopened`, `read`. |
 | Given | `idea` fue creado, actualizado 2 veces, y marcado completo |
 | When | `history("idea")` |
 | Then | Retorna 4 entradas: completed → updated → updated → created. |

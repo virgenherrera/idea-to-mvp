@@ -229,53 +229,53 @@ Lista consolidada de TODO lo que queda realmente pendiente o diferido
 a traves de los 3 adversarial reviews. Items resueltos por trabajo
 posterior fueron actualizados en sus reviews respectivos.
 
-### DIFERIDOS — Requieren decision arquitectonica o benchmarking
+### DIFERIDOS — Requieren decision arquitectonica
 
 | # | Origen | Hallazgo | Tipo | Nota |
 |---|--------|----------|------|------|
-| D1 | R003-H1 | Write path fuerza contenido a traves del SM | Arquitectura | ECHO check del PDC requiere que SM vea contenido. Cambiar a Pattern B para writes modifica supervision. Decision MIM. |
-| D2 | R002-H3 | Personalidades de rol son prosa, no rubricas verificables | Mejora iterativa | "Esceptico" vs "Riguroso" no produce diferencia checkeable en output. Mejora de segunda iteracion. |
-| D3 | R002-M3 | TPM editorial vs intencion del productor | Bajo riesgo | Drift semantico potencial. Nota ya agregada: "ediciones TPM que cambien estructura requieren confirmacion del productor." |
-| D4 | R002-M6 | MIM como entidad unica vs multi-stakeholder | Extension futura | Scope actual asume MIM = persona unica. Multi-requester/approver es extensible pero no implementado. |
-| D5 | R002-M13 | TPM delegation budget por tier sin cuantificar | Benchmarking | 30-50+ dispatches por ciclo. Requiere medicion empirica. Optimizacion: batch writes por fase. |
-| D6 | R002-M14 | Token overhead de reasoning para Pattern B | Benchmarking | Para artefactos pequenos, el overhead de decidir queries puede dominar el costo. Requiere threshold minimo. |
-| ~~D7~~ | ~~R001-M1~~ | ~~RAG fuera del repo rompe colaboracion multi-dev~~ | ~~RESUELTO~~ | ~~Capa de adaptadores (artifact-model.md) con 6 implementaciones. Colaboracion = elegir adaptador con concurrencia.~~ |
+| D1 | R003-H1 | Write path fuerza contenido a traves del SM | Arquitectura | ECHO check del PDC requiere que SM vea contenido. Decision MIM. |
+| ~~D2~~ | ~~R002-H3~~ | ~~Personalidades no verificables~~ | ~~RESUELTO~~ | ~~Output constraints por personalidad en role-profiles.md~~ |
+| ~~D3~~ | ~~R002-M3~~ | ~~TPM editorial drift~~ | ~~RESUELTO~~ | ~~Ediciones nivel 1 (formato) vs nivel 2 (estructura) con notificacion~~ |
+| ~~D4~~ | ~~R002-M6~~ | ~~Multi-stakeholder MIM~~ | ~~RESUELTO~~ | ~~Routing requester/approver en Fase 1~~ |
+| ~~D5~~ | ~~R002-M13~~ | ~~TPM dispatch budget~~ | ~~RESUELTO~~ | ~~3 tiers de batch writes (normal/comprimido/ultra-comprimido)~~ |
+| ~~D6~~ | ~~R002-M14~~ | ~~Token overhead Pattern B~~ | ~~RESUELTO~~ | ~~Threshold 500 tokens: < 500 → Pattern A, >= 500 → Pattern B~~ |
+| ~~D7~~ | ~~R001-M1~~ | ~~RAG multi-dev~~ | ~~RESUELTO~~ | ~~Capa de adaptadores con 6 implementaciones~~ |
 
 ### ABIERTOS — Concerns de producto o diseno no auto-fixables
 
 | # | Origen | Hallazgo | Tipo | Nota |
 |---|--------|----------|------|------|
-| A1 | R001-H3 | Escalacion ejecucion → planificacion sin protocolo completo | Depende de Execution Mode | `escalate(gap)` existe con 3 targets. Protocolo completo requiere disenar el Execution Mode primero. |
+| A1 | R001-H3 | Escalacion ejecucion → planificacion sin protocolo completo | Depende de Execution Mode | `escalate(gap)` existe con 3 targets. Protocolo completo requiere disenar el Execution Mode. |
 | A2 | R001-H5 | Preguntas pre-definidas de Fase 1 son rigidas | Producto | Las 6 preguntas del PO son una lista estatica. No se adaptan al tipo de proyecto. |
-| A3 | R001-H6 | Carga cognitiva insostenible para nuevos usuarios | Producto | 4 docs, ~4000 lineas, sin onboarding guide ni quick-start. |
-| ~~A4~~ | ~~R001-M4~~ | ~~No hay feedback del usuario sobre el proceso~~ | ~~RESUELTO~~ | ~~Fase 8 Retrospectiva: stop/start/continue + agreements como meta-config del SM.~~ |
+| A3 | R001-H6 | Carga cognitiva insostenible para nuevos usuarios | Producto | 4 docs, ~5000 lineas, sin onboarding guide ni quick-start. |
+| ~~A4~~ | ~~R001-M4~~ | ~~Feedback del proceso~~ | ~~RESUELTO~~ | ~~Fase 8 Retrospectiva~~ |
 | A5 | R001-C5p | Estrategia de delegacion multi-modelo no documentada | Diseno | Tiers mencionados, no concretados (que modelo para que tipo de tarea). |
+| A6 | R002-C9 | Verify/Accept/Retro contradicen operational-model.md | Depende de Execution Mode | TBD hasta disenar el modo ejecucion. |
 
-### COSMETICOS — Review-002 LOW (polish)
+### COSMETICOS — ~~Review-002 LOW~~ TODOS CORREGIDOS
 
-| # | Origen | Hallazgo |
-|---|--------|----------|
-| L1 | R002-L1 | Diagrama "Planificacion" incluye Ejecucion como stage — renombrar a "Ciclo Completo" |
-| L2 | R002-L2 | Verbos interfaz adaptador: espanol en operational-model vs ingles en artifact-model |
-| L3 | R002-L3 | Slugificacion de nombre de proyecto no definida |
-| L4 | R002-L4 | Phase naming drift ("Propuesta" vs "Fase 1 — Definir Idea") |
-| L5 | R002-L5 | Sources field es self-reported sin verificacion |
-| L6 | R002-L6 | DevSecOps "no triviales" sin threshold operacional |
+| # | Origen | Hallazgo | Estado |
+|---|--------|----------|--------|
+| ~~L1~~ | ~~R002-L1~~ | ~~Diagrama "Planificacion"~~ | CORREGIDO — renombrado "Ciclo Completo" |
+| ~~L2~~ | ~~R002-L2~~ | ~~Verbos es/en~~ | CORREGIDO — ya estandarizado |
+| ~~L3~~ | ~~R002-L3~~ | ~~Slugificacion~~ | CORREGIDO — regla definida (lowercase, max 64, colision -N) |
+| ~~L4~~ | ~~R002-L4~~ | ~~Phase naming drift~~ | CORREGIDO — ya alineado |
+| ~~L5~~ | ~~R002-L5~~ | ~~Sources self-reported~~ | CORREGIDO — `read` en history() para cross-check |
+| ~~L6~~ | ~~R002-L6~~ | ~~DevSecOps threshold~~ | CORREGIDO — checklist de 6 criterios concretos |
 
 ### Totales
 
-| Categoria | Cantidad | Auto-fixable | Requiere decision |
-|-----------|----------|--------------|-------------------|
-| Diferidos | 6 | 0 | 6 (MIM o benchmarking) |
-| Abiertos | 4 | 0 | 4 (producto o depende de Execution Mode) |
+| Categoria | Cantidad | Corregidos | Pendientes |
+|-----------|----------|------------|------------|
+| Diferidos | 7 | 6 | 1 (D1: write path) |
+| Abiertos | 6 | 1 | 5 (A1-A3, A5-A6) |
 | Cosmeticos | 6 | 6 | 0 |
-| **Total** | **16** | **6** | **10** |
+| **Total** | **19** | **13** | **6** |
 
-**Resumen**: de ~81 hallazgos brutos a traves de 3 reviews, quedan 16
-genuinamente pendientes. Los cosmeticos (6) son auto-fixables en
-cualquier momento. Los diferidos (6) requieren decision del MIM o
-medicion empirica. Los abiertos (4) son concerns de producto/diseno
-que se resuelven cuando se disene el Execution Mode o el onboarding.
+**Resumen**: de ~81 hallazgos brutos a traves de 3 reviews, quedan **6**
+genuinamente pendientes. D1 (write path) requiere decision MIM. A1 y A6
+dependen del diseno del Execution Mode. A2, A3, A5 son concerns de
+producto/diseno para iteracion futura.
 
 ---
 
@@ -289,7 +289,7 @@ que se resuelven cuando se disene el Execution Mode o el onboarding.
 | Work Item Hierarchy integrada end-to-end | Completo |
 | Pattern A/B consistente | Completo |
 | Roles default (5) + ad-hoc extensible | Completo |
-| Fast-forward con scoring auditable y persistido | Completo |
+| Fast-forward via state machine (no heuristicas) | Completo |
 | Circuit breaker (FAILED + PARTIAL) | Completo |
 | Smoke test con rubric confiable | Completo |
 | Mid-planning edit y mid-flight edit | Completo |
@@ -297,4 +297,12 @@ que se resuelven cuando se disene el Execution Mode o el onboarding.
 | Role deactivation | Completo |
 | Conflict resolution pre-Fase 7 | Completo |
 | Condensed contracts | Completo (1 ejemplo) |
+| Adapter ACID + transactions | Completo |
+| State machine configurable (draft→approved) | Completo |
+| TPM ingest (material del MIM) | Completo |
+| Batch writes por tier (normal/comprimido/ultra) | Completo |
+| Personalidades verificables (output constraints) | Completo |
+| TPM anti-drift (nivel 1 vs nivel 2) | Completo |
+| Multi-stakeholder routing | Completo |
+| Retrospectiva con meta-config | Completo |
 | Write path Pattern B | **DIFERIDO — decision MIM** |

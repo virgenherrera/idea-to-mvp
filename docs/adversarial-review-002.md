@@ -238,17 +238,18 @@ propio artefacto).
   fresco recibe SOLO handoff.md y debe generar un plan de ejecución.
   Si necesita hacer preguntas → handoff no es autocontenido.
 
-### H3. Personalidades de rol son prosa, no rúbricas verificables
+### ~~H3. Personalidades de rol son prosa, no rúbricas verificables~~
 
 **Fuente**: implementabilidad
 
 "Escéptico" vs "Riguroso" no produce diferencia verificable en output.
 Solo "conciso, 1-3 oraciones" (Fase 7) es realmente checkeable.
 
-- **Resolución**: → **DIFERIDO** — se marca como mejora iterativa.
-  Nota: las personalidades NO son vacías — orientan el tono y foco del
-  agente. Pero convertirlas en checklists verificables es trabajo de
-  segunda iteración. Se agrega nota en role-profiles.md.
+- **Resolución**: → **CORREGIDO** — tabla de output constraints
+  verificables por personalidad en role-profiles.md. El SM verifica
+  en el ECHO del PDC (ej: "esceptico" → cada AC tiene veredicto
+  explicito; "analitico" → cada decision tiene al menos 1 alternativa
+  evaluada). Las personalidades orientan; los constraints verifican.
 
 ### H4. TPM conflate completitud estructural y semántica
 
@@ -344,16 +345,18 @@ empezar ejecución ahora."
 - **Resolución**: → **CORREGIDO** — gate explícito de confirmación MIM
   antes de transición a Execution Mode.
 
-### M3. TPM editorial vs intención del productor
+### ~~M3. TPM editorial vs intención del productor~~
 
 **Fuente**: completitud
 
 TPM aplica "criterio editorial" sin que el rol productor revise la
 versión editada. Posible drift semántico silencioso.
 
-- **Resolución**: → **DIFERIDO** — bajo riesgo en la práctica (TPM
-  edita formato, no semántica). Se agrega nota: "ediciones TPM que
-  cambien estructura/contenido requieren confirmación del productor."
+- **Resolución**: → **CORREGIDO** — ediciones clasificadas en 2 niveles:
+  Nivel 1 (formato) se aplica sin notificar. Nivel 2 (estructura/
+  contenido) requiere notificacion al productor antes de aplicar. SM
+  verifica en ECHO. Documentado en artifact-model.md seccion
+  "Estandares de escritura del TPM".
 
 ### M4. Cadena de dependencias no enforced mecánicamente
 
@@ -365,17 +368,18 @@ cadena es descriptiva, no enforced.
 - **Resolución**: → **CORREGIDO** — TPM Create valida completitud de
   artefactos upstream como precondición. Rechaza/advierte si se viola.
 
-### M5. Sin modelo de concurrencia/locking para RAG
+### ~~M5. Sin modelo de concurrencia/locking para RAG~~
 
 **Fuente**: completitud
 
 Nada aborda dos sesiones concurrentes escribiendo al mismo artefacto.
 
-- **Resolución**: → **CORREGIDO** — explícitamente fuera de scope para
-  adaptador local ("sesión activa única asumida"). Concurrency safety
-  diferida a adaptadores futuros (Jira, DBMS).
+- **Resolución**: → **CORREGIDO** — contrato ACID completo del adaptador
+  define CONFLICT error en save cuando otro writer modifico desde el
+  ultimo read. Local: last-write-wins. DBMS/Jira/Git: aislamiento
+  real. Tabla de soporte ACID por adaptador documentada.
 
-### M6. MIM como entidad única vs aprobador distinto
+### ~~M6. MIM como entidad única vs aprobador distinto~~
 
 **Fuente**: completitud
 
@@ -383,9 +387,11 @@ Fase 1 pregunta "¿quién aprueba el resultado final?" pero luego MIM
 es un interlocutor único para todo. Si requester ≠ approver, no hay
 routing.
 
-- **Resolución**: → **DIFERIDO** — scope actual asume MIM = persona
-  única. Multi-stakeholder es extensión futura. Se documenta como
-  limitación conocida.
+- **Resolución**: → **CORREGIDO** — si pregunta 6 indica requester ≠
+  approver, el SM registra ambos en idea.md metadata y enruta:
+  contexto/scope → requester, gates de aceptacion → approver.
+  Default: MIM = requester = approver. Documentado en behavior.md
+  Fase 1.
 
 ### M7. Path default: docs/ vs artifacts/
 
@@ -449,7 +455,7 @@ forzando dispatch al TPM para cada pregunta de estado trivial.
   status report del TPM y re-consultar solo cuando el estado puede
   haber cambiado."
 
-### M13. Overhead de TPM / budget de delegaciones por tier sin cuantificar
+### ~~M13. Overhead de TPM / budget de delegaciones por tier sin cuantificar~~
 
 **Fuente**: implementabilidad
 
@@ -457,11 +463,13 @@ Un ciclo completo realista puede requerir 30-50+ dispatches. Para un
 challenge con timebox, eso podría consumir el presupuesto antes de
 escribir código.
 
-- **Resolución**: → **DIFERIDO** — requiere benchmarking empírico.
-  Se agrega nota: "comprimir interacción TPM en tiers bajos es una
-  optimización pendiente (batch writes por fase)."
+- **Resolución**: → **CORREGIDO** — 3 tiers de dispatch definidos:
+  Normal (N updates por fase), Comprimido (1 create-with-content +
+  1 markComplete), Ultra-comprimido (1 transaccion atomica). SM elige
+  tier segun timebox. Documentado en artifact-model.md seccion "Batch
+  writes por fase".
 
-### M14. Token economics omite overhead de reasoning para Pattern B
+### ~~M14. Token economics omite overhead de reasoning para Pattern B~~
 
 **Fuente**: implementabilidad
 
@@ -469,43 +477,50 @@ El modelo de costos solo cuenta tokens movidos, no reasoning del agente
 para decidir qué queries hacer. Para artefactos pequeños, el overhead
 podría dominar.
 
-- **Resolución**: → **DIFERIDO** — requiere medición empírica. Se
-  agrega nota sobre threshold mínimo de tamaño de artefacto.
+- **Resolución**: → **CORREGIDO** — threshold concreto: artefacto
+  < 500 tokens → Pattern A (SM inyecta directo, mas eficiente).
+  >= 500 tokens → Pattern B (query directo). SM decide automaticamente.
+  Documentado en artifact-model.md junto con batch writes.
 
 ---
 
-## LOW — Cosmético
+## LOW — ~~Cosmético~~ TODOS CORREGIDOS
 
-### L1. Diagrama "Planificación" incluye Ejecución como stage
+### ~~L1. Diagrama "Planificación" incluye Ejecución como stage~~
 
-**Fuente**: coherencia — sección titulada "Ciclo de Planificación"
-contiene nodo Ejecución dentro del loop. Renombrar a "Ciclo Completo."
+- **Resolución**: → **CORREGIDO** — renombrado a "Etapas del Ciclo
+  Completo" en behavior.md.
 
-### L2. Interfaz adaptador: verbos en español vs inglés
+### ~~L2. Interfaz adaptador: verbos en español vs inglés~~
 
-**Fuente**: coherencia — operational-model.md usa "guardar, leer,
-buscar, listar", artifact-model.md usa "save, read, search, list."
-Estandarizar a inglés.
+- **Resolución**: → **CORREGIDO** — ya estaba estandarizado a ingles
+  en sesiones anteriores. Verificado: no se encontraron verbos en
+  espanol en operational-model.md.
 
-### L3. Slugificación de nombre de proyecto no definida
+### ~~L3. Slugificación de nombre de proyecto no definida~~
 
-**Fuente**: completitud — topic_keys asumen slug limpio. Sin regla de
-normalización ni manejo de colisiones.
+- **Resolución**: → **CORREGIDO** — regla de slugificacion definida
+  en artifact-model.md: `lowercase(replace(trim(nombre), /[^a-z0-9]+/g, '-'))`.
+  Max 64 chars. Colisiones: append `-N`. Slug persistido como metadata.
 
-### L4. Phase naming drift
+### ~~L4. Phase naming drift~~
 
-**Fuente**: completitud — operational-model.md usa "Propuesta" donde
-los otros docs usan "Fase 1 — Definir Idea."
+- **Resolución**: → **CORREGIDO** — ya estaba alineado en sesiones
+  anteriores. Verificado: "Propuesta" no aparece en operational-model.md.
 
-### L5. Sources field es self-reported sin verificación
+### ~~L5. Sources field es self-reported sin verificación~~
 
-**Fuente**: implementabilidad — sub-agentes reportan qué consultaron
-en Sources pero el SM no puede cross-check.
+- **Resolución**: → **CORREGIDO** — `read` agregado como accion en
+  `history()` del adaptador. El SM puede cross-check: si el sub-agente
+  dice que consulto spec.md, history(spec) debe mostrar un read de
+  ese agente. Discrepancia = flag en ECHO del PDC.
 
-### L6. DevSecOps "no triviales" sin threshold operacional
+### ~~L6. DevSecOps "no triviales" sin threshold operacional~~
 
-**Fuente**: implementabilidad — "se activa si infra no trivial" sin
-definir qué es "no trivial."
+- **Resolución**: → **CORREGIDO** — threshold reemplazado con checklist
+  concreto de 6 criterios en role-profiles.md: autenticacion, PII, APIs
+  publicas, infra con estado, multi-entorno, compliance. Si ninguno
+  aplica → no se activa.
 
 ---
 
@@ -545,16 +560,14 @@ que el happy path.
 
 ## Resumen ejecutivo
 
-| Severidad | Total | Corregidos | Diferidos | Pendientes |
-|-----------|-------|------------|-----------|------------|
+| Severidad | Total | Corregidos | Diferidos | TBD |
+|-----------|-------|------------|-----------|-----|
 | Ya corregidos (pre-review) | 4 | 4 | — | — |
-| CRITICAL | 9 | 8 | — | 1 (C9 TBD) |
-| HIGH | 9 | 8 | 1 (H3) | 0 |
-| MEDIUM | 14 | 10 | 3 (M3, M13, M14) | 1 (M6) |
-| LOW | 6 | 0 | 0 | 6 |
-| **TOTAL** | **42** | **31** | **4** | **7** |
+| CRITICAL | 9 | 8 | — | 1 (C9) |
+| HIGH | 9 | 9 | 0 | 0 |
+| MEDIUM | 14 | 14 | 0 | 0 |
+| LOW | 6 | 6 | 0 | 0 |
+| **TOTAL** | **42** | **41** | **0** | **1** |
 
-Los 9 CRITICAL y 8/9 HIGH corregidos en sesion.
-Los 4 DIFERIDOS (H3, M3, M13, M14) + M6 consolidados en
-**review-003 → Pendientes Unificados** como D2, D3, D5, D6, D4
-respectivamente. Los 6 LOW como cosmeticos L1-L6.
+41 de 42 hallazgos corregidos. El unico pendiente es C9
+(Verify/Accept/Retro) que queda TBD hasta disenar el Execution Mode.

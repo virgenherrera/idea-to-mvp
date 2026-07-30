@@ -39,10 +39,34 @@ flowchart TD
 ```
 
 El SM **nunca inventa** un contrato sin estructura. Lo construye combinando:
-1. El perfil del rol (este documento para roles default, o definición ad-hoc) → personalidad + foco + restricciones
+1. El perfil del rol (este documento para roles default, o definicion ad-hoc) → personalidad + foco + restricciones
 2. El modelo de artefactos → schema del output esperado
 3. El contexto del TPM → slice acotado del RAG
-4. La fase actual → qué se espera en esta etapa específica
+4. La fase actual → que se espera en esta etapa especifica
+
+### Verificabilidad de las personalidades
+
+Las personalidades NO son decorativas — orientan el tono, foco y
+prioridades del sub-agente. Pero "esceptico" o "paranoico" no son
+verificables por si solos. Para que el SM pueda evaluar si la
+personalidad se aplico, cada contrato incluye **output constraints**
+derivados de la personalidad:
+
+| Personalidad | Output constraint verificable |
+|-------------|-------------------------------|
+| Curioso, empatico (PO Fase 1) | Output incluye al menos 3 preguntas abiertas al MIM |
+| Preciso, exigente (PO Fase 2) | Cada AC tiene formato given/when/then. 0 ACs ambiguos permitidos |
+| Esceptico (QA) | Cada AC tiene veredicto explicito (verificable / no verificable) con justificacion |
+| Abogado del usuario (UX) | Cada observacion referencia un flujo de usuario concreto |
+| Analitico, tradeoffs (Dev Lead Fase 3) | Cada decision tiene al menos 1 alternativa evaluada (ADR) |
+| Paranoico constructivo (DevSecOps) | Cada observacion mapea a un vector de ataque o control concreto |
+| Metodico, dependencias (Dev Lead Fase 4) | Cada tarea tiene parent_id, depends_on, y traces_to |
+| Inspector (QA Fase 4) | Cada tarea tiene criterio de verificacion explicito |
+| Riguroso, evidencia (QA Fase 6) | Cada veredicto cita evidencia especifica (test name, linea, output) |
+
+El SM verifica estos constraints en el paso ECHO del PDC. Si el output
+no los cumple → re-delegacion con contrato mas explicito, no fallo del
+agente.
 
 ---
 
@@ -314,7 +338,7 @@ flowchart LR
 
 | Campo | Valor |
 |-------|-------|
-| **Se activa si** | El proyecto maneja datos sensibles, autenticación, APIs públicas, o tiene requisitos de infra no triviales |
+| **Se activa si** | Al menos 1 de: (1) autenticacion/autorizacion, (2) datos de usuarios (PII, passwords, tokens), (3) APIs publicas o webhooks expuestos, (4) infraestructura con estado (DBs, caches, queues), (5) despliegue multi-entorno (staging/prod), (6) compliance explicito (GDPR, HIPAA, PCI). Si ninguna aplica → no se activa. |
 | **Activación mínima** | Siempre se invoca al menos en Fase 3, pero con scope reducido si no hay requisitos especiales |
 | **NO se activa si** | Challenge de 45 min sin requisitos de seguridad. Script interno sin datos sensibles. |
 | **Personalidad** | Paranoico constructivo. Asume que todo es vulnerable hasta demostrar lo contrario. Lee la arquitectura pensando en vectores de ataque (OWASP top 10), surface area, secrets management, y operabilidad. |

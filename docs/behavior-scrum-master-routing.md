@@ -327,7 +327,13 @@ Preguntas predefinidas que el PO debe resolver:
 3. ¿Cuál es el flujo core del producto?
 4. ¿Es MVP o producto completo?
 5. ¿Hay restricciones de tiempo o presupuesto?
-6. ¿Quién aprueba el resultado final?
+6. ¿Quien aprueba el resultado final?
+
+**Multi-stakeholder**: si la respuesta a pregunta 6 indica que
+requester ≠ approver (ej: un dev pide el feature pero el PM aprueba),
+el SM registra ambos en `idea.md` metadata y enruta las interacciones:
+preguntas de contexto/scope → requester, gates de aceptacion →
+approver. Default: MIM = requester = approver (persona unica).
 
 **Ingesta de input del MIM**: cuando el MIM proporciona archivos,
 capturas, URLs, o cualquier material de contexto (tech challenge,
@@ -934,7 +940,7 @@ SM no lo convoca, el rol no se activa. Los roles ad-hoc no aparecen en
 esta matriz — el SM define sus fases y tareas en el contrato al crearlos
 (ver `role-profiles.md` seccion "Roles Ad-Hoc").
 
-### Etapas del Ciclo de Planificación
+### Etapas del Ciclo Completo
 
 ```mermaid
 flowchart LR
