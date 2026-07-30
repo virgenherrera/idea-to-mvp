@@ -69,4 +69,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-MIT
+PostgreSQL License --- see [LICENSE](LICENSE).
