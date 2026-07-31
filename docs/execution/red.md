@@ -325,6 +325,117 @@ que ese stack cumpla las siguientes capacidades, sin importar cuál sea:
 
 ---
 
+## Disciplina de Código de Test
+
+Los patrones de esta sección aplican a TODA prueba escrita en la Capa 3,
+sin importar el boundary (App o E2E). Definen la calidad interna del
+código de test — no qué se prueba, sino cómo se escribe cada test. Son
+agnósticos de lenguaje y herramienta.
+
+### Patrones estructurales
+
+Cada test sigue una estructura predecible que separa preparación,
+ejecución y verificación:
+
+| Patrón | Aplica a | Regla |
+|--------|----------|-------|
+| **AAA** (Arrange-Act-Assert) | Todos los tests | Tres bloques separados, sin mezclar. Arrange prepara estado y datos. Act ejecuta la operación bajo prueba. Assert verifica el resultado. Si un test necesita más de un Act, son dos tests. |
+| **POM** (Page Object Model) | Tests con interfaz (UI, CLI) | Abstraer las interacciones con la interfaz en objetos reutilizables. El test describe intención ("login con credenciales válidas"), el POM ejecuta mecánica ("llenar campo X, click botón Y"). |
+| **Builder Pattern** | Datos de test | Construir datos de prueba mediante builders o factories, nunca hardcodeados en el cuerpo del test. Un builder centraliza la creación y permite variar solo lo relevante al caso. |
+| **Un assert lógico** | Todos los tests | Cada test verifica UNA cosa. Múltiples aserciones están permitidas solo si verifican facetas del mismo resultado lógico (ej. status code + body de la misma respuesta). |
+
+```mermaid
+flowchart LR
+    subgraph AAA["Patrón AAA"]
+        direction LR
+        AR["Arrange\n(preparar estado,\ndatos, dependencias)"]
+        AC["Act\n(ejecutar la operación\nbajo prueba)"]
+        AS["Assert\n(verificar resultado\ny efectos secundarios)"]
+        AR --> AC --> AS
+    end
+```
+
+### Higiene de mocks
+
+Dentro del boundary model, los tests de App no usan mocks del propio
+producto (stack real). Los tests E2E solo mockean dependencias de
+terceros. Esta sección define las reglas para esos mocks permitidos:
+
+| Regla | Qué previene |
+|-------|-------------|
+| **Verificación obligatoria** | Todo mock se verifica: ¿fue llamado? ¿Cuántas veces? ¿Con qué argumentos exactos? Un mock sin verificación es un mock invisible — oculta fallos en lugar de detectarlos. |
+| **Reset entre tests** | Cada test arranca con mocks limpios. Sin estado residual de tests anteriores. Un mock que acumula llamadas entre tests produce falsos positivos. |
+| **Verificación negativa** | Los mocks que NO deben llamarse se verifican explícitamente (ej. "el servicio de pago NO fue invocado cuando el usuario canceló"). La ausencia de llamada es tan importante como la presencia. |
+| **Argumentos exactos** | No verificar solo que "fue llamado" — verificar CON QUÉ fue llamado. Un mock que se llamó con los argumentos incorrectos es peor que un mock que no se llamó. |
+
+### Aserciones estrictas por DTO (Schema-Strict Assertions)
+
+Esta es la regla más importante de la disciplina de test del framework.
+Tiene implicaciones directas en compliance regulatorio.
+
+> **Compliance-by-Design**: si cada test asierte la forma EXACTA del
+> objeto de respuesta (no solo "contiene estos campos" sino "contiene
+> SOLO estos campos"), se obtiene verificación de compliance como efecto
+> secundario — sin suites de compliance separadas, sin rewrites, sin
+> trabajo adicional.
+
+**La regla**: toda aserción sobre un objeto de respuesta, un evento
+emitido, un payload enviado a terceros o un registro persistido debe
+verificar la **forma completa** del DTO — campos presentes, campos
+ausentes y tipos.
+
+| Tipo de aserción | Uso | Ejemplo conceptual |
+|------------------|-----|--------------------|
+| **Igualdad estricta** (todo el DTO) | Response bodies, eventos, payloads | "La respuesta es EXACTAMENTE `{id, name, email}` — ni más ni menos" |
+| **Exclusión explícita** | Datos sensibles | "La respuesta NO contiene `password`, `ssn`, `cardNumber`" |
+| **Schema validation** | Contratos de API | "La respuesta cumple el schema OpenAPI/JSON Schema definido en la Pre-Fase" |
+
+```mermaid
+flowchart TD
+    RESPONSE["Respuesta / Evento / Payload"]
+    STRICT{{"¿Aserción estricta\npor DTO?"}}
+
+    RESPONSE --> STRICT
+
+    STRICT -->|"Igualdad estricta"| EXACT["Verifica forma COMPLETA:\ncampos presentes,\ncampos ausentes,\ntipos correctos"]
+    STRICT -->|"Exclusión explícita"| EXCLUDE["Verifica que campos\nsensibles NO están\npresentes en el output"]
+    STRICT -->|"Schema validation"| SCHEMA["Verifica contra el\nschema formal definido\nen la Pre-Fase"]
+
+    EXACT --> COMPLIANCE["Compliance-by-Design:\nHIPAA, PCI DSS, SOC 2,\nGDPR — verificados\ncomo efecto secundario"]
+    EXCLUDE --> COMPLIANCE
+    SCHEMA --> COMPLIANCE
+```
+
+**Por qué esto importa para compliance:**
+
+| Regulación | Qué exige | Cómo la aserción estricta lo cubre |
+|------------|-----------|-----------------------------------|
+| **HIPAA** | No exponer PHI (Protected Health Information) fuera de contextos autorizados | Si el DTO de respuesta expone un campo no declarado, el test falla. Campos PHI que no pertenecen al endpoint se detectan automáticamente. |
+| **PCI DSS** | No transmitir datos de tarjeta fuera de scope | Un payload con `cardNumber` donde el schema no lo declara rompe la aserción estricta. Sin auditoría manual. |
+| **GDPR** | Minimización de datos — solo recolectar/exponer lo necesario | La igualdad estricta detecta campos extra (datos personales que no deberían estar en la respuesta). |
+| **SOC 2** | Evidencia de controles sobre datos | Los tests con aserciones estrictas SON la evidencia. El reporte de cobertura demuestra que cada endpoint fue verificado contra su schema. |
+
+> **Sin rewrites**: cuando una auditoría de compliance solicita evidencia
+> de que un endpoint no expone datos fuera de scope, el test de App con
+> aserción estricta por DTO ya lo demuestra. No se necesitan suites
+> adicionales, no se necesitan herramientas de scanning, no se necesita
+> reescribir nada. Los tests que verifican funcionalidad también
+> verifican compliance — por diseño, no por accidente.
+
+### Dependencias modernas
+
+El Test Engineer usa las versiones actuales del ecosistema de testing del
+stack definido en `design.md`. Sin dependencias legacy, sin polyfills
+para APIs obsoletas, sin patrones de compatibilidad retroactiva.
+
+| Regla | Razón |
+|-------|-------|
+| **Última versión estable** del framework de test | APIs modernas = menos boilerplate, mejores mensajes de error, mejor rendimiento |
+| **Sin wrappers legacy** | Si el framework de test ofrece una API nativa para algo, usarla. No escribir utilidades propias que reimplementen funcionalidad del framework. |
+| **Tipos estrictos en tests** | Si el lenguaje soporta tipos, los tests los usan. Un test sin tipos puede pasar con datos incorrectos sin que el compilador lo detecte. |
+
+---
+
 ## Qué Significa "Red" Operativamente
 
 - Las tres capas existen: Test Plan, Test Contract, Test Implementation.
@@ -334,5 +445,10 @@ que ese stack cumpla las siguientes capacidades, sin importar cuál sea:
 - Cada test traza a un AC específico a través del Test Plan y el Test
   Contract.
 - No existen tests de boundary File (Unit) en el repositorio.
+- Cada test sigue AAA (Arrange-Act-Assert) sin excepciones.
+- Toda aserción sobre objetos de respuesta es estricta por DTO
+  (compliance-by-design).
+- Los mocks permitidos (solo dependencias externas) están verificados:
+  llamadas, argumentos, frecuencia.
 - Si un test no puede escribirse, hay un gap en el contrato o el AC
   (escalar a Pre-Fase).

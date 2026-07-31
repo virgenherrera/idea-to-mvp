@@ -9,6 +9,7 @@
 
 | Término | Definición |
 |---------|------------|
+| **AAA (Arrange-Act-Assert)** | Patrón estructural obligatorio para todo test. Tres bloques separados: preparar estado, ejecutar operación, verificar resultado. Si un test necesita más de un Act, son dos tests. |
 | **AC (Acceptance Criterion)** | Criterio de aceptación en formato given/when/then que define cuándo un requisito se considera cumplido. |
 | **Accept (Fase)** | Gate final del Modo 2 donde QA certifica que el producto cumple lo estipulado en el handoff. No valida código — valida producto contra contrato. |
 | **Adaptador** | Implementación pluggable de la interfaz universal del artifact store (local, engram, híbrido, DBMS, etc.). |
@@ -19,6 +20,7 @@
 | **Circuit breaker** | Mecanismo de protección: si 3 delegaciones consecutivas al mismo rol fallan, el SM detiene la cadena y escala al MIM. |
 | **Código droppable** | Código con 0% de cobertura en App tests. Si ningún test lo toca a través de interacciones reales de producto, no tiene justificación de existir. Candidato a eliminación. |
 | **Compact rules** | Reglas de código y convenciones del proyecto, extraídas del skill registry, que el orquestador inyecta pre-digeridas en cada sub-agente. |
+| **Compliance-by-Design** | Principio del framework: si los tests asiertan DTOs estrictamente (forma completa, no parcial), se obtiene verificación de compliance regulatorio (HIPAA, PCI DSS, GDPR, SOC 2) como efecto secundario — sin suites adicionales ni rewrites. |
 | **Contract Architect** | Rol del Modo 2 que define contratos formales (APIs, schemas, interfaces) a partir del handoff. Activo en la Pre-Fase. |
 | **Contrato de delegación** | Estructura con campos obligatorios (rol, personalidad, contexto, input, output, restricciones, status report) que el SM usa para lanzar un sub-agente. |
 | **DAG (Directed Acyclic Graph)** | Grafo de dependencias entre tareas en `tasks.md`. Define el orden de ejecución y los lanes paralelos. |
@@ -35,11 +37,13 @@
 | **Pattern A** | Estrategia de retrieval donde el SM busca, cura y re-inyecta contexto en el prompt del sub-agente. Útil para búsquedas fuzzy o fan-out alto (8+). |
 | **Pattern B** | Estrategia de retrieval donde el SM pasa solo topic_keys y el sub-agente consulta el artifact store directamente. 6x más barato que Pattern A. |
 | **PDC (Post-Delegation Checkpoint)** | Protocolo de 4 pasos que el SM ejecuta después de cada retorno de sub-agente: ECHO (coherencia), VERIFY (cobertura), MARK (persistir), DECIDE (siguiente acción). |
+| **POM (Page Object Model)** | Patrón para tests con interfaz (UI, CLI). Abstrae interacciones mecánicas en objetos reutilizables. El test describe intención, el POM ejecuta mecánica. |
 | **Pre-Fase** | Primera etapa del Modo 2. Define contratos formales antes de escribir tests o código. Habilita desarrollo paralelo. |
 | **QA (Modo 2)** | Rol del Modo 2 activo en Fase Accept. Verifica producto contra handoff. No escribe tests ni corrige código — certifica. Mecanismo de certificación definido por el consumidor del framework. |
 | **RAG (Retrieval-Augmented Generation)** | El artifact store usado como fuente de contexto acotado para los agentes. Los agentes consultan slices específicos, no el codebase completo. |
 | **Red/Green/Refactor** | Las 3 fases macro del Modo 2. Red = escribir tests (fallan). Green = escribir código (tests pasan). Refactor = review de calidad (tests siguen pasando). |
 | **Reviewer** | Rol del Modo 2 activo en Fase Refactor. Tres variantes: Arquitectura (SOLID, DRY, KISS), Seguridad (OWASP), Performance (memory leaks, N+1). |
+| **Schema-Strict Assertions** | Regla de disciplina de test: toda aserción sobre objetos de respuesta verifica la forma COMPLETA del DTO (campos presentes, campos ausentes, tipos). Detecta campos extra que podrían violar compliance regulatorio. |
 | **SM (Session Manager / Orquestador)** | El agente principal que actúa como facade del proyecto. Orquesta fases, convoca roles, valida gates y controla transiciones. No produce contenido. No es un Scrum Master en el sentido del Scrum Guide. |
 | **Sub-agente** | Agente instanciado por el SM con un contrato de delegación acotado. Recibe personalidad, contexto y restricciones específicas para su tarea. Los roles del scrum team son sub-agentes. |
 | **Test Contract** | Manifiesto enumerable por sujeto bajo prueba. Cada entrada vincula un caso de test con un nombre inmutable y trazable a un AC. Previene código de test spaghetti. |
