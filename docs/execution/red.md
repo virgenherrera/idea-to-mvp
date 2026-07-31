@@ -1,101 +1,338 @@
-# Fase Red — Estrategia y Suite de Pruebas
+# Fase Red — Arquitectura de Testing
 
 ← [Ejecución](README.md)
 
-## Filosofia de testing
+Este documento define el modelo de testing de la Fase Red: qué tipos de test
+existen, quién los escribe explícitamente, quién los deriva por filtrado, y
+cómo se traza cada test hasta un AC de `spec.md`. El modelo es agnóstico de
+lenguaje, framework y herramienta — define el QUÉ, no el CÓMO. El stack
+concreto lo decide `design.md` en la planificación.
 
-La piramide de testing clasica (muchos unit, pocos e2e) **NO aplica**
-en este framework. La piramide esta invertida porque el objetivo es
-verificar que el sistema FUNCIONA, no que las funciones individuales
-retornan valores correctos.
+---
+
+## Filosofía: Testing de Alto Valor
+
+El criterio que determina el tipo de un test no es la pirámide clásica ni
+su inversión — es **dónde se ubica la frontera del mock** (el "boundary").
+Cuanto más cerca del stack real se ejecuta un test, mayor es su valor de
+verificación; cuanto más aislado está mediante mocks, más redundante se
+vuelve frente a un test de nivel superior con buena cobertura.
+
+De este criterio se deriva una consecuencia estructural: **solo existen dos
+tiers de testing con desarrollo explícito**. Todo lo demás — integración,
+smoke, regresión, sanity — se obtiene por filtrado inteligente sobre esos
+dos tiers, no por escritura de suites adicionales.
+
+> **Testing de Alto Valor**: un test solo se escribe si ejercita una
+> interacción real del producto (base de datos real, HTTP real, contenedor
+> de inyección de dependencias real). Un test que solo verifica que una
+> función retorna un valor, aislada del sistema mediante mocks, no aporta
+> señal adicional cuando el nivel de App ya tiene cobertura alta — es
+> mantenimiento sin retorno.
+
+---
+
+## Modelo de Boundaries
+
+| Boundary | Tipo | Política |
+|----------|------|----------|
+| File | Unit | **PROHIBIDO** — valor cero, redundante cuando los tests de App tienen cobertura alta |
+| Module | Integración | **Sin desarrollo explícito** — se deriva por filtros desde los tests de App cuando se toca un módulo |
+| App (stack real, sin mocks) | Servicio/Componente | **DESARROLLO EXPLÍCITO** — tier primario, cobertura alta obligatoria, interacciones reales con el producto, detección de código droppable |
+| Solution (multi-servicio, cero mocks) | E2E | **DESARROLLO EXPLÍCITO** — para deploys, tags, merges a main/develop |
+| Cualquiera | Performance/stress/load | **TBD** — post-MVP, delegado como historias al propio framework |
+| Cualquiera | Regression/smoke/sanity | **Sin desarrollo explícito** — se deriva por tags/nomenclatura desde los tests de App + E2E existentes |
 
 ```mermaid
-flowchart TD
-    subgraph CLASICA["Piramide clasica\n(NO usamos)"]
-        direction TB
-        C_E2E["E2E\n(pocos)"]
-        C_INT["Integracion\n(algunos)"]
-        C_UNIT["Unit\n(muchos)"]
-        C_E2E --- C_INT --- C_UNIT
-    end
+flowchart LR
+    F["File\n(mock por archivo)"] --> M["Module\n(mock por modulo)"]
+    M --> A["App\n(stack real, sin mocks)"]
+    A --> S["Solution\n(multi-servicio, cero mocks)"]
 
-    subgraph NUESTRA["Piramide invertida\n(SI usamos)"]
-        direction BT
-        N_UNIT["Unit\n(minimos:\nsolo logica pura)"]
-        N_E2E["E2E\n(rutas criticas)"]
-        N_INT["Integracion\n(PRIMARIOS:\ncobertura real)"]
-        N_UNIT --- N_E2E --- N_INT
-    end
+    F -.-> FP["Unit: PROHIBIDO"]
+    M -.-> MP["Integracion: sin desarrollo explicito"]
+    A -.-> AP["Servicio/Componente: desarrollo explicito"]
+    S -.-> SP["E2E: desarrollo explicito"]
 ```
 
-> **El meme del Titanic**: tests unitarios que pasan mientras el sistema
-> se hunde son inservibles. Un test que no ejerce el stack real no
-> demuestra nada.
->
-> **Matización por contexto**: la pirámide invertida (integración mayor
-> que E2E, E2E mayor que unit) es el DEFAULT para proyectos de
-> aplicación (APIs, web apps, servicios). Para librerías, utilidades y
-> lógica de dominio compleja (algoritmos, parsers, cálculos financieros),
-> la pirámide clásica sigue siendo apropiada — estos contextos se
-> benefician de cobertura unitaria extensiva. El Test Engineer decide la
-> proporción adecuada según el contexto, documentando la justificación
-> en la estrategia de testing.
+A medida que el boundary se aleja del archivo aislado y se acerca a la
+solución completa, el mock desaparece y la señal de verificación aumenta.
+Los dos boundaries intermedios (File, Module) no requieren suite propia:
+File está prohibido, Module se deriva del boundary App.
 
 ---
 
-## Jerarquia de tests
+## Política de Testing
 
-| Prioridad | Tipo | Caracteristicas | Cobertura esperada |
-|-----------|------|-------------------|----------------------|
-| **1 (primaria)** | Integracion | DBMS real (no mocks, no in-memory). Migraciones y seeders reales. Stack completo ejercitado. Detecta codigo muerto. | Alta (objetivo > 80%) |
-| **2 (secundaria)** | E2E | Sin mocks internos (solo mock de terceros). Flujos de usuario completos. Valida contratos contra implementacion. | Rutas criticas cubiertas |
-| **3 (minima)** | Unit | Solo para funciones puras con logica compleja (math, algoritmos, parsers). NO para glue code, CRUD, ni I/O. | Solo donde aplica |
+### Desarrollo explícito (los únicos 2 tiers escritos)
+
+- **Tests de App** — boundary App, stack real completo, cobertura alta
+  obligatoria. Tier primario.
+- **Tests E2E** — boundary Solution, multi-servicio, cero mocks. Se
+  ejecutan en deploys, tags y merges a `main`/`develop`.
+
+### Prohibido
+
+- **Tests de Unit** (boundary File) — no se escriben bajo ninguna
+  circunstancia en este framework. Si un test necesita mockear el propio
+  archivo bajo prueba para pasar, esa es la señal de que el test no
+  pertenece a este modelo.
+
+### Sin desarrollo explícito (derivado por filtrado)
+
+- **Integración** (boundary Module) — un hook de repositorio detecta el
+  módulo tocado y ejecuta el subconjunto de tests de App que lo cubren.
+  Mismos tests, filtro distinto.
+- **Regression / Smoke / Sanity** — subconjuntos de los tests de App y
+  E2E existentes, seleccionados por tag o nomenclatura. Ver
+  [Tests Derivados y Pipeline Placement](#tests-derivados-y-pipeline-placement).
+
+### TBD (post-MVP)
+
+- **Performance / Stress / Load** — no definido en el alcance del MVP.
+  Se delega como historias de trabajo al propio framework en una
+  iteración futura.
 
 ---
 
-## Herramientas y configuracion de cobertura
+## Arquitectura de la Fase Red — 3 Capas
 
-### Reglas de la Fase Red
-
-1. **Elegir herramientas** apropiadas para el stack definido en
-   `design.md` (framework de testing, assertion library, coverage tool)
-2. **Configurar cobertura** con collection operacional y thresholds
-   definidos
-3. **Disenar test plan** mapeado a:
-   - ACs de `spec.md` (trazabilidad directa)
-   - Decisiones de arquitectura de `design.md`
-   - Work items de `tasks.md`
-4. **Escribir la suite completa** --- todos los tests fallan porque no
-   hay implementacion. Eso es RED.
-5. La suite de tests ES la especificacion ejecutable del sistema
+El Test Engineer no escribe "una suite de tests" — produce tres capas
+encadenadas, cada una agnóstica de herramienta. Solo la Capa 3 es código
+ejecutable; las Capas 1 y 2 son artefactos de trazabilidad.
 
 ```mermaid
 sequenceDiagram
+    autonumber
     participant OE as Orquestador
     participant TE as Test Engineer
     participant REPO as Working Tree
 
-    OE->>TE: Contrato: escribir suite de tests<br/>contra contratos y ACs
+    OE->>TE: Contrato: producir 3 capas<br/>contra ACs y boundaries definidos
     activate TE
-    TE->>TE: Selecciona framework de testing<br/>(del stack en design.md)
-    TE->>TE: Configura coverage collection
-    TE->>TE: Mapea ACs → test cases
-    TE->>TE: Mapea contratos → contract tests
-    TE->>REPO: Escribe tests (todos FALLAN)
-    TE-->>OE: Suite completa + Status Report
+    TE->>TE: Capa 1 - Test Plan:<br/>mapea ACs a casos, asigna boundary y tags
+    TE->>REPO: Escribe Test Plan (meta-documento)
+    TE->>TE: Capa 2 - Test Contract:<br/>define manifiesto enumerable por sujeto
+    TE->>REPO: Escribe Test Contract (codigo declarativo)
+    TE->>TE: Capa 3 - Test Implementation:<br/>referencia el Test Contract, sin mocks
+    TE->>REPO: Escribe tests App y E2E (todos FALLAN)
+    TE-->>OE: 3 capas completas + Status Report
     deactivate TE
 
-    OE->>OE: PDC: verifica mapeo ACs ↔ tests
-    OE->>OE: Ejecuta suite → confirma que<br/>TODOS fallan (estado RED)
+    OE->>OE: PDC: verifica mapeo AC -> Plan -> Contract -> Implementacion
+    OE->>OE: Ejecuta suite -> confirma estado RED
 ```
+
+### Capa 1: Test Plan
+
+Meta-documento, no código. Responde "qué se va a probar":
+
+- Mapea cada AC de `spec.md` a uno o más casos de test.
+- Asigna a cada caso un boundary (App o E2E — los únicos dos válidos
+  para desarrollo explícito).
+- Asigna tags de filtrado (`smoke`, `critical-path`, `regression`) que
+  luego alimentan la derivación de tests en el pipeline.
+- Identifica matrices de test cuando aplica (combinaciones, casos límite).
+
+### Capa 2: Test Contract
+
+Código, pero declarativo — no contiene lógica de test, solo la
+enumera. Un manifiesto por sujeto bajo prueba, donde cada entrada es un
+caso con nombre inmutable, legible por humanos y ligado a un AC.
+
+> El framework define el CONCEPTO, no la implementación. En
+> nest-base/fullstack-base este concepto se materializó como clases con
+> propiedades `static readonly`, pero cualquier mecanismo del lenguaje
+> consumidor que produzca un manifiesto enumerable, inmutable y
+> referenciable cumple el contrato.
+
+```mermaid
+classDiagram
+    class TestPlan {
+        +ac : string
+        +descripcion : string
+        +boundary : string
+        +tags : string_lista
+    }
+    class TestContract {
+        <<manifiesto>>
+        +nombreDeCaso : string
+    }
+    class TestImplementation {
+        +ejecutaContra : StackReal
+        +referencia : TestContract
+    }
+    TestPlan --> TestContract : se traduce en
+    TestContract --> TestImplementation : se referencia desde
+```
+
+El Test Contract es el puente entre el Test Plan y la implementación.
+Su propósito es doble: impide que un agente de IA escriba nombres de test
+como strings sueltos y dispersos (spaghetti de test naming), y habilita
+trazabilidad por IDE — el sujeto de prueba y su superficie de casos son
+visibles de un vistazo.
+
+### Capa 3: Test Implementation
+
+Tests ejecutables que referencian el Test Contract — nunca strings
+inline para el nombre de un caso.
+
+- **Tests de App**: interacciones reales contra el stack (base de datos
+  real, HTTP real, contenedor de inyección de dependencias real). Cero
+  mocks del propio producto.
+- **Tests E2E**: contra la solución desplegada, multi-servicio.
+- **Coverage como verdad**: umbral alto, jamás se reduce. Código sin
+  cobertura es candidato droppable (ver
+  [Código Droppable](#código-droppable)).
 
 ---
 
-## Que significa "Red" operativamente
+## Trazabilidad: AC → Test Plan → Test Contract → Implementación → Coverage
 
-- Todos los tests existen y se ejecutan
-- Todos los tests FALLAN (no hay implementacion)
-- El coverage tool esta operativo y reportando
-- Cada test traza a un AC o contrato especifico
+```mermaid
+flowchart LR
+    AC["AC\n(spec.md)"] --> PLAN["Test Plan\n(boundary + tags)"]
+    PLAN --> CONTRACT["Test Contract\n(nombre de caso inmutable)"]
+    CONTRACT --> IMPL["Test Implementation\n(App o E2E, sin mocks)"]
+    IMPL --> COV["Coverage\n(codigo vivo o droppable)"]
+```
+
+Cada eslabón de la cadena es verificable de forma independiente: dado un
+AC, se puede encontrar su entrada en el Test Plan; dada esa entrada, su
+caso en el Test Contract; dado ese caso, su implementación; dada esa
+implementación, el archivo de producción que cubre y su porcentaje de
+cobertura.
+
+```text
+AC-01 (spec.md)
+  → Test Plan: caso "login exitoso", boundary: App, tags: [smoke, critical]
+    → Test Contract: AuthTestCase.loginSuccess = "Should authenticate..."
+      → it(AuthTestCase.loginSuccess, ...) → real HTTP + real DB
+        → Coverage: src/auth/login.service.ts → 95% (codigo vivo)
+        → Coverage: src/auth/legacy-adapter.ts → 0% (droppable)
+```
+
+> Ejemplo ilustrativo, no prescriptivo. La sintaxis concreta (`it(...)`,
+> el nombre de la clase de contrato, la ruta de archivo) depende del
+> stack que defina `design.md`. Lo que el framework exige es que la
+> cadena sea reconstruible en ambas direcciones: de AC a línea de
+> cobertura, y de línea de cobertura de vuelta a AC.
+
+Si un AC no puede completar la cadena — no hay caso de Test Plan que lo
+cubra, o el Test Contract no tiene entrada, o la implementación no
+referencia el contrato — hay un gap que se escala a la Pre-Fase.
+
+---
+
+## Tests Derivados y Pipeline Placement
+
+Ningún tipo de test fuera de App y E2E se escribe. Todos se obtienen
+filtrando esos dos conjuntos por módulo tocado, por tag o por ubicación
+en el pipeline.
+
+| Necesidad | Cómo se resuelve |
+|-----------|-------------------|
+| "Tests unitarios" | No existen. Los tests de App con cobertura alta los vuelven redundantes. |
+| "Tests de integración" | Un hook de git detecta el módulo tocado → ejecuta el subconjunto de tests de App de ese módulo. Mismos tests, filtro distinto. |
+| "Smoke tests" | E2E seleccionados por tag. Post-deploy: "¿desplegó correctamente?" |
+| "Regresión" | Todo test de App/E2E escrito para reproducir un bug ES regresión. Tag opcional. |
+| "Sanity" | Subconjunto mínimo de tests de App (ruta crítica), seleccionable por tag. |
+| "Performance/stress/load" | TBD post-MVP — historias dedicadas. |
+
+```mermaid
+flowchart TD
+    APP["Tests de App\n(todos, con tags)"]
+    E2E["Tests E2E\n(todos, con tags)"]
+
+    APP -->|"filtro: modulo tocado"| INT["Integracion\n(subconjunto derivado)"]
+    APP -->|"filtro: tag smoke"| SMOKE_APP["Smoke\n(subconjunto derivado)"]
+    E2E -->|"filtro: tag smoke"| SMOKE_E2E["Smoke\n(subconjunto derivado)"]
+    APP -->|"filtro: tag critical-path"| SANITY["Sanity\n(subconjunto derivado)"]
+    APP -->|"escrito para reproducir un bug"| REG_APP["Regression\n(tag opcional)"]
+    E2E -->|"escrito para reproducir un bug"| REG_E2E["Regression\n(tag opcional)"]
+```
+
+### Ubicación en el pipeline
+
+| Qué corre | Cuándo | Propósito |
+|-----------|--------|-----------|
+| Tests de App (solo módulo tocado) | Pre-commit / pre-push | Feedback rápido sobre lo que cambió |
+| Tests de App (todos los módulos afectados) | CI (en PR) | Confianza completa antes del merge |
+| Tests E2E | Deploys, tags, merges a develop/main | Confianza a nivel de solución completa |
+| Subconjunto E2E (tag smoke) | Post-deploy a un ambiente | "¿Desplegó correctamente?" |
+
+---
+
+## Código Droppable
+
+La cobertura no es una métrica de vanidad — es una HERRAMIENTA para
+identificar código muerto.
+
+```mermaid
+stateDiagram-v2
+    [*] --> SinCobertura
+    SinCobertura --> CubiertoPorApp: "test de App ejercita el codigo real"
+    SinCobertura --> CubiertoPorE2E: "test E2E ejercita el codigo real"
+    CubiertoPorApp --> CodigoVivo
+    CubiertoPorE2E --> CodigoVivo
+    SinCobertura --> CodigoDroppable: "ningun test real lo ejercita"
+    CodigoVivo --> [*]
+    CodigoDroppable --> [*]: "candidato a eliminacion"
+```
+
+- El umbral de cobertura es obligatorio y **nunca puede bajarse**.
+- Código que ningún test de App ejercita mediante interacciones reales
+  del producto no tiene justificación para existir.
+- El framework llama a esto **código droppable**: código que puede
+  eliminarse con seguridad porque ninguna prueba de alto valor lo toca.
+- El concepto de **colección selectiva de cobertura** (medir solo
+  archivos con lógica real, excluir boilerplate y configuración) aplica
+  de forma universal, pero el consumidor del framework define qué
+  archivos entran en esa colección según su propio stack.
+
+---
+
+## Herramientas y Configuración
+
+Este documento define REQUISITOS, no herramientas. El stack de testing
+concreto (framework de test, librería de aserciones, herramienta de
+cobertura) lo define `design.md` en la planificación. La Fase Red exige
+que ese stack cumpla las siguientes capacidades, sin importar cuál sea:
+
+### Requisitos del test runner
+
+- Debe permitir ejecutar tests contra un stack real (base de datos real,
+  servidor HTTP real, contenedor de DI real) sin sustituir esas piezas
+  por dobles de prueba.
+- Debe soportar mocking limitado a dependencias de terceros dentro de
+  tests E2E — nunca mocking del propio producto.
+- Debe soportar un mecanismo de tags o nomenclatura que permita
+  seleccionar subconjuntos de la suite (para derivar integración, smoke,
+  sanity y regresión sin escribir suites nuevas).
+- Debe poder ejecutarse tanto de forma acotada (módulo específico, para
+  pre-commit/pre-push) como completa (toda la suite, para CI).
+
+### Requisitos de la herramienta de cobertura
+
+- Debe reportar cobertura por archivo y de forma agregada.
+- Debe poder configurarse con un umbral mínimo que falle el build si no
+  se alcanza.
+- Debe soportar inclusión/exclusión selectiva de archivos (el concepto
+  de `collectCoverageFrom`), para que la detección de código droppable
+  mida solo lógica real y no boilerplate o configuración.
+- El umbral configurado es el que la Fase Refactor usa como gate — no se
+  negocia a la baja en ninguna fase posterior.
+
+---
+
+## Qué Significa "Red" Operativamente
+
+- Las tres capas existen: Test Plan, Test Contract, Test Implementation.
+- Todos los tests de la Capa 3 se ejecutan y todos FALLAN (no hay
+  implementación).
+- La herramienta de cobertura está operativa y reportando.
+- Cada test traza a un AC específico a través del Test Plan y el Test
+  Contract.
+- No existen tests de boundary File (Unit) en el repositorio.
 - Si un test no puede escribirse, hay un gap en el contrato o el AC
-  (escalar a Pre-Fase)
+  (escalar a Pre-Fase).

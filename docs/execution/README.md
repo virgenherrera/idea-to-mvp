@@ -35,14 +35,16 @@ flowchart LR
         R["Fase Red\nTests"]
         G["Fase Green\nImplementacion"]
         RF["Fase Refactor\nCalidad"]
-        C --> R --> G --> RF
+        A["Fase Accept\nCertificacion QA"]
+        C --> R --> G --> RF --> A
     end
 
     CODE["Codigo funcional\n(salida)"]
 
     HANDOFF -->|"consume"| C
-    RF -->|"produce"| CODE
+    A -->|"produce"| CODE
 
+    A -.->|"rechazado:\nre-trabajo"| RF
     RF -.->|"regresión → revertir"| RF
     G -.->|"test incorrecto"| R
     R -.->|"contrato ambiguo"| C
@@ -57,6 +59,7 @@ flowchart LR
 | Red | Contratos + ACs de `spec.md` | Suite de tests (todos fallan) + cobertura configurada | Test Engineer |
 | Green | Tests rojos + contratos | Codigo que pasa todos los tests | Implementor |
 | Refactor | Codigo verde + tests | Codigo limpio, revisado, alineado a `design.md` | Reviewers (multiples) |
+| Accept: Certificación QA | Código refactorizado + reports de Reviewers | Certificación formal de cumplimiento del handoff | QA (Modo 2) |
 
 ---
 
@@ -71,12 +74,12 @@ multiples veces dentro de un proyecto:
 flowchart TD
     subgraph ITER_1["Iteracion 1 (tasks T-01..T-05)"]
         direction LR
-        C1["Contratos"] --> R1["Red"] --> G1["Green"] --> RF1["Refactor"]
+        C1["Contratos"] --> R1["Red"] --> G1["Green"] --> RF1["Refactor"] --> A1["Accept"]
     end
 
     subgraph ITER_2["Iteracion 2 (tasks T-06..T-10)"]
         direction LR
-        C2["Contratos\n(incrementales)"] --> R2["Red\n(nuevos tests)"] --> G2["Green"] --> RF2["Refactor"]
+        C2["Contratos\n(incrementales)"] --> R2["Red\n(nuevos tests)"] --> G2["Green"] --> RF2["Refactor"] --> A2["Accept"]
     end
 
     ITER_1 --> ITER_2
@@ -194,6 +197,7 @@ flowchart LR
 | **Reviewer (Arquitectura)** | Critico, orientado a mantenibilidad. Compara contra design.md. | Refactor | Revisa alineacion arquitectonica, SOLID, DRY, KISS, patrones. | Codigo verde + design.md | Reporte de revision + sugerencias de refactor |
 | **Reviewer (Seguridad)** | Paranoico constructivo. Busca vulnerabilidades. | Refactor | Revisa OWASP Top 10, secrets, dependencias, surface area. | Codigo verde + spec.md (no-funcionales) | Reporte de seguridad |
 | **Reviewer (Performance)** | Analitico, orientado a metricas. Busca bottlenecks. | Refactor | Revisa memory leaks, N+1, operaciones bloqueantes. | Codigo verde | Reporte de performance |
+| **QA (Modo 2)** | Verificador exhaustivo. Contrasta producto contra handoff. No asume que "tests pasan" es suficiente. | Accept | Verifica que CADA AC del handoff se cumple en el producto, que la cobertura no bajó, que el comportamiento de producto es el esperado. Certifica formalmente. | Código refactorizado + test reports + handoff.md | Certificación formal (mecanismo definido por el consumidor del framework) |
 | **MIM** | Humano. Decide, aprueba, desbloquea. | Todas (on-demand) | Aprueba contratos, resuelve ambiguedades, acepta resultado final. | Reportes del Orquestador | Decisiones y aprobaciones |
 
 ### Mapeo a roles de planificacion
@@ -215,6 +219,7 @@ flowchart LR
         TE["Test\nEngineer"]
         IMP["Implementor"]
         REV["Reviewers"]
+        QA_E["QA\n(Certificación)"]
     end
 
     SM_P -.->|"analogo"| OE
@@ -222,6 +227,7 @@ flowchart LR
     QA_P -.->|"informa"| TE
     DEV_P -.->|"informa"| IMP
     SEC_P -.->|"informa"| REV
+    QA_P -.->|"informa"| QA_E
 ```
 
 Los roles del Modo 2 NO son los mismos que los del Modo 1. En
@@ -289,15 +295,16 @@ Areas dentro del Modo 2 que requieren definicion adicional:
 
 ## Contenido de esta sección
 
-Este documento se divide en seis páginas:
+Este documento se divide en siete páginas:
 
 | Página | Contenido |
 |--------|-----------|
 | **README.md** (este documento) | Vision general, ciclo iterativo, conexion con Modo 1, roles, modelo de delegacion |
 | [Contratos](contracts.md) | Pre-Fase: contract-first, tipos de contrato, desarrollo paralelo, validacion |
-| [Fase Red](red.md) | Estrategia de testing, piramide invertida, jerarquia de tests |
+| [Fase Red](red.md) | Modelo de boundaries, arquitectura de 3 capas, tests derivados y código droppable |
 | [Fase Green](green.md) | Reglas de implementacion, estrategia de commits, test vs codigo |
 | [Fase Refactor](refactor.md) | Gate de calidad, dimensiones de revision, checklist |
+| [Fase Accept](accept.md) | Certificación QA: qué verifica, contra qué, cómo certifica |
 | [Estrategia Git](git-strategy.md) | Gitflow, worktrees para paralelismo, commits, merge strategy |
 
 ---
