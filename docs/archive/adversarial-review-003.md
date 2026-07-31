@@ -14,14 +14,14 @@
 | Severidad | Cantidad | Corregidos | Diferidos |
 |-----------|----------|------------|-----------|
 | CRITICAL | 5 | 5 | 0 |
-| HIGH | 10 | 9 | 1 (H1) |
+| HIGH | 10 | 10 | 0 |
 | MEDIUM | 9 | 9 | 0 |
 | LOW | 4 | 4 | 0 |
-| **Total** | **28** | **27** | **1** |
+| **Total** | **28** | **28** | **0** |
 
-**Veredicto post-fix: 27 de 28 hallazgos corregidos.** El unico diferido
-(H1: write path Pattern B) requiere decision arquitectonica del MIM
-sobre si cambiar el modelo de supervision ECHO.
+**Veredicto post-fix: 28 de 28 hallazgos corregidos.** H1 (write path)
+fue el ultimo en resolverse — ver "Write Path: Acoplado vs Desacoplado"
+en `behavior-scrum-master-routing.md`.
 
 ### Causas Raiz — RESUELTAS
 
@@ -81,15 +81,25 @@ bloqueantes y asunciones criticas. Instruccion explicita: "NO asumas
 
 ---
 
-## HIGH — ~~Comportamiento incorrecto o fragil~~ 9/10 CORREGIDOS
+## HIGH — ~~Comportamiento incorrecto o fragil~~ 10/10 CORREGIDOS
 
-### H1. Write path fuerza contenido a traves del SM — DIFERIDO
+### ~~H1. Write path fuerza contenido a traves del SM~~ CORREGIDO
 **Fuente**: IMPL-002
 
-**Estado**: DIFERIDO — requiere decision arquitectonica. El ECHO check
-del PDC requiere que el SM vea el contenido del sub-agente. Cambiar
-esto (sub-agente persiste directo, SM recibe solo Status Report)
-modifica el modelo de supervision. Decision del MIM requerida.
+**Correccion**: seccion "Write Path: Acoplado vs Desacoplado" agregada
+en `behavior-scrum-master-routing.md` (PDC, punto 2.1). Regla de
+umbral (reutiliza el threshold de 500 tokens de M14): por debajo del
+umbral se mantiene el write path acoplado (sub-agente devuelve
+contenido, SM hace ECHO inline); por encima, el sub-agente persiste
+directo via TPM y el SM solo recibe el Status Report. El ECHO se
+desacopla en dos verdictos delegados — estructural (TPM, equivalente
+al tier Local de la Estrategia de Delegacion Multi-Modelo) y semantico
+(sub-agente fresco que lee el artefacto via Patron B, tier Cloud) — el
+SM nunca ve el contenido completo por encima del umbral. Nota explicita
+agregada: la seccion define COMPORTAMIENTO (que debe pasar, cuando, en
+que orden), no IMPLEMENTACION (que runtime ejecuta el sub-agente fresco,
+que protocolo de transporte usa la lectura — eso se resuelve al disenar
+el Modo de Ejecucion o al elegir adaptador concreto).
 
 ### ~~H2. Sin cap para loops infinitos de PARTIAL~~ CORREGIDO
 **Correccion**: regla agregada en `behavior.md`: 3 PARTIAL consecutivos
@@ -229,11 +239,11 @@ Lista consolidada de TODO lo que queda realmente pendiente o diferido
 a traves de los 3 adversarial reviews. Items resueltos por trabajo
 posterior fueron actualizados en sus reviews respectivos.
 
-### DIFERIDOS — Requieren decision arquitectonica
+### DIFERIDOS — TODOS RESUELTOS
 
 | # | Origen | Hallazgo | Tipo | Nota |
 |---|--------|----------|------|------|
-| D1 | R003-H1 | Write path fuerza contenido a traves del SM | Arquitectura | ECHO check del PDC requiere que SM vea contenido. Decision MIM. |
+| ~~D1~~ | ~~R003-H1~~ | ~~Write path fuerza contenido a traves del SM~~ | ~~RESUELTO~~ | ~~Write path desacoplado con umbral de 500 tokens (reutiliza M14): ECHO estructural (TPM, tier Local) + ECHO semantico (sub-agente fresco via Patron B, tier Cloud). SM nunca ve el contenido completo por encima del umbral. Ver `behavior-scrum-master-routing.md` seccion 2.1.~~ |
 | ~~D2~~ | ~~R002-H3~~ | ~~Personalidades no verificables~~ | ~~RESUELTO~~ | ~~Output constraints por personalidad en role-profiles.md~~ |
 | ~~D3~~ | ~~R002-M3~~ | ~~TPM editorial drift~~ | ~~RESUELTO~~ | ~~Ediciones nivel 1 (formato) vs nivel 2 (estructura) con notificacion~~ |
 | ~~D4~~ | ~~R002-M6~~ | ~~Multi-stakeholder MIM~~ | ~~RESUELTO~~ | ~~Routing requester/approver en Fase 1~~ |
@@ -267,16 +277,18 @@ posterior fueron actualizados en sus reviews respectivos.
 
 | Categoria | Cantidad | Resueltos | Diferidos |
 |-----------|----------|-----------|-----------|
-| Diferidos (arquitectura) | 7 | 6 | 1 (D1: write path — requiere decision MIM) |
+| Diferidos (arquitectura) | 7 | 7 | 0 |
 | Abiertos (producto/diseno) | 6 | 2 (A4, A5) | 4 (A1, A2, A3, A6) |
 | Cosmeticos | 6 | 6 | 0 |
-| **Total** | **19** | **14** | **5** |
+| **Total** | **19** | **15** | **4** |
 
-**Resumen**: de ~81 hallazgos brutos a traves de 3 reviews, quedan **5**
+**Resumen**: de ~81 hallazgos brutos a traves de 3 reviews, quedan **4**
 diferidos a fases futuras — ninguno permanece abierto sin clasificar.
-D1 (write path) y A6 requieren decision arquitectonica sobre el Modo de
-Ejecucion. A1 depende del mismo diseno. A2 y A3 son concerns de producto
-para iteracion futura (preguntas adaptativas, onboarding guide).
+D1 (write path) se resolvio (write path desacoplado con umbral, ver
+`behavior-scrum-master-routing.md` seccion 2.1). A1 y A6 requieren
+decision arquitectonica sobre el Modo de Ejecucion. A2 y A3 son
+concerns de producto para iteracion futura (preguntas adaptativas,
+onboarding guide).
 
 **Todos los hallazgos han sido resueltos o diferidos a fases futuras
 (Modo Ejecución, decisiones de producto). Las revisiones adversariales
@@ -311,4 +323,4 @@ del Modo de Planificación están cerradas.**
 | Multi-stakeholder routing | Completo |
 | Retrospectiva con meta-config | Completo |
 | Estrategia de delegacion multi-modelo (Local/Cloud) | Completo |
-| Write path Pattern B | **DIFERIDO — decision MIM** |
+| Write path desacoplado (umbral 500 tokens, ECHO estructural + semantico) | Completo |

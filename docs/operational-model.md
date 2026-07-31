@@ -180,12 +180,14 @@ directamente. Si no lo es, las usa como guía para obtener las respuestas.
 
 #### Adaptador por defecto: `docs/` como RAG local
 
-- Path por defecto: `docs/` en un directorio designado FUERA del repo
-  destino (ejemplo: `~/.idea-to-mvp/projects/{nombre}/docs/`)
+- Path por defecto: `{repo}/docs/` — DENTRO del repositorio destino
+  (corregido en commit 07eafad; ver también sección "Adaptadores del
+  Artifact Store" más abajo para el detalle completo del adaptador)
 - Formato: archivos markdown, uno por fase
-- Legible por humanos, versionable si se desea
+- Legible por humanos, versionable con git
 - Los agentes hacen fetch de archivos específicos, no crawl completo
-- Adaptadores adicionales (engram, Jira, Confluence, etc.): TBD
+- Adaptadores adicionales (engram, Jira, Confluence, etc.): ver sección
+  "Adaptadores del Artifact Store"
 
 **Restricción clave**: el modo planificación NUNCA toca el working tree del
 repo destino. Lee el codebase para informar decisiones, pero toda la salida
