@@ -304,12 +304,10 @@ escritura son mediadas por el TPM (ver `artifact-model.md` → "TPM como
 DBMS"); las lecturas pueden ser directas vía Pattern B.
 
 ### Adaptador local (por defecto)
-- Almacena artefactos como archivos markdown en un directorio designado
-  FUERA del repo destino.
-- Ejemplo: `~/.idea-to-mvp/projects/{nombre-proyecto}/docs/`
-- Ventajas: sin dependencias externas, trackeable con git si se desea,
-  legible por humanos.
-- Desventaja: sin acceso cross-machine.
+- Almacena artefactos como archivos markdown en `{repo}/docs/`
+- Dentro del repositorio destino — agentes y usuarios acceden al mismo filesystem
+- Ventajas: cero dependencias, legible por humanos, versionable con git
+- Desventaja: sin acceso cross-machine, sin búsqueda semántica
 
 ### Adaptador engram
 - Almacena artefactos como observaciones engram con topic keys estructurados.
@@ -385,6 +383,53 @@ hacerlo verdad.
 
 Estos son OPERACIONALES. Pertenecen a la capa de tooling, no a la capa de
 gobernanza.
+
+---
+
+## Estrategia de Delegación Multi-Modelo
+
+El SM selecciona el tier de modelo por tarea usando un criterio simple:
+**¿La salida correcta es derivable de reglas/templates, o requiere juicio?**
+
+| Tier | Runtime | Criterio de selección | Costo |
+|------|---------|----------------------|-------|
+| **Local** (Docker / Ollama) | Modelo local, cero costo por token | La salida es determinista o template-driven. No requiere razonamiento complejo. | Cero (solo compute local) |
+| **Cloud** (Claude / Codex / equivalente) | API remota, costo por token | Requiere síntesis, juicio, creatividad, o razonamiento sobre contexto ambiguo. | Proporcional al uso |
+
+### Asignación por componente
+
+| Componente | Tier | Justificación |
+|-----------|------|---------------|
+| **TPM** (validar formato, verificar schema, generar markdown, batch writes, slug) | Local | Operaciones mecánicas con reglas bien definidas |
+| **Echo Protocol** — checks estructurales (completitud, formato, campos requeridos) | Local | Verificable con reglas |
+| **Echo Protocol** — checks semánticos (coherencia, contradicciones, calidad) | Cloud | Requiere comprensión del contenido |
+| **SM** (coordinación, decisiones de routing, gate evaluation) | Cloud | Requiere juicio sobre contexto |
+| **PO** (spec desde input ambiguo, priorización, ACs) | Cloud | Síntesis y juicio |
+| **Dev Lead** (diseño arquitectónico, estimación, secuenciación) | Cloud | Razonamiento técnico profundo |
+| **QA** (adversarial review, estrategia de pruebas, verificación) | Cloud | Juicio y creatividad adversarial |
+| **DevSecOps** (threat model, surface analysis) | Cloud | Razonamiento de seguridad |
+| **UX** (validación de decisiones de usuario) | Cloud | Empatía y juicio de producto |
+| **Retro** (síntesis stop/start/continue, agreements) | Cloud | Síntesis de múltiples perspectivas |
+
+### Regla de decisión
+
+```
+if (output == template_con_slots && sin_ambiguedad)
+  → Local
+else
+  → Cloud
+```
+
+El SM no necesita un scoring complejo. Si puede escribir el template y los
+slots de antemano, la tarea es mecánica. Si necesita que el agente **piense**,
+es cloud.
+
+### Nota de implementación
+
+La selección de modelo es una decisión de **tooling**, no de gobernanza.
+Cada proyecto puede configurar qué modelo local usar (llama3, mistral,
+phi, etc.) y qué proveedor cloud preferir. El framework define el CRITERIO
+de selección, no el modelo específico.
 
 ---
 
