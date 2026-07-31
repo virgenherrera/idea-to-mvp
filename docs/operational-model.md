@@ -274,6 +274,21 @@ encuentra un gap, el sistema regresa al ciclo de preguntas para esa fase.
 repo destino. NO crea artefactos de planificación, documentos de feedback ni
 archivos de estado del proceso en el repo.
 
+**Estructura interna**: el Modo 2 opera en 4 fases macro:
+
+1. **Pre-Fase: Contratos** — Contract-first. Define interfaces públicas
+   (API, DB, componentes) antes de cualquier código. Habilita paralelismo.
+2. **Fase Red** — Escribe la suite completa de tests (integración primero,
+   E2E segundo, unit mínimo). Todos fallan. La suite ES la especificación
+   ejecutable.
+3. **Fase Green** — Implementa código que pase todos los tests. Sin
+   optimización prematura. Commits frecuentes.
+4. **Fase Refactor** — Gate de calidad: SOLID, DRY, KISS, seguridad
+   (OWASP), performance, alineación con `design.md`. Tests deben seguir
+   pasando.
+
+> Detalle: [execution-model.md](execution-model.md).
+
 ---
 
 ## Límites

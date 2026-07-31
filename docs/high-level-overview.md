@@ -89,7 +89,7 @@ flowchart LR
 | Proposito | Producir fuentes de verdad | Implementar codigo |
 | Participantes | Scrum team (lentes) | Orquestador + minions |
 | Donde escribe | Artifact store (fuera del repo) | Working tree del repo |
-| Estado actual | **DEFINIDO** | **TBD** |
+| Estado actual | **DEFINIDO** | **DEFINIDO** |
 
 > Detalle: [operational-model.md](operational-model.md).
 
@@ -97,8 +97,8 @@ flowchart LR
 
 ## Pipeline Completo
 
-El ciclo tiene 4 macro-fases. Solo la primera esta completamente
-definida en el framework actual.
+El ciclo tiene 4 macro-fases. Las dos primeras estan definidas. Las
+fases post-ejecucion estan definidas como parte del Modo 1.
 
 ```mermaid
 %% Pipeline completo con macro-fases
@@ -113,9 +113,13 @@ flowchart TD
         F1 --> F2 --> F3 --> F4 --> F5
     end
 
-    subgraph MACRO_2["Handoff a Ejecucion (TBD)"]
+    subgraph MACRO_2["Handoff a Ejecucion (DEFINIDO)"]
         direction LR
-        EX["Ejecucion\nOrquestador\n+ minions\nimplementan"]
+        EX_C["Pre-Fase\nContratos"]
+        EX_R["Fase Red\nTests"]
+        EX_G["Fase Green\nImplementacion"]
+        EX_RF["Fase Refactor\nCalidad"]
+        EX_C --> EX_R --> EX_G --> EX_RF
     end
 
     subgraph POST["Post-Ejecucion (DEFINIDO)"]
@@ -131,12 +135,11 @@ flowchart TD
         OPS["Operacion\nMonitoreo,\nrunbooks,\nSRE"]
     end
 
-    F5 -->|"handoff.md"| EX
-    EX -->|"codigo\nimplementado"| F6
+    F5 -->|"handoff.md"| EX_C
+    EX_RF -->|"codigo\nimplementado"| F6
     F8 -->|"siguiente ciclo"| F1
     F7 -->|"ops-runbook.md"| OPS
 
-    style MACRO_2 stroke-dasharray: 5 5
     style MACRO_3 stroke-dasharray: 5 5
 ```
 
@@ -375,12 +378,13 @@ almacenan, valida integridad, y sirve consultas con criterio editorial.
 
 ## Que Sigue (areas TBD)
 
-El framework actualmente cubre la **macro-fase de planificacion** en
-detalle. Las siguientes areas estan identificadas pero no definidas:
+El framework cubre la macro-fase de planificacion y la macro-fase de
+ejecucion en detalle. Las siguientes areas estan identificadas pero no
+definidas:
 
 | Area | Estado | Descripcion |
 |------|--------|-------------|
-| Modo Ejecucion | TBD | Como el orquestador consume el handoff, delega a sub-agentes, y produce codigo. Patron orquestador-minion. |
+| Modo Ejecucion | **DEFINIDO** | 4 fases (Contratos → Red → Green → Refactor). Contract-first, piramide de testing invertida, revision multi-dimensional. Ver [execution-model.md](execution-model.md). |
 | Modo Operacion | TBD | Para proyectos con servicios vivos: monitoreo, runbooks, SRE, alertas. Consumidor de `ops-runbook.md`. |
 | Adaptadores avanzados | TBD | Jira, DBMS, Git repo, MS Project como adaptadores del artifact store. |
 | Routing no-Scrum | TBD | Routing tables para Kanban (WIP limits), Shape Up (bets), SAFe (PIs). Los artefactos son universales; la orquestacion no. |
@@ -397,3 +401,4 @@ detalle. Las siguientes areas estan identificadas pero no definidas:
 | [artifact-model.md](artifact-model.md) | 6 artefactos, TPM, interfaz de adaptadores, state machine, jerarquia de work items |
 | [behavior-scrum-master-routing.md](behavior-scrum-master-routing.md) | SM como facade, state machine del proyecto, fast-forward, PDC, circuit breaker |
 | [role-profiles.md](role-profiles.md) | Contratos de delegacion por fase, personalidades, activacion condicional, roles ad-hoc |
+| [execution-model.md](execution-model.md) | Modo 2: Contract-first, Red-Green-Refactor macro, roles de ejecucion, conexion con Modo 1 |
