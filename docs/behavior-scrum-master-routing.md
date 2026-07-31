@@ -136,7 +136,11 @@ sequenceDiagram
     TPM->>TPM: Escanea RAG
     TPM->>SM: "idea.md: aprobado, spec.md: aprobado, design.md: borrador (3/5 secciones)"
     SM->>SM: Deriva: estamos en Fase 3 (Diseñar), design.md en draft
-    SM->>SM: Siguiente acción: convocar Dev Lead para producir design.md
+    SM->>TPM: "¿Hay fallos registrados en el ciclo actual?"
+    TPM->>TPM: Consulta history() filtrando action: failure
+    TPM->>SM: "2 rechazos PDC en design.md (VERIFY), rol Dev Lead"
+    SM->>SM: Ajusta estrategia: contrato más explícito o personalidad diferente
+    SM->>SM: Siguiente acción: convocar Dev Lead con contrato ajustado
 ```
 
 ### Fast-Forward Contextual — Gradiente de Certeza
@@ -231,6 +235,74 @@ No solo al inicio. Ejemplos:
   No pasa por Idea → Spec → Design.
 - **Epic ya groomeado** → todo en el RAG → SM detecta artefactos
   aprobados → fast-forward directo a ejecución.
+
+---
+
+## Tiers de Activación
+
+El SM determina el **tier de ceremonia** al inicio de cada ciclo usando el
+score de fast-forward (F1-F4). El tier define cuánta ceremonia se aplica,
+no qué artefactos se producen — los artefactos son universales.
+
+```mermaid
+flowchart TD
+    SCORE["Score F1-F4\n(0-8 puntos)"] --> CHECK{{"Evaluar\nrango"}}
+    CHECK -->|"0-2"| COMPLETO["Tier Completo\nCeremonia total"]
+    CHECK -->|"3-5"| ESTANDAR["Tier Estándar\nCeremonia normal"]
+    CHECK -->|"6-8"| LIGERO["Tier Ligero\nCeremonia mínima"]
+
+    COMPLETO --> C_OUT["Todos los roles\nTodos los gates\nDispatch normal"]
+    ESTANDAR --> E_OUT["3-4 roles por fase\nGates estándar\nFast-forward parcial"]
+    LIGERO --> L_OUT["1-2 roles esenciales\nGates comprimidos\nDispatch ultra-comprimido"]
+```
+
+### Tabla de tiers
+
+| Tier | Score | Ceremonia | Roles | Dispatch | Ideal para |
+|------|-------|-----------|-------|----------|------------|
+| **Ligero** | 6-8 | Mínima. SM puede comprimir múltiples fases en una sola delegación. | 1-2 roles (los estrictamente necesarios para la fase) | Comprimido o ultra-comprimido | Bugs, epics ya groomeados, estándar abierto puro |
+| **Estándar** | 3-5 | Normal. Fases secuenciales con fast-forward parcial posible. | 3-4 roles según fase | Normal | Features nuevos, dominio acotado con decisiones pendientes |
+| **Completo** | 0-2 | Total. Toda fase ejecutada, todo rol convocado, todo gate enforced. | Todos los roles default + posibles ad-hoc | Normal (sin compresión) | Productos nuevos, alta ambigüedad, regulados, misión crítica |
+
+### Qué cambia por tier
+
+| Aspecto | Ligero (6-8) | Estándar (3-5) | Completo (0-2) |
+|---------|--------------|----------------|----------------|
+| **Roles por fase** | 1-2 esenciales | 3-4 según fase | Todos + ad-hoc |
+| **Gates** | Comprimidos (SM valida inline) | Estándar (PDC completo) | Estrictos (PDC + validación cruzada) |
+| **Dispatch** | Ultra-comprimido: múltiples fases en una delegación | Normal: una fase por delegación | Normal: una fase por delegación, sin omisiones |
+| **Smoke test handoff** | Omisible si el contexto es determinista | Requerido | Requerido + revisión adversarial |
+
+### Reglas de escalación
+
+- El SM determina el tier al INICIO del ciclo, basado en el score F1-F4.
+- El tier puede **escalar** mid-cycle (Ligero → Estándar, Estándar →
+  Completo) si la complejidad descubierta lo justifica.
+- El tier **NUNCA** de-escala mid-cycle. La complejidad descubierta no se
+  puede des-descubrir.
+- **Triggers de escalación**:
+  1. Tasa de fallo PDC > 50% en el tier actual (más de la mitad de las
+     delegaciones retornan FAILED o PARTIAL sin progreso).
+  2. El MIM solicita explícitamente más ceremonia.
+
+#### Ejemplo concreto de escalación
+
+> El SM inicia un ciclo en **Tier Ligero** (score 7: módulo OTEL en app
+> NestJS existente). Durante la fase de diseño, el Dev Lead descubre que
+> la integración requiere un custom exporter con lógica de retry no
+> trivial. Dos delegaciones consecutivas retornan PARTIAL. El SM evalúa:
+> 2/3 delegaciones con problemas → tasa > 50%. Escala a **Tier Estándar**:
+> convoca QA para validar testeabilidad y DevSecOps para revisar el
+> surface del exporter. El ciclo continúa con ceremonia normal desde este
+> punto.
+
+### Nota sobre artefactos
+
+Los tiers afectan la **ceremonia** (roles convocados, gates aplicados,
+patrón de dispatch), NO los **artefactos**. Independientemente del tier,
+el ciclo produce los mismos artefactos (`idea.md`, `spec.md`,
+`design.md`, `tasks.md`, `handoff.md`). Lo que cambia es cuántos ojos
+los revisan y cuántos checkpoints se aplican antes de aprobarlos.
 
 ---
 
@@ -882,6 +954,52 @@ crash) porque:
   las reglas correctamente (`injected` / `self-loaded` / `none`). Si
   reportan `none`, el SM sabe que perdió contexto y debe re-resolver
 
+#### Historial de Fallos
+
+El circuit breaker protege intra-sesion, pero los fallos tambien se
+registran cross-session en `history()` del artefacto afectado (ver
+`artifact-model.md`). Esto permite al SM aprender de fallos anteriores
+al recuperar estado.
+
+**Que se registra**: cada fallo se almacena como entrada en `history()`
+con `action: "failure"` y metadata especifica del tipo:
+
+| Tipo | Campos adicionales | Ejemplo |
+|------|-------------------|---------|
+| `pdc_rejection` | `step` (ECHO/VERIFY/MARK/DECIDE), `role`, `reason` | Rechazo en VERIFY: output no cubre ACs |
+| `circuit_breaker` | `role`, `consecutive` | 3 fallos consecutivos del rol QA |
+| `escalation` | `role`, `description`, `resolution` | Gap en diseno de auth, MIM proveyo ADR |
+| `redelegation` | `role`, `reason`, `contract_delta` | Scope demasiado amplio, acotado a ACs 1-3 |
+
+Formato de registro (todos comparten campos base `action: "failure"`,
+`phase`, `timestamp`):
+
+```yaml
+# Ejemplo: rechazo PDC
+{ action: "failure", type: "pdc_rejection", step: "VERIFY",
+  role: "Dev Lead", reason: "output no cubre 2 de 5 ACs", phase: 3 }
+
+# Ejemplo: circuit breaker
+{ action: "failure", type: "circuit_breaker",
+  role: "QA", consecutive: 3, phase: 6 }
+```
+
+**Como el SM usa el historial en recovery**:
+
+1. Despues de derivar la fase actual, el SM pregunta al TPM:
+   "Hay fallos registrados en el ciclo actual?"
+2. El TPM consulta `history()` de los artefactos en progreso filtrando
+   `action: "failure"`.
+3. Si existen fallos, el SM ajusta la estrategia antes de re-delegar:
+   - **Rechazo PDC recurrente** — contrato mas explicito, personalidad
+     del rol ajustada, scope mas acotado.
+   - **Circuit breaker previo** — cambiar enfoque del rol o escalar
+     tier desde el inicio.
+   - **Escalacion resuelta** — inyectar la resolucion del MIM como
+     contexto explicito en el nuevo contrato.
+   - **Re-delegacion previa** — aplicar el `contract_delta` que
+     funciono como baseline del nuevo contrato.
+
 ### Ejemplo de contrato completo
 
 ```plaintext
@@ -936,6 +1054,17 @@ flowchart TD
     DECIDE -->|Parcial| REDELEGATE
     DECIDE -->|Bloqueado| ESCALATE
 ```
+
+> **Drift semantico en VERIFY**: el paso VERIFY no solo valida
+> completitud estructural — tambien verifica que el contenido del
+> artefacto producido sea semanticamente consistente con los artefactos
+> upstream. El TPM ejecuta `verifyConsistency` en modo semantico para
+> detectar contradicciones (drift critico) o adiciones sin trazabilidad
+> (drift menor). Si se detecta drift critico, el SM bloquea la
+> aprobacion y re-delega. Si se detecta drift menor, el SM consulta al
+> MIM antes de proceder. Ver `artifact-model.md` seccion "Deteccion de
+> Drift Semantico" para la definicion completa de indicadores y niveles
+> de severidad.
 
 ### Qué pasa cuando un sub-agente falla
 

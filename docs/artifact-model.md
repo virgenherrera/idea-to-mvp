@@ -1409,10 +1409,77 @@ MVP de persistencia.
 |---------|----------|
 | Precondicion | Al menos un artefacto en el array. Todos deben existir. |
 | Postcondicion | Retorna lista de inconsistencias: `{source, target, type, description}`. Lista vacia = consistente. |
-| Tipos de inconsistencia | `MISSING_TRACE` (referencia rota), `STALE_DEPENDENCY` (upstream modificado despues del downstream), `SCHEMA_VIOLATION` (seccion requerida faltante). |
+| Tipos de inconsistencia | `MISSING_TRACE` (referencia rota), `STALE_DEPENDENCY` (upstream modificado despues del downstream), `SCHEMA_VIOLATION` (seccion requerida faltante), `SEMANTIC_DRIFT_CRITICAL` (contradiccion semantica con upstream — ver Deteccion de Drift Semantico), `SEMANTIC_DRIFT_MINOR` (contenido nuevo sin trazabilidad a upstream). |
 | Given | `spec` referencia `idea` requisito R1, pero R1 fue eliminado de `idea` |
 | When | `verifyConsistency(["idea", "spec"])` |
 | Then | Retorna `{source: "spec", target: "idea", type: "MISSING_TRACE", description: "R1 referenciado en spec no existe en idea"}`. |
+
+#### Deteccion de Drift Semantico
+
+La verificacion estructural (`MISSING_TRACE`, `STALE_DEPENDENCY`,
+`SCHEMA_VIOLATION`) detecta gaps en la forma de los artefactos. La
+deteccion de drift semantico verifica que el **significado** se preserve
+a lo largo de la cadena idea → spec → design → tasks.
+
+**Problema**: cuando agentes IA diferentes producen artefactos en
+secuencia, cada uno reinterpreta el artefacto upstream. Despues de 4+
+reinterpretaciones, la intencion original puede desviarse
+significativamente sin que exista ninguna referencia rota.
+
+**Indicadores de drift** (que verifica `verifyConsistency` en modo
+semantico):
+
+| Indicador | Ejemplo | Tipo |
+|-----------|---------|------|
+| AC en `spec.md` sin mapeo a problema o restriccion en `idea.md` | Spec define "soporte offline" pero idea no menciona conectividad | `SEMANTIC_DRIFT_MINOR` |
+| Decision en `design.md` que contradice restriccion de `spec.md` | Spec exige respuesta < 200ms; design elige polling de 5s | `SEMANTIC_DRIFT_CRITICAL` |
+| Tarea en `tasks.md` sin trazabilidad a componente de `design.md` | Tarea "implementar cache Redis" sin ADR que la respalde | `SEMANTIC_DRIFT_MINOR` |
+| Requisito nuevo que aparecio mid-chain sin aprobacion del MIM | Design agrega autenticacion biometrica que nadie pidio | `SEMANTIC_DRIFT_CRITICAL` |
+
+**Niveles de severidad**:
+
+| Nivel | Significado | Accion del SM |
+|-------|-------------|---------------|
+| **Drift critico** | Contradiccion directa con upstream. El artefacto downstream dice algo incompatible con lo que upstream aprobo. | Bloquea aprobacion. SM re-delega al rol productor con la contradiccion explicita. |
+| **Drift menor** | Adicion no presente en upstream. No contradice, pero no tiene trazabilidad. | Warning. SM consulta al MIM: "Esto se agrego sin estar en {upstream}. ¿Lo apruebas?" |
+| **Sin drift** | Todo el contenido del artefacto es trazable a contenido aprobado upstream. | Procede normalmente. |
+
+**Flujo de verificacion**:
+
+```mermaid
+flowchart TD
+    TRIGGER["verifyConsistency(artifacts)\ncon modo semantico"]
+    STRUCT["Verificacion estructural\n(MISSING_TRACE, STALE_DEPENDENCY,\nSCHEMA_VIOLATION)"]
+    SEM["Verificacion semantica\n(drift entre artefactos)"]
+    MAP["Mapear contenido downstream\na contenido upstream"]
+    EVAL{{"¿Todo el contenido\ntiene trazabilidad\nsemantica?"}}
+    OK["Sin drift\n→ procede"]
+    MINOR["Drift menor\n→ warning al SM\n→ SM consulta MIM"]
+    CRITICAL["Drift critico\n→ bloquea aprobacion\n→ SM re-delega"]
+
+    TRIGGER --> STRUCT
+    STRUCT --> SEM
+    SEM --> MAP
+    MAP --> EVAL
+    EVAL -->|"Todo trazable"| OK
+    EVAL -->|"Adicion sin fuente"| MINOR
+    EVAL -->|"Contradiccion"| CRITICAL
+```
+
+**Donde se ejecuta**:
+
+- En el paso **VERIFY** del PDC (despues de cada retorno de sub-agente)
+- En la validacion de gate (antes de `transition(artifact, "approved")`)
+- El SM puede delegar este check al QA, que ya posee la personalidad
+  esceptica adecuada para cuestionar trazabilidad
+
+> **Trazabilidad semantica vs. estructural**: la verificacion
+> estructural pregunta "¿existe la referencia?" La verificacion
+> semantica pregunta "¿el significado es compatible?" Ambas son
+> necesarias. Un artefacto puede pasar la verificacion estructural
+> (todas las secciones existen, todas las referencias apuntan a
+> artefactos reales) y fallar la semantica (una decision contradice
+> una restriccion upstream).
 
 #### delete(artifact, reason)
 
@@ -1430,11 +1497,15 @@ MVP de persistencia.
 | Aspecto | Contrato |
 |---------|----------|
 | Precondicion | `artifact` es un slug valido (puede o no existir actualmente). |
-| Postcondicion | Retorna lista ordenada (mas reciente primero) de: `{version, timestamp, producer, action, content_hash}`. Lista vacia si el artefacto nunca existio. |
-| Acciones | `created`, `updated`, `transitioned`, `deleted`, `read`. |
+| Postcondicion | Retorna lista ordenada (mas reciente primero) de: `{version, timestamp, producer, action, content_hash}`. Entradas con `action: "failure"` incluyen campos adicionales (`type`, `phase`, y metadata del tipo). Lista vacia si el artefacto nunca existio. |
+| Acciones | `created`, `updated`, `transitioned`, `deleted`, `read`, `failure`. |
+| Failure metadata | Tipos de fallo: `pdc_rejection` (step, role, reason), `circuit_breaker` (role, consecutive), `escalation` (role, description, resolution), `redelegation` (role, reason, contract_delta). Ver `behavior-scrum-master-routing.md` seccion Historial de Fallos. |
 | Given | `idea` fue creado, actualizado 2 veces, y aprobado via transition |
 | When | `history("idea")` |
 | Then | Retorna 4 entradas: transitioned(→approved) → updated → updated → created. |
+| Given | `design` tuvo 2 rechazos PDC en step VERIFY durante Fase 3 |
+| When | `history("design")` |
+| Then | Incluye entradas `{action: "failure", type: "pdc_rejection", step: "VERIFY", role: "Dev Lead", phase: 3}`. El SM las consulta en recovery para ajustar estrategia. |
 
 #### transition(artifact, newState, reason?)
 

@@ -497,10 +497,12 @@ de selección, no el modelo específico.
    Si el handoff es el contrato entre modos, su estructura importa.
    ¿Un schema? ¿Un template? ¿Campos mínimos requeridos?
 
-5. **¿Cómo afectan los tiers de activación a la separación de modos?**
-   Un desarrollador solo en un proyecto de fin de semana no necesita una
-   revisión de 6 roles. ¿Cómo escala hacia abajo el modo planificación de
-   forma elegante?
+5. ~~**¿Cómo afectan los tiers de activación a la separación de modos?**~~
+   **RESUELTO**: los tiers de activación (Ligero, Estándar, Completo)
+   están definidos en `behavior-scrum-master-routing.md` → sección
+   "Tiers de Activación". El SM determina el tier al inicio del ciclo
+   usando el score F1-F4 de fast-forward. Los tiers escalan ceremonia
+   (roles, gates, dispatch), no artefactos.
 
 6. ~~**¿Verificación en modo ejecución — quién la hace?**~~
    **RESUELTO**: Verify (Fase 6) y Accept (Fase 7) son fases
