@@ -842,7 +842,7 @@ flowchart TD
 |-----------|---------|------------|---------------|---------|
 | `idea.md` | PO | SM (preguntas) | SM (estructural vía TPM) + QA (verificabilidad de restricciones) | Fase spec |
 | `spec.md` | PO | — | QA (testeabilidad), UX (experiencia), SM (gate) | Fase design |
-| `design.md` | Dev Lead | DevSecOps (seguridad, infra) | SM (estructural vía TPM) + DevSecOps (seguridad) + UX (experiencia, condicional) | Fase tasks |
+| `design.md` | Dev Lead | DevSecOps (seguridad, infra) | SM (estructural vía TPM) + DevSecOps (seguridad) + UX (experiencia, foco según tipo de interfaz — nunca ausente) | Fase tasks |
 | `tasks.md` | Dev Lead | QA (verificabilidad por tarea) | SM (estructural vía TPM) + QA (verificabilidad por tarea) | Fase handoff |
 | `handoff.md` | TPM | — | SM (autocontención) | Modo ejecución |
 | `ops-runbook.md` | DevSecOps | Dev Lead (troubleshooting) | SM (gate) | NOC/Ops |
@@ -1810,7 +1810,7 @@ Esto es metadata del PROYECTO, no de un artefacto individual.
 | 2026-08-01 | scrum | kanban | Equipo prefiere flujo continuo post-MVP | Replenishment 5 días |
 
 ## Roles activos
-- [PO, SM, Dev Lead, QA] (UX desactivado: proyecto CLI)
+- [PO, SM, Dev Lead, QA, UX] (UX con foco CLI/DX: proyecto CLI, sin interfaz visual)
 ```
 
 ### Artefactos mixtos — el caso real

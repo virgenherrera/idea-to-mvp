@@ -80,7 +80,7 @@ agente.
 | **Dev Lead** | Arquitectura, patrones, decisiones técnicas, tradeoffs | "¿Cómo lo construimos para que escale y sea mantenible?" | Staff Engineer / Architect |
 | **QA** | Verificabilidad, edge cases, estrategia de testing | "¿Cómo sé que esto funciona? ¿Cómo sé que NO funciona?" | QA Lead |
 | **DevSecOps** | Seguridad, infraestructura, deployment, observabilidad | "¿Esto es seguro? ¿Esto se puede operar?" | Security Engineer + SRE |
-| **UX** | Experiencia de usuario, usabilidad, flujos, accesibilidad | "¿El usuario puede hacer lo que necesita sin fricción?" | UX Designer |
+| **UX** | Experiencia del actor que interactúa con el sistema — visual, de línea de comandos, o de API/SDK — usabilidad, flujos, accesibilidad | "¿Quien interactúa con esto puede hacer lo que necesita sin fricción?" | UX Designer / DX Engineer |
 
 > **Nota**: SM y TPM NO son roles productivos — son infraestructura.
 > SM orquesta; TPM persiste. No aparecen en este documento porque su
@@ -267,11 +267,11 @@ Para ticket externo:
 flowchart LR
     SM_F2["SM"] -->|"contrato"| PO_F2["PO\n🟢"]
     SM_F2 -->|"contrato"| QA_F2["QA\n🟢"]
-    SM_F2 -.->|"si hay UI"| UX_F2["UX\n🟡 condicional"]
+    SM_F2 -->|"contrato"| UX_F2["UX\n🟢"]
 
     style PO_F2 fill:#bfb,stroke:#080
     style QA_F2 fill:#bfb,stroke:#080
-    style UX_F2 fill:#ffb,stroke:#880
+    style UX_F2 fill:#bfb,stroke:#080
 ```
 
 #### PO en Fase 2: Formalización
@@ -296,16 +296,16 @@ flowchart LR
 | **NO hace** | NO elige frameworks de testing. NO escribe pruebas. NO decide prioridad de los ACs. NO modifica los ACs directamente — sugiere reformulaciones al PO. |
 | **Gate** | 100% de ACs verificables. QA aprueba testeabilidad. |
 
-#### UX en Fase 2: Validación de Experiencia (CONDICIONAL)
+#### UX en Fase 2: Validación de Experiencia (adaptada al tipo de interfaz)
 
 | Campo | Valor |
 |-------|-------|
-| **Se activa si** | El proyecto tiene interfaz de usuario (web, mobile, desktop) |
-| **NO se activa si** | API pura, CLI, librería, servicio backend-only |
-| **Personalidad** | Abogado del usuario final. Lee los ACs desde la perspectiva de quien va a USAR el producto. Busca flujos confusos, pasos innecesarios, inconsistencias en la experiencia. |
+| **Siempre activo** | Todo sistema tiene una interfaz — visual (web/mobile/desktop), de línea de comandos (CLI/TUI), o de programación (API/SDK/librería). UX nunca se desactiva; lo que cambia es su foco. |
+| **Foco según interfaz** | Web/mobile/desktop → UX visual (flujos, fricción, accesibilidad). CLI/TUI → ergonomía de comandos, claridad de mensajes de error, legibilidad del output. API/SDK/librería → DX (Developer Experience): naming, consistencia, mensajes de error accionables, documentación inline. |
+| **Personalidad** | Abogado de quien interactúa con el sistema — usuario final, desarrollador integrador, u operador de CLI. Lee los ACs desde esa perspectiva. Busca flujos confusos, pasos innecesarios, inconsistencias en la experiencia (visual o de interfaz de comandos/API). |
 | **Contexto del RAG** | topic_keys: `sdd/{project}/idea` + `sdd/{project}/spec` |
-| **Input** | Revisar ACs que involucren interacción del usuario |
-| **Output esperado** | Observaciones de UX por AC: OK / friccioso / inconsistente + recomendación |
+| **Input** | Revisar ACs que involucren interacción de cualquier tipo (humano-visual, humano-CLI, o programa-a-programa) |
+| **Output esperado** | Observaciones de UX/DX por AC: OK / friccioso / inconsistente + recomendación |
 | **NO hace** | NO diseña interfaces. NO crea wireframes. NO prioriza funcionalidades. |
 
 ---
@@ -316,11 +316,11 @@ flowchart LR
 flowchart LR
     SM_F3["SM"] -->|"contrato"| DEV_F3["Dev Lead\n🟢"]
     SM_F3 -->|"contrato"| SEC_F3["DevSecOps\n🟡 condicional"]
-    SM_F3 -.->|"si hay UI"| UX_F3["UX\n🟡 condicional"]
+    SM_F3 -->|"contrato"| UX_F3["UX\n🟢"]
 
     style DEV_F3 fill:#bfb,stroke:#080
     style SEC_F3 fill:#ffb,stroke:#880
-    style UX_F3 fill:#ffb,stroke:#880
+    style UX_F3 fill:#bfb,stroke:#080
 ```
 
 #### Dev Lead en Fase 3: Arquitecto
@@ -347,14 +347,14 @@ flowchart LR
 | **Output esperado** | Evaluación: riesgos identificados (con severidad), recomendaciones de mitigación, requisitos de infra, validación de manejo de secrets, recomendaciones de monitoreo/alertas |
 | **NO hace** | NO modifica la arquitectura directamente — sugiere al Dev Lead. NO implementa. NO configura infra. NO escribe código. |
 
-#### UX en Fase 3: Validación de Decisiones de Diseño (CONDICIONAL)
+#### UX en Fase 3: Validación de Decisiones de Diseño (adaptada al tipo de interfaz)
 
 | Campo | Valor |
 |-------|-------|
-| **Se activa si** | El proyecto tiene interfaz de usuario |
-| **Personalidad** | Pragmático. Evalúa si las decisiones de arquitectura degradan la UX (latencia percibida, complejidad de flujos, estados de error confusos). No busca perfección — busca que las decisiones técnicas no arruinen la experiencia. |
+| **Siempre activo** | Toda arquitectura expone algún tipo de interfaz (visual, CLI/TUI, o API/SDK) — ver principio en Fase 2. |
+| **Personalidad** | Pragmático. Evalúa si las decisiones de arquitectura degradan la experiencia de quien interactúa con el sistema: latencia percibida, complejidad de flujos o de comandos, estados de error confusos, ergonomía de la API expuesta. No busca perfección — busca que las decisiones técnicas no arruinen la experiencia, sea visual, de CLI, o de API/SDK. |
 | **Contexto del RAG** | topic_keys: `sdd/{project}/design` + `sdd/{project}/spec` (seccion UX) |
-| **Input** | Revisar decisiones de diseño que impactan al usuario |
+| **Input** | Revisar decisiones de diseño que impactan a quien interactúa con el sistema |
 | **Output esperado** | OK / problema detectado + alternativa sugerida |
 | **NO hace** | NO diseña interfaces. NO modifica la arquitectura. |
 
@@ -541,8 +541,12 @@ como "roles activos". Las reglas se re-evalúan:
 1. **En retrospectiva** (Fase 8) — revisión programada.
 2. **Mid-cycle por escalación** — cualquier rol o el SM puede flaggear
    "scope changed, re-evaluate activation" en cualquier momento. Ejemplo:
-   un proyecto CLI-only que descubre que necesita UI en Fase 4 →
-   el SM reactiva UX sin esperar retro. El SM notifica al MIM del cambio.
+   un proyecto CLI-only que descubre en Fase 4 que también expondrá un
+   dashboard web → UX amplía su foco (de CLI-UX/DX únicamente a también
+   cubrir UX visual) sin esperar retro. UX ya estaba activo desde Fase 2
+   (ver "Reglas de Activación Condicional" — UX nunca se desactiva, solo
+   cambia su foco según el tipo de interfaz). El SM notifica al MIM del
+   cambio de alcance.
 3. **Creación de roles ad-hoc** — el SM puede crear roles ad-hoc en
    cualquier fase si detecta un gap de expertise. El rol se registra en
    `idea.md` con su justificación y fases activas. Ver sección
@@ -561,9 +565,10 @@ como "roles activos". Las reglas se re-evalúan:
 flowchart TD
     START["SM evalúa contexto\nen Fase 1"]
 
-    START --> Q_UI{{"¿Tiene UI?"}}
-    Q_UI -->|No| NO_UX["UX: ❌ desactivado\nen todas las fases"]
-    Q_UI -->|Sí| UX_ON["UX: ✅ Spec, Design,\nVerify, Accept, Retro"]
+    START --> Q_UI{{"¿Qué tipo de\ninterfaz expone?"}}
+    Q_UI -->|"Visual\n(web/mobile/desktop)"| UX_VISUAL["UX: ✅ Spec, Design,\nVerify, Accept, Retro\n(foco: flujos, fricción, a11y)"]
+    Q_UI -->|"CLI / TUI"| UX_CLI["UX: ✅ Spec, Design,\nVerify, Accept, Retro\n(foco: ergonomía de comandos,\nmensajes de error, output)"]
+    Q_UI -->|"API / SDK / librería"| UX_DX["UX: ✅ Spec, Design,\nVerify, Accept, Retro\n(foco: DX — naming,\nerrores accionables, docs)"]
 
     START --> Q_SEC{{"¿Requisitos de\nseguridad especiales?"}}
     Q_SEC -->|No| MIN_SEC["DevSecOps: ⚠️ mínimo\nsolo Design (auditoría ligera)"]
@@ -587,12 +592,12 @@ flowchart TD
 | Condición del proyecto | PO | Dev Lead | QA | DevSecOps | UX |
 |----------------------|-----|---------|-----|----------|-----|
 | **Proyecto completo (default)** | Idea, Spec, Verify, Accept, Retro | Design, Tasks, Verify, Accept, Retro | Spec, Tasks, Verify, Accept, Retro | Design, Tasks, Verify, Accept, Retro | Spec, Design, Verify, Accept, Retro |
-| **Sin interfaz de usuario** (API, CLI, lib) | igual | igual | igual | igual | ❌ ninguna |
-| **Sin seguridad especial** | igual | igual | igual | ⚠️ solo Design (mínimo) | depende |
-| **Developer solo (tier bajo)** | Idea+Spec condensado | Design+Tasks condensado | Spec+Verify condensado | ⚠️ mínimo o ❌ | depende |
-| **Challenge con timebox** | Idea (fast) | Design+Tasks (fast) | Verify (fast) | ❌ salvo que lo pidan | ❌ salvo que lo pidan |
-| **Bug en producción (fast-forward)** | ❌ (no hay idea que definir) | Verify (diagnóstico) | Verify (reproducción) | ⚠️ si es security bug | ❌ |
-| **Feature en proyecto maduro** | Spec (ACs del feature) | Design, Tasks | Spec, Verify | depende del feature | depende del feature |
+| **Interfaz no-visual** (API, CLI, SDK/lib) | igual | igual | igual | igual | igual — foco cambia a DX/CLI-UX, nunca se desactiva (ver Fase 2/3) |
+| **Sin seguridad especial** | igual | igual | igual | ⚠️ solo Design (mínimo) | igual |
+| **Developer solo (tier bajo)** | Idea+Spec condensado | Design+Tasks condensado | Spec+Verify condensado | ⚠️ mínimo o ❌ | condensado con Spec/Design, foco según interfaz |
+| **Challenge con timebox** | Idea (fast) | Design+Tasks (fast) | Verify (fast) | ❌ salvo que lo pidan | ⚠️ mínimo (pase rápido condensado con QA) — nunca cero |
+| **Bug en producción (fast-forward)** | ❌ (no hay idea que definir) | Verify (diagnóstico) | Verify (reproducción) | ⚠️ si es security bug | ⚠️ solo si el fix cambia una interfaz existente (mensaje de error, output, endpoint) |
+| **Feature en proyecto maduro** | Spec (ACs del feature) | Design, Tasks | Spec, Verify | depende del feature | depende del feature (¿toca alguna interfaz?) |
 
 ### Lo que significa "condensado"
 
