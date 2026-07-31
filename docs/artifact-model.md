@@ -1204,7 +1204,7 @@ flowchart TD
         direction TB
 
         subgraph DEFAULT["Local (DEFAULT)"]
-            DF_DESC["Archivos .md en directorio\nfuera del repo destino\n~/.idea-to-mvp/projects/{name}/"]
+            DF_DESC["Archivos .md en\n{repo}/docs/\nDentro del repo destino"]
         end
 
         subgraph ENGRAM_A["Engram"]
@@ -1280,14 +1280,13 @@ flowchart LR
 
 ### Adaptador por defecto: `docs/` como RAG local
 
-- **Path**: `~/.idea-to-mvp/projects/{project-slug}/`
-- **Slugificacion**: `lowercase(replace(trim(nombre), /[^a-z0-9]+/g, '-'))`.
-  Colisiones: si el slug ya existe, append `-N` (e.g. `mi-app-2`).
-  Maximo 64 caracteres. El slug se persiste como metadata del proyecto.
+- **Path**: `{repo}/docs/` — dentro del repositorio destino
 - **Formato**: archivos markdown, uno por artefacto
-- **Ventajas**: cero dependencias, legible por humanos, versionable con git
-- **Desventaja**: sin acceso cross-machine, sin búsqueda semántica
-- **Suficiente para**: proyectos individuales, challenges, MVPs
+- **Ventajas**: cero dependencias, legible por humanos, versionable con git,
+  accesible por igual para agentes y usuarios humanos (es el mismo filesystem)
+- **Desventaja**: sin búsqueda semántica, sin acceso cross-machine
+- **Suficiente para**: proyectos individuales, challenges, MVPs — que es el
+  caso de uso default del framework
 - **Concurrencia**: sesion activa unica asumida. Last-write-wins.
   Adaptadores con concurrencia (DBMS, Jira, Git repo) implementan
   ACID completo (ver seccion "Garantias transversales"). El contrato
