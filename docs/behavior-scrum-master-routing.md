@@ -58,16 +58,23 @@ respuesta determina en qué fase estamos:
 | Si el TPM reporta... | Entonces el SM está en... |
 |----------------------|--------------------------|
 | RAG vacío | Fase 1: Definir Idea |
-| `idea.md` completo, nada más | Fase 2: Especificar |
-| `idea.md` + `spec.md` completos | Fase 3: Diseñar |
-| `idea.md` + `spec.md` + `design.md` completos | Fase 4: Desglosar Tareas |
-| todos hasta `tasks.md` completos | Fase 5: Generar Handoff |
-| `handoff.md` completo | Modo Ejecución |
+| `idea.md` aprobado, nada más | Fase 2: Especificar |
+| `idea.md` + `spec.md` aprobados | Fase 3: Diseñar |
+| `idea.md` + `spec.md` + `design.md` aprobados | Fase 4: Desglosar Tareas |
+| todos hasta `tasks.md` aprobados | Fase 5: Generar Handoff |
+| `handoff.md` aprobado | Modo Ejecución |
 | `handoff.md` + resultados de ejecución | Fase 6: Verificar |
 | verificación aprobada | Fase 7: Aceptar |
 | aceptación aprobada | Fase 8: Retrospectiva |
 
+> **Modelo de estado unificado**: los artefactos siguen la state machine
+> configurable definida en `artifact-model.md` → sección `transition`.
+> El estado aprobado es el que señala que un artefacto pasó su gate y
+> habilita la siguiente fase. Estados disponibles: borrador, en revisión,
+> aprobado, rechazado, cancelado.
+
 Esto significa:
+
 - **Nueva sesión** → el SM pregunta al TPM y sabe exactamente dónde retomar
 - **Compaction** → los artefactos sobreviven, el estado se reconstruye
 - **Crash** → mismo mecanismo, cero pérdida de estado de proceso
@@ -78,26 +85,28 @@ Esto significa:
 | Anomalía | Cómo la detecta el SM | Acción |
 |----------|----------------------|--------|
 | Artefacto downstream existe pero upstream falta (ej: `spec.md` sin `idea.md`) | TPM reporta artefactos existentes; SM detecta gap en la cadena | Escalar al MIM: "El RAG está en estado inconsistente. Falta {upstream}. ¿Reconstruir o descartar {downstream}?" |
-| Dos artefactos en estado "in progress" simultáneamente | TPM reporta múltiples artefactos incompletos | SM selecciona el más upstream y se enfoca en completarlo. El otro se marca como "pendiente, bloqueado por {upstream}." |
-| Artefacto marcado completo pero inconsistente con upstream editado | `verifyConsistency` del TPM detecta conflicto post-update | SM notifica: "El artefacto {downstream} puede estar desactualizado respecto a cambios en {upstream}." → Re-convocar rol validador. |
+| Dos artefactos en estado "in progress" simultáneamente | TPM reporta múltiples artefactos no aprobados | SM selecciona el más upstream y se enfoca en llevarlo a aprobado. El otro se marca como "pendiente, bloqueado por {upstream}." |
+| Artefacto aprobado pero inconsistente con upstream editado | `verifyConsistency` del TPM detecta conflicto post-update | SM notifica: "El artefacto {downstream} puede estar desactualizado respecto a cambios en {upstream}." → Re-convocar rol validador. |
 | RAG vacío pero con historial (proyecto existente, artefactos eliminados) | TPM reporta RAG vacío + historial de operaciones | SM pregunta al MIM: "RAG vacío pero hay historial previo. ¿Empezar de cero o restaurar?" |
-| MIM solicita cambio a artefacto ya completado durante planificación | MIM dice "cambia este AC" mientras estamos en Fase 3+ | SM instruye al TPM para marcar el artefacto como `en revisión`. SM re-convoca al rol productor original con contrato acotado al cambio solicitado. Artefactos downstream se marcan como `posiblemente desactualizados` vía `verifyConsistency`. Fase actual se pausa hasta que el cambio upstream se complete y la cascada se resuelva. |
+| MIM solicita cambio a artefacto ya aprobado durante planificación | MIM dice "cambia este AC" mientras estamos en Fase 3+ | SM instruye al TPM para transicionar el artefacto a en revisión. SM re-convoca al rol productor original con contrato acotado al cambio solicitado. Artefactos downstream se marcan como `posiblemente desactualizados` vía `verifyConsistency`. Fase actual se pausa hasta que el cambio upstream alcance aprobado y la cascada se resuelva. |
 | MIM envía edit mientras un sub-agente está en vuelo | SM recibe mensaje del MIM antes de que el sub-agente retorne | SM encola el edit. Cuando el sub-agente retorna, SM aplica PDC normal. Luego evalúa si el edit invalida el resultado recién recibido. Si lo invalida → re-delega con el edit incorporado. Si no → procesa el edit como un cambio separado. |
 | Artefacto creado pero vacío (shell sin contenido) | TPM reporta artefacto con 0 secciones completadas | Se trata como "no existe" para la state machine. El SM permanece en la fase que requiere ese artefacto. El TPM puede eliminar el shell vacío si no tiene utilidad. |
 
-**Definición mecánica de "completo"**: un artefacto está completo cuando
-(1) todas las secciones requeridas por su schema existen (check
-estructural, TPM), Y (2) el rol validador aprobó la calidad semántica
-del contenido (check semántico, vía PDC).
+**Definición mecánica de "aprobado"**: un artefacto alcanza el estado
+aprobado (vía `transition(artifact, "approved")`) cuando (1) todas
+las secciones requeridas por su schema existen (check estructural, TPM),
+Y (2) el rol validador aprobó la calidad semántica del contenido (check
+semántico, vía PDC). El estado aprobado es el que habilita la
+siguiente fase — el SM verifica este estado, no un flag binario.
 
 ```mermaid
 stateDiagram-v2
     [*] --> Idea: entrada del usuario
-    Idea --> Spec: TPM reporta idea.md completo
-    Spec --> Design: TPM reporta spec.md completo
-    Design --> Tasks: TPM reporta design.md completo
-    Tasks --> Handoff: TPM reporta tasks.md completo
-    Handoff --> MIM_GATE: TPM reporta handoff.md completo
+    Idea --> Spec: idea.md → aprobado
+    Spec --> Design: spec.md → aprobado
+    Design --> Tasks: design.md → aprobado
+    Tasks --> Handoff: tasks.md → aprobado
+    Handoff --> MIM_GATE: handoff.md → aprobado
     MIM_GATE --> Execution: MIM confirma inicio de ejecución
     Execution --> Verify: implementación completada
     Verify --> Accept: verificación aprobada
@@ -112,7 +121,7 @@ stateDiagram-v2
 ```
 
 La lógica de transición es del SM (él decide si el gate pasa). El TPM
-provee los datos (qué artefactos existen, cuáles están completos). La
+provee los datos (qué artefactos existen, cuáles están aprobados). La
 diferencia clave: **el SM no necesita recordar nada entre sesiones** — todo
 lo que necesita saber está en el RAG.
 
@@ -125,9 +134,9 @@ sequenceDiagram
 
     SM->>TPM: "¿Qué artefactos existen y cuál es su estado?"
     TPM->>TPM: Escanea RAG
-    TPM->>SM: "idea.md: completo, spec.md: completo, design.md: incompleto (3/5 secciones)"
-    SM->>SM: Deriva: estamos en Fase 3 (Diseñar), artefacto parcial
-    SM->>SM: Siguiente acción: convocar Dev Lead para completar design.md
+    TPM->>SM: "idea.md: aprobado, spec.md: aprobado, design.md: borrador (3/5 secciones)"
+    SM->>SM: Deriva: estamos en Fase 3 (Diseñar), design.md en draft
+    SM->>SM: Siguiente acción: convocar Dev Lead para producir design.md
 ```
 
 ### Fast-Forward Contextual — Gradiente de Certeza
@@ -150,7 +159,7 @@ flowchart TD
 #### Reglas del gradiente
 
 | Certeza | Criterio del SM | Hasta dónde avanza | Ejemplo |
-|---------|-----------------|--------------------|---------| 
+|---------|-----------------|--------------------|---------|
 | **Baja** | Dominio desconocido, requisitos ambiguos, no hay app existente | Idea + preguntas | "Hazme el uber de lanchas" |
 | **Media** | Estándar conocido pero con decisiones pendientes | Idea + spec parcial + preguntas específicas | "Agrega auth con JWT" |
 | **Alta** | Estándar abierto, app existente en el RAG, patrones bien definidos | Hasta handoff o ejecución directa | "Crea módulo OTEL" |
@@ -166,15 +175,19 @@ El SM evalúa 4 factores y asigna 0, 1, o 2 puntos a cada uno:
 
 | Factor | 0 puntos | 1 punto | 2 puntos |
 |--------|----------|---------|----------|
-| **F1. Artefactos existentes** | RAG vacío | 1-2 artefactos upstream | spec + design + tasks completos |
+| **F1. Artefactos existentes** | RAG vacío | 1-2 artefactos upstream | spec + design + tasks aprobados |
 | **F2. Estandarización** | Dominio custom sin estándar | Estándar con variantes (auth, API) | Estándar abierto puro (OTEL, i18n, linting) |
 | **F3. Ambigüedad de dominio** | Infinitas interpretaciones ("uber de X") | Dominio acotado con decisiones pendientes | Dominio determinista (agregar módulo X a app existente) |
 | **F4. Referencia existente** | Sin codebase ni precedentes | Codebase existe pero no cubre este dominio | Codebase con patrones/stack que aplican directamente |
 
-> **Nota F1**: un artefacto que existe pero está incompleto cuenta como
-> 0.5 puntos (redondear el total al entero más cercano). "Incompleto" =
-> el TPM reporta que faltan secciones requeridas. Un artefacto parcial
-> NO equivale a un artefacto completo para scoring.
+> **Nota F1**: un artefacto que existe pero no está aprobado
+> cuenta como 0.5 puntos. "No aprobado" = el TPM reporta que faltan
+> secciones requeridas o que el artefacto está en borrador/en revisión.
+> **Cap**: la suma de puntos de artefactos no aprobados tiene un techo
+> de **1 punto** para F1, independientemente de cuántos existan. Esto
+> previene que N borradores incompletos alcancen el mismo score (F1=2)
+> que artefactos validados y aprobados. Para alcanzar F1=2, los
+> artefactos upstream deben estar aprobados.
 
 **Thresholds**:
 
@@ -217,7 +230,7 @@ No solo al inicio. Ejemplos:
   reproduce → diagnostica → fix → promueve al ambiente apropiado.
   No pasa por Idea → Spec → Design.
 - **Epic ya groomeado** → todo en el RAG → SM detecta artefactos
-  completos → fast-forward directo a ejecución.
+  aprobados → fast-forward directo a ejecución.
 
 ---
 
@@ -229,7 +242,7 @@ El SM NO produce artefactos de contenido. El SM:
 2. **Convoca** a los roles del scrum team (default o ad-hoc) que corresponden a esa fase
 3. **Extiende** el equipo con roles ad-hoc cuando el proyecto requiere expertise fuera del equipo default
 4. **Acota** la función de cada rol convocado (qué esperamos, qué NO)
-5. **Valida** que el artefacto de salida esté completo (vía TPM)
+5. **Valida** que el artefacto de salida quede aprobado (vía TPM)
 6. **Bloquea** el avance si el gate no se cumple
 7. **Desbloquea** la siguiente fase cuando el artefacto es suficiente
 8. **Rastrea** la iteración actual, el historial, y las escalaciones
@@ -250,7 +263,7 @@ flowchart TD
     EXECUTE["Rol(es) convocados trabajan\n(formulan preguntas, revisan, validan)"]
     MIM["MIM responde"]
     ARTIFACT["Artefacto producido\n(guardado en RAG)"]
-    GATE{{"SM valida:\n¿artefacto completo?"}}
+    GATE{{"SM valida:\n¿artefacto aprobado?"}}
     NEXT["SM desbloquea\nsiguiente fase"]
     BLOCK["SM bloquea:\n'Faltan respuestas:\n1. ...\n2. ...'"]
 
@@ -261,8 +274,8 @@ flowchart TD
     EXECUTE --> MIM
     MIM --> ARTIFACT
     ARTIFACT --> GATE
-    GATE -->|Completo| NEXT
-    GATE -->|Incompleto| BLOCK
+    GATE -->|Aprobado| NEXT
+    GATE -->|No aprobado| BLOCK
     BLOCK --> MIM
     NEXT -->|"nueva fase"| DETECT
 ```
@@ -292,6 +305,7 @@ flowchart LR
     subgraph F2["Especificar"]
         F2_PO["PO"]
         F2_QA["QA"]
+        F2_UX["UX\n(condicional)"]
     end
     subgraph F3["Diseñar"]
         F3_DEV["Dev Lead"]
@@ -491,7 +505,7 @@ fast-forward saltó. El MIM tiene la última palabra.
 | **Facilitador** | SM |
 | **Función** | Evaluar el proceso, no el producto. Cerrar el ciclo con acuerdos concretos. |
 | **NO hace** | NO re-abre defectos de producto (eso es Fase 6). NO redefine scope (eso es Fase 1). |
-| **Artefacto de salida** | Seccion "Retrospectiva" en `idea.md` (persistida via TPM) |
+| **Artefacto de salida** | Metadata del proyecto → sección "Retrospectiva" (persistida vía TPM en el artifact store como metadata operacional, NO dentro de ninguno de los 6 artefactos de producto) |
 | **Gate** | Al menos 1 acuerdo concreto registrado. MIM confirma cierre del ciclo. |
 
 **Estructura de la sesion** (facilitada por el SM):
@@ -524,9 +538,10 @@ especifico para su perspectiva):
 | Ad-hoc | "Tu contribucion impacto el resultado? El contrato fue claro?" | "Start: incluir Data Architect desde Fase 3" |
 
 **Persistencia**: el SM instruye al TPM para registrar los resultados
-en `idea.md` seccion "Retrospectiva" con formato:
+en la metadata del proyecto (NO en `idea.md` — la retro es metadata
+operacional, no un artefacto de producto ISO). Formato:
 
-```
+```markdown
 ## Retrospectiva
 
 ### Stop doing
@@ -561,8 +576,9 @@ opera el framework en el siguiente ciclo. Ejemplos:
 - "Start: incluir Data Architect desde Fase 3" → el SM crea un rol
   ad-hoc con contrato y lo pre-activa en la convocatoria de Fase 3.
 
-El SM lee los agreements del ciclo anterior (via TPM, de `idea.md`
-seccion "Retrospectiva/Agreements") al iniciar un nuevo ciclo y los
+El SM lee los agreements del ciclo anterior (via TPM, de la metadata
+del proyecto seccion "Retrospectiva/Agreements") al iniciar un nuevo
+ciclo y los
 incorpora como reglas operativas. Esto es el **feedback loop del
 proceso**: la retro no es ceremonial — produce cambios concretos en
 el comportamiento del SM y del equipo.
@@ -611,6 +627,7 @@ Ejemplo concreto:
 > - `handoff.md` — no existe
 >
 > Preguntas pendientes para completar `idea.md`:
+>
 > 1. ¿Quién es el usuario final?
 > 2. ¿Cuál es el flujo core del producto?
 > 3. ¿Hay restricciones de tiempo o presupuesto?
@@ -628,6 +645,7 @@ archivos, no ejecuta comandos, no produce artefactos. **CERO excepciones.**
 Ni siquiera el handoff — eso también lo hace un sub-agente.
 
 El SM solo hace tres cosas:
+
 1. Orquestar (convocar roles, definir contratos, validar gates)
 2. Comunicarse con el MIM (preguntar, reportar, bloquear)
 3. Decidir qué sub-agente lanzar y con qué contrato
@@ -648,14 +666,14 @@ El TPM NO es un embudo tonto de datos. Tiene criterio propio para:
   lo estructura antes de persistirlo.
 - **Operaciones CRUD sobre el RAG** — decide si un artefacto requiere
   creación, actualización (upsert), o en casos excepcionales, eliminación.
-  Marca artefactos como completos cuando corresponde.
+  Transiciona artefactos a aprobado cuando corresponde.
 - **Contexto acotado para agentes** — cuando el SM o un rol necesitan
   información del RAG, el TPM sirve el slice correcto. No devuelve "todo",
   devuelve lo relevante para el contrato activo.
 - **Tracking de completitud** — sabe qué artefactos existen, cuáles están
-  completos, cuáles tienen gaps. Reporta estado al SM.
+  aprobados, cuáles tienen gaps. Reporta estado al SM.
 - **Release readiness** — en fases finales, verifica que todos los
-  artefactos necesarios estén completos y consistentes entre sí antes de
+  artefactos necesarios estén aprobados y consistentes entre sí antes de
   que el SM declare el handoff listo.
 
 Por default, el acceso de lectura sigue el **Patrón B**: el SM no
@@ -682,9 +700,9 @@ sequenceDiagram
     activate TPM
     TPM->>TPM: Evalúa: ¿crear, actualizar, o fusionar?
     TPM->>TPM: Aplica estándares de escritura
-    TPM->>SM: "idea.md completo en RAG"
+    TPM->>SM: "idea.md en estado aprobado"
     deactivate TPM
-    SM->>MIM: "Fase completada. Artefacto: idea.md"
+    SM->>MIM: "Fase completada. Artefacto: idea.md (aprobado)"
 ```
 
 | Aspecto | Detalle |
@@ -694,7 +712,7 @@ sequenceDiagram
 | **Personalidad** | Riguroso, metódico, con criterio editorial. Mantiene estándares sin imponer opinión de producto o técnica. |
 | **Responsabilidades** | CRUD sobre RAG, estándares de escritura, serving de contexto acotado, tracking de completitud, release readiness |
 | **Cuándo se invoca** | Cada vez que hay que persistir, leer, o verificar artefactos en el RAG |
-| **Heartbeat** | Notifica operación realizada + estado del artefacto (completo/incompleto/gaps) |
+| **Heartbeat** | Notifica operación realizada + estado del artefacto (borrador/en revisión/aprobado/gaps) |
 
 ### Operaciones del TPM sobre el RAG
 
@@ -702,7 +720,7 @@ sequenceDiagram
 |-----------|--------|---------|
 | **Crear** | Primera vez que una fase produce un artefacto | `idea.md` no existe → el TPM lo crea con estructura y estándares |
 | **Actualizar** | Una fase completa información faltante o corrige algo | QA identifica un AC ambiguo → el TPM actualiza `spec.md` |
-| **Marcar completo** | El SM valida que el gate de una fase pasó | Todas las preguntas de negocio respondidas → `idea.md` marcado como completo |
+| **Transition** | El SM valida que el gate pasó y transiciona el artefacto | Gate aprobado → `transition("idea", "approved", "gate passed")` |
 | **Leer** | Cuando un agente necesita información | Sub-agente lee directamente vía `topic_key` (Patrón B). El TPM no interviene en lecturas. |
 | **Servir contexto** | Solo para Patrón A (8+ consumidores o búsqueda fuzzy) | Default: los agentes leen directo. El TPM solo sirve slices curados en escenarios excepcionales de alto fan-out. |
 | **Verificar consistencia** | Antes de generar handoff Y después de cualquier Update a un artefacto upstream | El TPM revisa que artefactos downstream no se contradigan con el upstream editado. Reporta stale artifacts al SM. |
@@ -767,7 +785,7 @@ Este patrón está validado empíricamente en `nest-base`, `virgenherrera` y
 
 Todo sub-agente DEBE incluir este bloque en su output final:
 
-```
+```plaintext
 Status: [SUCCESS | PARTIAL | FAILED | BLOCKED]
 Progress: X/Y items completados
 Blocker: (si aplica — qué lo detuvo)
@@ -866,7 +884,7 @@ crash) porque:
 
 ### Ejemplo de contrato completo
 
-```
+```plaintext
 Contrato de delegación:
 ─────────────────────────────────────────────
 Rol:           QA
@@ -911,8 +929,8 @@ flowchart TD
     STATUS -->|Sí| ECHO
     ECHO -->|No coherente| REDELEGATE
     ECHO -->|Coherente| VERIFY
-    VERIFY -->|Incompleto| REDELEGATE
-    VERIFY -->|Completo| MARK
+    VERIFY -->|No aprobado| REDELEGATE
+    VERIFY -->|Aprobado| MARK
     MARK --> DECIDE
     DECIDE -->|Suficiente| ADVANCE
     DECIDE -->|Parcial| REDELEGATE
@@ -996,7 +1014,7 @@ flowchart LR
 | 3. Diseñar | Definir stack técnico (con justificación). Definir arquitectura de alto nivel. Elegir patrones de diseño. Evaluar tradeoffs técnicos. Documentar decisiones tomadas y descartadas. |
 | 4. Desglosar Tareas | Descomponer el diseño en tareas atómicas. Ordenar por dependencias. Identificar tareas paralelizables. Estimar complejidad relativa. Mapear cada tarea a ACs de `spec.md`. |
 | 5. Generar Handoff | — |
-| 6. Verificar | Validar que la implementación respete las decisiones de arquitectura. Revisar calidad de código. |
+| 6. Verificar | Validar que la implementación respete las decisiones de arquitectura. Revisar calidad de código. **Co-producir `ops-runbook.md`** (secciones de troubleshooting y arquitectura operativa). |
 | 7. Aceptar | Dar veredicto sobre la calidad técnica de la implementación. Aprobar, solicitar cambios, o bloquear. |
 | 8. Retrospectiva | Evaluar si las decisiones arquitectónicas fueron acertadas. Proponer mejoras técnicas para el siguiente ciclo. |
 
@@ -1009,7 +1027,7 @@ flowchart LR
 | 3. Diseñar | Evaluar superficie de seguridad. Identificar riesgos de la arquitectura propuesta. Definir requisitos de infra. Validar que las decisiones no introduzcan vulnerabilidades conocidas. |
 | 4. Desglosar Tareas | Identificar tareas que requieren consideraciones de seguridad. Agregar tareas de hardening si faltan. |
 | 5. Generar Handoff | — |
-| 6. Verificar | Validar que no se introdujeron vulnerabilidades. Revisar configuraciones de seguridad. Verificar manejo de secrets. |
+| 6. Verificar | Validar que no se introdujeron vulnerabilidades. Revisar configuraciones de seguridad. Verificar manejo de secrets. **Producir `ops-runbook.md`** (secciones de infra, monitoreo, seguridad, deploy/rollback). |
 | 7. Aceptar | Dar veredicto sobre la postura de seguridad. Aprobar, solicitar cambios, o bloquear. |
 | 8. Retrospectiva | Evaluar si las medidas de seguridad fueron adecuadas. Proponer mejoras. |
 
@@ -1035,7 +1053,7 @@ flowchart LR
 | 3. Diseñar | Convocar Dev Lead + DevSecOps (+ UX si aplica). Facilitar decisiones. Validar gate. |
 | 4. Desglosar Tareas | Convocar Dev Lead. Validar que no haya dependencias cíclicas. Validar estimaciones. Validar gate. |
 | 5. Generar Handoff | Instruir al TPM para compilar handoff. Validar completitud del resultado. |
-| 6. Verificar | Convocar roles de verificación según tipo de cambio. Validar que el proceso se haya seguido. |
+| 6. Verificar | Convocar roles de verificación según tipo de cambio. Validar que el proceso se haya seguido. Instruir producción de `ops-runbook.md` (DevSecOps: infra/seguridad, Dev Lead: troubleshooting). |
 | 7. Aceptar | Convocar panel de aceptación. Facilitar la revisión. Consolidar veredictos. |
 | 8. Retrospectiva | Facilitar la retrospectiva. Documentar lecciones aprendidas. Proponer mejoras de proceso. |
 

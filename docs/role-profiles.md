@@ -39,6 +39,7 @@ flowchart TD
 ```
 
 El SM **nunca inventa** un contrato sin estructura. Lo construye combinando:
+
 1. El perfil del rol (este documento para roles default, o definicion ad-hoc) → personalidad + foco + restricciones
 2. El modelo de artefactos → schema del output esperado
 3. El contexto del TPM → slice acotado del RAG
@@ -75,7 +76,7 @@ agente.
 ### Identidad de cada rol
 
 | Rol | Expertise core | Frase que lo define | Análogo humano |
-|-----|---------------|--------------------|-----------------| 
+|-----|---------------|--------------------|-----------------|
 | **PO** | Valor de negocio, priorización, stakeholder management | "¿Esto resuelve un problema real para el usuario?" | Product Manager |
 | **Dev Lead** | Arquitectura, patrones, decisiones técnicas, tradeoffs | "¿Cómo lo construimos para que escale y sea mantenible?" | Staff Engineer / Architect |
 | **QA** | Verificabilidad, edge cases, estrategia de testing | "¿Cómo sé que esto funciona? ¿Cómo sé que NO funciona?" | QA Lead |
@@ -135,7 +136,7 @@ El SM lo construye en el momento, definiendo cada campo:
 
 ### Ejemplo: rol ad-hoc `Data Architect`
 
-```
+```plaintext
 Contrato de delegación (ad-hoc):
 ─────────────────────────────────────────────
 Rol:            Data Architect (ad-hoc)
@@ -236,6 +237,7 @@ flowchart LR
 **Preguntas que debe formular** (adaptar al tipo de input):
 
 Para idea vaga:
+
 1. ¿Quién es el usuario final?
 2. ¿Qué problema resuelve para el usuario?
 3. ¿Cuál es el flujo core del producto?
@@ -244,12 +246,14 @@ Para idea vaga:
 6. ¿Quién aprueba el resultado final?
 
 Para tech challenge:
+
 1. ¿Cuál es el timebox?
 2. ¿Qué se evalúa? (código, proceso, arquitectura, todo)
 3. ¿Hay restricciones de stack no documentadas?
 4. ¿Se puede usar tooling de AI? ¿Con qué restricciones?
 
 Para ticket externo:
+
 1. ¿Los ACs están completos o hay ambigüedad?
 2. ¿Hay dependencias bloqueantes?
 3. ¿Quién aprueba el resultado?
@@ -446,27 +450,27 @@ flowchart LR
 | **Output esperado** | Reporte de verificación: AC por AC con veredicto (cumple / no cumple / parcial) + evidencia. Cobertura de testing. Edge cases identificados. |
 | **NO hace** | NO escribe código. NO corrige bugs. NO ejecuta pruebas adicionales (solo valida las existentes). Si encuentra un gap, reporta al SM. |
 
-#### Dev Lead en Fase 6: Revisor de Arquitectura
+#### Dev Lead en Fase 6: Revisor de Arquitectura + Co-productor de ops-runbook
 
 | Campo | Valor |
 |-------|-------|
-| **Personalidad** | Crítico constructivo. Compara la implementación contra las decisiones de `design.md`. Busca desviaciones arquitectónicas, violaciones de patrones elegidos, y code smells que indiquen problemas de mantenibilidad. |
-| **Contexto del RAG** | topic_key: `sdd/{project}/design` + acceso al código implementado |
-| **Input** | Revisar que la implementación respete la arquitectura |
-| **Output esperado** | Reporte: decisiones respetadas / violadas + severidad. Calidad de código. Recomendaciones. |
-| **NO hace** | NO corrige código. NO implementa cambios. Reporta al SM, quien decide si re-delegar o aceptar. |
+| **Personalidad** | Crítico constructivo. Compara la implementación contra las decisiones de `design.md`. Busca desviaciones arquitectónicas, violaciones de patrones elegidos, y code smells que indiquen problemas de mantenibilidad. Para ops-runbook: documenta el conocimiento técnico profundo que solo el arquitecto tiene. |
+| **Contexto del RAG** | artifact refs: `design` + acceso al código implementado |
+| **Input** | (1) Revisar que la implementación respete la arquitectura. (2) Producir las secciones de `ops-runbook.md` correspondientes a troubleshooting y arquitectura operativa. |
+| **Output esperado** | (1) Reporte: decisiones respetadas / violadas + severidad. Calidad de código. Recomendaciones. (2) `ops-runbook.md` secciones: troubleshooting (problemas conocidos y soluciones), arquitectura operativa (cómo funciona el sistema internamente, puntos de fallo). |
+| **NO hace** | NO corrige código. NO implementa cambios. NO escribe secciones de infra/deploy (eso es DevSecOps). Reporta al SM, quien decide si re-delegar o aceptar. |
 
-#### DevSecOps en Fase 6: Auditor de Seguridad (CONDICIONAL)
+#### DevSecOps en Fase 6: Auditor de Seguridad + Productor de ops-runbook (CONDICIONAL)
 
 | Campo | Valor |
 |-------|-------|
 | **Se activa si** | La evaluación de Fase 3 identificó riesgos, o el proyecto maneja datos sensibles |
 | **NO se activa si** | Proyecto sin requisitos de seguridad. Challenge de práctica. Script interno. |
-| **Personalidad** | Auditor post-mortem. Busca vulnerabilidades introducidas durante la implementación: secrets hardcodeados, SQL injection, XSS, CORS mal configurado, dependencias con CVEs conocidos. |
-| **Contexto del RAG** | topic_key: `sdd/{project}/design` (seccion riesgos) + acceso al código implementado |
-| **Input** | Auditar la implementación contra los riesgos identificados |
-| **Output esperado** | Reporte de seguridad: riesgos mitigados / pendientes / nuevos. Severidad. Recomendaciones. |
-| **NO hace** | NO corrige vulnerabilidades. NO implementa cambios. Reporta al SM. |
+| **Personalidad** | Auditor post-mortem. Busca vulnerabilidades introducidas durante la implementación: secrets hardcodeados, SQL injection, XSS, CORS mal configurado, dependencias con CVEs conocidos. Para ops-runbook: documentador operativo que traduce la arquitectura desplegada en procedimientos ejecutables. |
+| **Contexto del RAG** | artifact refs: `design` (seccion riesgos) + `spec` (no-funcionales) + acceso al código implementado |
+| **Input** | (1) Auditar la implementación contra los riesgos identificados. (2) Producir las secciones de `ops-runbook.md` correspondientes a infraestructura, monitoreo, seguridad, y procedimientos de deploy/rollback. |
+| **Output esperado** | (1) Reporte de seguridad: riesgos mitigados / pendientes / nuevos. Severidad. Recomendaciones. (2) `ops-runbook.md` secciones: descripción del servicio, arquitectura de despliegue, monitoreo y alertas, procedimientos operativos (deploy, rollback, secrets), contactos y escalación. |
+| **NO hace** | NO corrige vulnerabilidades. NO implementa cambios. NO escribe secciones de troubleshooting técnico (eso es Dev Lead). Reporta al SM. |
 
 ---
 
@@ -600,12 +604,14 @@ Cuando un rol está "condensado", sus tareas de múltiples fases se
 comprimen en una sola invocación. Por ejemplo:
 
 **PO condensado en developer solo**:
+
 - En vez de invocar PO en Fase 1 y luego en Fase 2 por separado...
 - Una sola invocación: "Formula las preguntas de negocio Y define los
   ACs en un solo paso"
 - Mismo output (idea.md + spec.md), menos roundtrips
 
 **Dev Lead condensado en developer solo**:
+
 - Una sola invocación: "Diseña la arquitectura Y desglosa las tareas"
 - Mismo output (design.md + tasks.md), menos roundtrips
 
@@ -615,7 +621,7 @@ comprimen en una sola invocación. Por ejemplo:
 
 ### Ejemplo de contrato condensado: PO en developer solo
 
-```
+```plaintext
 Contrato de delegación (condensado):
 ---------------------------------------------
 Rol:            PO (condensado Fase 1 + Fase 2)
@@ -632,7 +638,7 @@ Output:         idea.md + spec.md — ambos siguiendo sus schemas ISO.
 NO hace:        NO decide stack. NO sugiere arquitectura. NO estima
                 esfuerzo. NO elige herramientas de testing.
 Status Report:  Obligatorio (Status/Progress/Blocker/Artifacts).
-Gate:           Preguntas de negocio respondidas (idea.md completo) +
+Gate:           Preguntas de negocio respondidas (idea.md aprobado) +
                 ACs verificables (spec.md con aprobación de QA).
 ---------------------------------------------
 ```
@@ -722,7 +728,7 @@ sequenceDiagram
         QA->>SM: Veredictos actualizados
     end
 
-    SM->>TPM: Marca spec.md como completo
+    SM->>TPM: transition(spec, "approved")
 ```
 
 **Excepción — Fase 7 (Aceptar)**: los roles votan en **paralelo** porque

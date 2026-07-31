@@ -36,6 +36,38 @@ avances prematuros.
 
 ---
 
+## Modelo de Ownership y Contexto
+
+El framework opera con dos niveles de ownership sobre el contexto del proyecto:
+
+### SM — Ownership total, carga bajo demanda
+
+El SM es el único actor con el mapa completo del proyecto: conoce todos los
+topic keys, artifact slugs, estados de la state machine, contratos de fase,
+y roles disponibles. Pero NO carga todo en su contexto — lo consulta via
+RAG cuando lo necesita. El SM sabe que todo existe y DONDE esta; solo trae
+a su ventana de contexto lo que la decision actual requiere.
+
+### Sub-agentes — Ownership acotado por contrato de delegación
+
+Los sub-agentes (roles del scrum team, TPM, agentes ad-hoc) reciben
+UNICAMENTE lo que su rol y fase requieren, definido en el contrato de
+delegación. No saben que existe el resto del contexto, ni necesitan saberlo.
+Su scope es el contrato — nada mas.
+
+### Principio operativo
+
+Ningun actor carga lo que no necesita. El SM tiene acceso total pero lazy;
+los sub-agentes tienen acceso parcial pero suficiente. Un sub-agente que
+intenta cargar todo el contexto del proyecto esta violando este principio —
+el contrato de delegación ES el limite de scope.
+
+Esto aplica tanto a humanos como a agentes: el `{repo}/docs/` es accesible
+para todos, pero cada actor consulta solo los artefactos relevantes a su
+tarea actual.
+
+---
+
 ## Dos Modos
 
 ### Modo 1 — Planificación (idea → handoffs)
@@ -158,6 +190,7 @@ El sistema no espera que el MIM sepa qué preguntar. Según el nivel de
 entrada detectado, genera preguntas dirigidas:
 
 Para una **idea vaga** ("Uber de lanchas"):
+
 - ¿Quién es el usuario final? (pasajeros, lancheros, ambos)
 - ¿Cuál es el flujo core? (reservar, pagar, rastrear)
 - ¿Qué plataforma? (web, mobile, ambos)
@@ -165,12 +198,14 @@ Para una **idea vaga** ("Uber de lanchas"):
 - ¿MVP o producto completo? ¿Deadline?
 
 Para un **tech challenge** (archivos del repo):
+
 - ¿Cuál es el timebox?
 - ¿Hay restricciones de stack no documentadas?
 - ¿Qué se evalúa? (código, proceso, arquitectura, todo)
 - ¿Se puede usar tooling de AI? ¿Con qué restricciones?
 
 Para un **ticket externo**:
+
 - ¿Los ACs están completos o hay ambigüedad?
 - ¿Hay dependencias bloqueantes?
 - ¿Quién aprueba el resultado?
@@ -178,12 +213,13 @@ Para un **ticket externo**:
 Las preguntas se adaptan: si el MIM ES el stakeholder/creador, las responde
 directamente. Si no lo es, las usa como guía para obtener las respuestas.
 
-#### Adaptador por defecto: `docs/` como RAG local
+#### Adaptador por defecto: archivos locales como RAG
 
-- Path por defecto: `docs/` en un directorio designado FUERA del repo
-  destino (ejemplo: `~/.idea-to-mvp/projects/{nombre}/docs/`)
-- Formato: archivos markdown, uno por fase
-- Legible por humanos, versionable si se desea
+- Path por defecto: `~/.idea-to-mvp/projects/{nombre}/docs/` — **fuera**
+  del repo destino (garantiza que el modo planificación nunca contamine
+  el working tree)
+- Formato: archivos markdown, uno por artefacto
+- Legible por humanos, opcionalmente versionable con git
 - Los agentes hacen fetch de archivos específicos, no crawl completo
 - Adaptadores adicionales (engram, Jira, Confluence, etc.): TBD
 
@@ -211,17 +247,20 @@ encuentra un gap, el sistema regresa al ciclo de preguntas para esa fase.
 **Quién participa**: el orquestador y los sub-agentes (minions).
 
 **Qué consume**:
+
 - Documentos de handoff del Modo 1
 - El AGENTS.md del repo destino (reglas de gobernanza)
 - Compact rules resueltas y estándares del proyecto
 
 **Qué produce**:
+
 - Cambios de código en el repo destino
 - Resultados de pruebas
 - Reportes de verificación
 - Commits (siguiendo las convenciones del repo)
 
 **Cómo funciona**:
+
 - El orquestador lee el handoff y el AGENTS.md del repo
 - El orquestador delega a sub-agentes con:
   - Alcance específico de tarea (del handoff)
@@ -296,20 +335,24 @@ y es LEÍDO por el modo ejecución.
 ## Adaptadores del Artifact Store
 
 El framework necesita una capa de persistencia pluggable. Cada adaptador
-implementa la misma interfaz universal de 8 operaciones (ver
-`artifact-model.md` → "Adaptadores de Persistencia" para la definición
-completa: `save`, `read`, `search`, `list`, `markComplete`,
-`verifyConsistency`, `delete`, `history`). Todas las operaciones de
-escritura son mediadas por el TPM (ver `artifact-model.md` → "TPM como
-DBMS"); las lecturas pueden ser directas vía Pattern B.
+implementa la misma interfaz universal (ver `artifact-model.md` →
+"Adaptadores de Persistencia" para la definición completa de las 9
+operaciones: `ingest`, `save`, `read`, `search`, `list`,
+`verifyConsistency`, `delete`, `history`, `transition`). Todas las
+operaciones de escritura son mediadas por el TPM (ver `artifact-model.md`
+→ "TPM como DBMS"); las lecturas pueden ser directas vía Pattern B.
+La gestión de estado de artefactos usa `transition` exclusivamente
+(la anterior `markComplete` fue absorbida por `transition`).
 
 ### Adaptador local (por defecto)
-- Almacena artefactos como archivos markdown en `{repo}/docs/`
-- Dentro del repositorio destino — agentes y usuarios acceden al mismo filesystem
-- Ventajas: cero dependencias, legible por humanos, versionable con git
+
+- Almacena artefactos como archivos markdown en `~/.idea-to-mvp/projects/{nombre}/docs/`
+- **Fuera** del repositorio destino — el modo planificación nunca toca el working tree del repo
+- Ventajas: cero dependencias, legible por humanos, opcionalmente versionable
 - Desventaja: sin acceso cross-machine, sin búsqueda semántica
 
 ### Adaptador engram
+
 - Almacena artefactos como observaciones engram con topic keys estructurados.
 - Ventajas: cross-session, buscable, sobrevive compaction.
 - Desventaja: requiere servidor MCP de engram, contenido puede truncarse en
@@ -317,6 +360,7 @@ DBMS"); las lecturas pueden ser directas vía Pattern B.
   completo).
 
 ### Adaptador híbrido
+
 - Escribe en ambos: local y engram.
 - Ventajas: lo mejor de ambos — legibilidad local + persistencia
   cross-session.
@@ -413,7 +457,7 @@ El SM selecciona el tier de modelo por tarea usando un criterio simple:
 
 ### Regla de decisión
 
-```
+```plaintext
 if (output == template_con_slots && sin_ambiguedad)
   → Local
 else

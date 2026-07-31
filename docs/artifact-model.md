@@ -160,7 +160,7 @@ quién lo produce, quién lo consume, y reglas de ownership.
 may be selected in accordance with the project's information management
 policies"*):
 
-```
+```markdown
 # Idea: {nombre del proyecto}
 
 ## Problema                        ← 29148 sec 9.3.2 Business purpose
@@ -184,7 +184,7 @@ Lo que falta resolver antes de especificar.
 ## Metadata
 - Fecha de creación
 - Fuente del input (idea vaga, challenge, ticket, spec parcial)
-- Estado: borrador | completo
+- Estado: borrador | aprobado
 - Iteración y metodología vigente
 ```
 
@@ -209,7 +209,7 @@ Lo que falta resolver antes de especificar.
 
 **Contenido mínimo** (alineado a 29148 — StRS/SRS simplificado):
 
-```
+```markdown
 # Spec: {nombre del proyecto}
 
 ## Requisitos funcionales
@@ -255,7 +255,7 @@ Cada requisito traza a idea.md (qué problema resuelve).
 
 **Contenido mínimo** (alineado a 42010 viewpoints + 1016 design entities):
 
-```
+```markdown
 # Design: {nombre del proyecto}
 
 ## Stack tecnológico
@@ -320,7 +320,7 @@ Cada decisión traza a spec.md (qué requisito resuelve).
 > descompone **deliverables** — "qué se entrega". `tasks.md` descompone
 > **actividades** — "qué se ejecuta". Son niveles diferentes:
 >
-> ```
+> ```plaintext
 > WBS (deliverable) → Work Package → Activity (nuestra tarea)
 > ISO 21511            PMI WBS        ISO 21502 sec 7.6 / PMBOK Define Activities
 > ```
@@ -329,7 +329,7 @@ Cada decisión traza a spec.md (qué requisito resuelve).
 
 **Contenido mínimo** (alineado a ISO 21502 sec 7.6 + PMBOK Activity List):
 
-```
+```markdown
 # Tasks: {nombre del proyecto}
 
 ## Tareas
@@ -374,7 +374,7 @@ Grafo de dependencias resuelto.
 
 **Contenido mínimo** (alineado a 15289 transition + 29119-3 test plan):
 
-```
+```markdown
 # Handoff: {nombre del proyecto}
 
 ## Resumen ejecutivo
@@ -423,7 +423,7 @@ Qué se decidió NO hacer y por qué (para evitar scope creep).
 
 **Contenido mínimo** (alineado a ITIL 4 Service Transition + Google SRE PRR):
 
-```
+```markdown
 # Ops Runbook: {nombre del proyecto}
 
 ## Descripción del servicio
@@ -662,7 +662,7 @@ La trazabilidad vertical conecta niveles y permite responder preguntas como:
 - "¿Cuál es el progreso del initiative L0-001?" → porcentaje de
   descendientes `done` / total
 
-```
+```plaintext
 L0-001: Sistema de autenticación
 ├── L1-001: Login con OAuth2
 │   ├── L2-001: Como usuario puedo logearme con Google
@@ -713,7 +713,7 @@ iteration:
 Con la jerarquía definida, `tasks.md` evoluciona de "lista plana de tareas"
 a "vista materializada del DAG de actividades (L3-L4)":
 
-```
+```markdown
 # Tasks: {nombre del proyecto}
 
 ## Work Items (L3-L4)
@@ -751,6 +751,7 @@ en `tasks.md` mediante `traces_to`.
 ### Impacto en `handoff.md`
 
 El handoff incluye:
+
 - El DAG completo de work items con sus dependencias
 - Los lanes paralelos pre-calculados
 - La ruta crítica identificada
@@ -864,7 +865,7 @@ flowchart TD
    excepciones.
 
 3. **El TPM es el ÚNICO que ESCRIBE en el RAG** — todas las operaciones
-   de escritura (create, update, delete, mark-complete) pasan por el TPM
+   de escritura (create, update, delete, transition) pasan por el TPM
    con criterio editorial (formato, completitud, consistencia). Las
    **lecturas son libres** — cualquier rol puede consultar el RAG
    directamente vía Pattern B (topic_keys) sin intermediario. Ver
@@ -934,8 +935,8 @@ flowchart TD
 
 1. Cada requisito o tarea es una oración única y completa (no listas
    anidadas de fragmentos).
-2. Sin TODOs, TBDs, o placeholders sin resolver en artefactos marcados
-   como completos.
+2. Sin TODOs, TBDs, o placeholders sin resolver en artefactos en estado
+   `approved`.
 3. Referencias cruzadas entre artefactos usan IDs trazables (no "ver
    arriba" o "como se dijo").
 4. Formato Markdown consistente con el schema del artefacto definido
@@ -959,11 +960,11 @@ completo.
 
 | Operación | Qué hace | Quién la invoca | Ejemplo |
 |-----------|----------|-----------------|---------|
-| **Create** | Crea un artefacto nuevo con metadata inicial. **Precondición**: verifica que todos los artefactos upstream estén marcados como `completo` antes de crear. Si un upstream falta o está incompleto, rechaza y reporta al SM. | SM (instrucción) | "Crea idea.md para el proyecto X" |
+| **Create** | Crea un artefacto nuevo con metadata inicial. **Precondición**: verifica que todos los artefactos upstream estén aprobados antes de crear. Si un upstream falta o no está aprobado, rechaza y reporta al SM. | SM (instrucción) | "Crea idea.md para el proyecto X" |
 | **Read** | Retorna un slice acotado del artefacto | SM, Roles | "Dame la sección de ACs de spec.md" |
 | **Update** | Modifica contenido existente, mantiene trazabilidad | SM (instrucción) | "Actualiza el ADR #3 en design.md" |
 | **Delete** | Elimina contenido obsoleto (raro, con justificación) | SM (instrucción) | "Elimina la tarea T-07, fue descartada" |
-| **Mark complete** | Cambia el estado del artefacto a `completo` | SM (vía gate) | "spec.md pasó el gate, marcar completo" |
+| **Transition** | Cambia el estado del artefacto en la state machine (`draft` → `review` → `approved`/`rejected`). Lo que antes era "marcar completo" ahora es `transition(artifact, "approved", "gate passed")`. | SM (vía gate) | "spec.md pasó el gate: `transition('spec', 'approved', 'QA + SM gate passed')`" |
 | **Verify consistency** | Verifica integridad referencial entre artefactos | SM (pre-gate) | "¿Todos los ACs de spec trazan a ideas?" |
 | **Serve context** | Sirve el contexto ACOTADO que un agente necesita | SM o sub-agente directo | "Dame solo las tareas T-01..T-03" |
 
@@ -974,9 +975,9 @@ spikes), el SM puede agrupar operaciones por fase:
 
 | Tier | Dispatches por fase | Cuando aplica |
 |------|---------------------|---------------|
-| Normal | 1 Create + N Updates + 1 MarkComplete | Proyectos sin timebox. Cada interaccion es un dispatch. |
-| Comprimido | 1 Create-with-content + 1 MarkComplete | Challenges con timebox. El sub-agente produce el artefacto completo en una delegacion; el TPM lo recibe y persiste en un solo dispatch. |
-| Ultra-comprimido | 1 transaction (Create + MarkComplete) | Artefactos triviales o fast-forward con alta certeza. Una sola transaccion atomica. |
+| Normal | 1 Create + N Updates + 1 Transition | Proyectos sin timebox. Cada interaccion es un dispatch. |
+| Comprimido | 1 Create-with-content + 1 Transition | Challenges con timebox. El sub-agente produce el artefacto completo en una delegacion; el TPM lo recibe y persiste en un solo dispatch. |
+| Ultra-comprimido | 1 transaction (Create + Transition) | Artefactos triviales o fast-forward con alta certeza. Una sola transaccion atomica. |
 
 **Regla para Pattern B + batch**: cuando el sub-agente lee directo del
 RAG (Pattern B) y produce un artefacto completo, el dispatch al TPM es
@@ -1073,18 +1074,20 @@ flowchart TD
 
 ### Cómo funciona Pattern B en la práctica
 
-El SM NO pasa contenido — pasa **referencias**:
+El SM NO pasa contenido — pasa **referencias al adaptador**:
 
-```
+```plaintext
 Contrato de delegación:
 ─────────────────────────────────────────────
 Rol:           Dev Lead
 Personalidad:  Arquitecto (ver role-profiles.md Fase 3)
-Contexto:      Lee del RAG usando estas referencias:
-               - topic_key: "sdd/{project}/idea"  (restricciones)
-               - topic_key: "sdd/{project}/spec"   (ACs y contratos)
-               Usa mem_search(query: "{topic_key}") → mem_get_observation(id)
-               para obtener el contenido completo.
+Contexto:      Lee del artifact store usando la interfaz universal:
+               - read("idea", "Restricciones conocidas")
+               - read("spec")
+               El adaptador activo resuelve la operación:
+               - Local: lee {store}/idea.md, {store}/spec.md
+               - Engram: mem_search → mem_get_observation
+               - DBMS: SELECT content FROM artifacts WHERE slug = ...
 Input:         Diseñar la arquitectura que satisfaga los ACs
 Output:        design.md (schema del artifact model)
 Status Report: Obligatorio
@@ -1092,36 +1095,41 @@ Status Report: Obligatorio
 ```
 
 El sub-agente recibe ~100 tokens de instrucción en vez de ~5,000 tokens
-de contexto inyectado. Consulta el RAG directamente y obtiene exactamente
-lo que necesita, cuando lo necesita.
+de contexto inyectado. Consulta el artifact store directamente vía la
+interfaz universal y obtiene exactamente lo que necesita, cuando lo
+necesita.
 
 ```mermaid
 sequenceDiagram
     participant SM
     participant AGENT as Sub-agente (Dev Lead)
-    participant RAG as RAG (vía adaptador)
+    participant STORE as Artifact Store (vía adaptador)
 
-    SM->>AGENT: Contrato + topic_keys (~100 tokens)
+    SM->>AGENT: Contrato + artifact refs (~100 tokens)
     activate AGENT
 
-    AGENT->>RAG: mem_search("sdd/project/spec")
-    RAG->>AGENT: observation_id: 1234
-    AGENT->>RAG: mem_get_observation(1234)
-    RAG->>AGENT: spec.md completo (2K tokens, directo)
+    AGENT->>STORE: read("spec")
+    STORE->>AGENT: spec.md completo (2K tokens, directo)
 
     Note over AGENT: Razona sobre los ACs...
     Note over AGENT: Descubre que necesita detalle de idea.md
 
-    AGENT->>RAG: mem_search("sdd/project/idea")
-    RAG->>AGENT: observation_id: 1230
-    AGENT->>RAG: mem_get_observation(1230)
-    RAG->>AGENT: idea.md seccion restricciones (500 tokens)
+    AGENT->>STORE: read("idea", "Restricciones conocidas")
+    STORE->>AGENT: idea.md seccion restricciones (500 tokens)
 
     AGENT->>SM: design.md + Status Report
     deactivate AGENT
 
     Note over SM: SM nunca leyó spec.md ni idea.md\n= 0 tokens de contexto en el SM
 ```
+
+> **Nota de implementación**: la interfaz universal (`read`, `search`,
+> etc.) es adapter-agnostic. Para el adaptador engram, `read("spec")`
+> se traduce internamente a `mem_search(query: "sdd/{project}/spec")`
+>
+> - `mem_get_observation(id)`. Para el adaptador local, se traduce a
+> leer `{store}/spec.md`. El contrato de delegación usa la interfaz
+> universal — el adaptador activo resuelve la llamada.
 
 ### Retrieval adaptativo: el agente sabe mejor qué necesita
 
@@ -1146,7 +1154,7 @@ seguridad, inyectaría de más.
 Para no perder visibilidad sobre qué leyó el agente, el Status Report
 debe incluir un campo de **fuentes consultadas**:
 
-```
+```plaintext
 Status Report:
   Status: SUCCESS
   Progress: design.md completo (5/5 secciones)
@@ -1193,7 +1201,6 @@ flowchart TD
         READ_OP["read(artifact, section?)"]
         SEARCH["search(query, scope?)"]
         LIST["list(filters?)"]
-        MARK["markComplete(artifact)"]
         VERIFY["verifyConsistency(artifact[])"]
         DELETE["delete(artifact, reason)"]
         HISTORY["history(artifact)"]
@@ -1204,7 +1211,7 @@ flowchart TD
         direction TB
 
         subgraph DEFAULT["Local (DEFAULT)"]
-            DF_DESC["Archivos .md en\n{repo}/docs/\nDentro del repo destino"]
+            DF_DESC["Archivos .md en\n{store}/\nFuera del repo destino"]
         end
 
         subgraph ENGRAM_A["Engram"]
@@ -1278,12 +1285,14 @@ flowchart LR
     ADAPTER_V -->|"slice acotado"| TPM_V
 ```
 
-### Adaptador por defecto: `docs/` como RAG local
+### Adaptador por defecto: archivos locales como RAG
 
-- **Path**: `{repo}/docs/` — dentro del repositorio destino
+- **Path por defecto**: `~/.idea-to-mvp/projects/{nombre}/docs/` — **fuera**
+  del repositorio destino. Esto garantiza que el modo planificación nunca
+  contamine el working tree del repo con artefactos de proceso.
 - **Formato**: archivos markdown, uno por artefacto
-- **Ventajas**: cero dependencias, legible por humanos, versionable con git,
-  accesible por igual para agentes y usuarios humanos (es el mismo filesystem)
+- **Ventajas**: cero dependencias, legible por humanos, opcionalmente
+  versionable con git (el directorio del store puede ser un repo separado)
 - **Desventaja**: sin búsqueda semántica, sin acceso cross-machine
 - **Suficiente para**: proyectos individuales, challenges, MVPs — que es el
   caso de uso default del framework
@@ -1378,21 +1387,21 @@ MVP de persistencia.
 | Precondicion | Ninguna (lista vacia es valida). |
 | Postcondicion | Retorna lista de artefactos con: `artifact`, `status` (draft/complete), `last_modified`, `producer`. |
 | Filtros | `status`, `producer`, `modified_after`, `modified_before`. |
-| Given | Store con `idea` (complete) y `spec` (draft) |
-| When | `list({status: "complete"})` |
+| Given | Store con `idea` (approved) y `spec` (draft) |
+| When | `list({status: "approved"})` |
 | Then | Retorna solo `idea`. |
 
-#### markComplete(artifact)
+#### ~~markComplete(artifact)~~ — RETIRADO
 
-| Aspecto | Contrato |
-|---------|----------|
-| Precondicion | El artefacto existe y su status es `draft`. |
-| Postcondicion | Status cambia a `complete`. Timestamp de completitud registrado. |
-| Idempotencia | Si — marcar un artefacto ya completo es no-op. |
-| Given | `idea` con status `draft` |
-| When | `markComplete("idea")` |
-| Then | `idea.status` es `complete`. `list()` lo refleja. |
-| Error: NOT_FOUND | El artefacto no existe. |
+> **Unificación de estado (R004-C1)**: `markComplete` se retira como
+> operación independiente. La gestión de estado de artefactos se unifica
+> en `transition`. Lo que antes era `markComplete(artifact)` ahora es
+> `transition(artifact, "approved", reason)`. Los gates del SM verifican
+> el estado `approved` (no `complete`).
+>
+> **Migración**: reemplazar toda llamada `markComplete(x)` por
+> `transition(x, "approved", "gate passed")`. Ver sección `transition`
+> para la state machine completa.
 
 #### verifyConsistency(artifact[])
 
@@ -1422,10 +1431,10 @@ MVP de persistencia.
 |---------|----------|
 | Precondicion | `artifact` es un slug valido (puede o no existir actualmente). |
 | Postcondicion | Retorna lista ordenada (mas reciente primero) de: `{version, timestamp, producer, action, content_hash}`. Lista vacia si el artefacto nunca existio. |
-| Acciones | `created`, `updated`, `completed`, `deleted`, `reopened`, `read`. |
-| Given | `idea` fue creado, actualizado 2 veces, y marcado completo |
+| Acciones | `created`, `updated`, `transitioned`, `deleted`, `read`. |
+| Given | `idea` fue creado, actualizado 2 veces, y aprobado via transition |
 | When | `history("idea")` |
-| Then | Retorna 4 entradas: completed → updated → updated → created. |
+| Then | Retorna 4 entradas: transitioned(→approved) → updated → updated → created. |
 
 #### transition(artifact, newState, reason?)
 
@@ -1451,7 +1460,7 @@ MVP de persistencia.
 machine (que estados existen y que transiciones son validas). El
 framework proporciona un **default** basado en el patron universal:
 
-```
+```plaintext
                     ┌──────────┐
               ┌────→│  review  │────┐
               │     └──────────┘    │
@@ -1493,22 +1502,22 @@ operaciones deben cumplir garantias ACID:
 
 | Garantia | Descripcion | Ejemplo |
 |----------|-------------|---------|
-| **Atomicidad** | Una transaccion multi-operacion se aplica completa o no se aplica. No hay estado intermedio visible. | `save(spec) + markComplete(spec) + verifyConsistency([idea, spec])` — si verify falla, spec no se marca complete y el save se revierte. |
-| **Consistencia** | El store siempre esta en un estado valido. No existen referencias rotas, artefactos sin metadata, ni estados invalidos. | No se puede `markComplete(design)` si `spec` no esta complete (cadena de dependencias). |
+| **Atomicidad** | Una transaccion multi-operacion se aplica completa o no se aplica. No hay estado intermedio visible. | `save(spec) + transition(spec, "approved") + verifyConsistency([idea, spec])` — si verify falla, spec no se aprueba y el save se revierte. |
+| **Consistencia** | El store siempre esta en un estado valido. No existen referencias rotas, artefactos sin metadata, ni estados invalidos. | No se puede `transition(design, "approved")` si `spec` no esta en `approved` (cadena de dependencias). |
 | **Aislamiento** | Operaciones concurrentes no producen estados corruptos. Nivel minimo: read-committed. | Dos agentes leyendo `spec` simultaneamente ven la misma version. Un `save` en progreso no es visible hasta commit. |
 | **Durabilidad** | Despues de un commit exitoso, el contenido sobrevive a crash, compaction, o perdida de sesion. | Para local: flush a disco. Para DBMS: commit SQL. Para engram: observation persistida. |
 
 **Transacciones**: el TPM puede agrupar operaciones en una transaccion.
 Si cualquier operacion falla, todas se revierten.
 
-```
+```plaintext
 transaction {
   save("spec", contenido, metadata)
   verifyConsistency(["idea", "spec"])
-  markComplete("spec")
+  transition("spec", "approved", "gate passed")
 }
 // Si verifyConsistency detecta inconsistencias → rollback del save
-// Si markComplete falla (precondicion) → rollback del save + verify
+// Si transition falla (precondicion/transicion invalida) → rollback del save + verify
 ```
 
 **Nivel de soporte por adaptador**:
@@ -1525,7 +1534,7 @@ transaction {
 > adaptador (`begin()`, `commit()`, `rollback()`). Para adaptadores sin
 > soporte nativo de transacciones (local, engram), implementar como
 > write-ahead log o copy-on-write.
-
+>
 > **TODO**: definir tests de conformance que un adaptador debe pasar
 > para ser considerado compatible. Formato sugerido: suite ejecutable
 > con los given/when/then de arriba como casos de prueba.
@@ -1766,10 +1775,10 @@ flowchart TD
 Cada artefacto registra BAJO QUÉ metodología fue producido. Esto no
 cambia el contenido — es metadata de trazabilidad.
 
-```
+```markdown
 ## Metadata
 - Fecha de creación: 2026-07-15
-- Estado: completo
+- Estado: aprobado
 - Iteración: Sprint 3
 - Metodología vigente: scrum
 - Revisores: [PO, QA]
@@ -1777,7 +1786,7 @@ cambia el contenido — es metadata de trazabilidad.
 
 Si la metodología cambia y un artefacto nuevo se produce después:
 
-```
+```markdown
 ## Metadata
 - Fecha de creación: 2026-08-02
 - Estado: borrador
@@ -1795,7 +1804,7 @@ contenido.
 El proyecto mantiene un historial de cambios de metodología en el RAG.
 Esto es metadata del PROYECTO, no de un artefacto individual.
 
-```
+```markdown
 # Metadata del Proyecto: {nombre}
 
 ## Metodología vigente
