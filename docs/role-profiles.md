@@ -219,7 +219,7 @@ flowchart LR
     SM_F1["SM"] -->|"contrato"| PO_F1["PO\n🟢 activo"]
     SM_F1 -.->|"si challenge"| SM_SELF["SM extrae\nreglas de proceso"]
 
-    style PO_F1 fill:#bfb,stroke:#080
+    style PO_F1 fill:#bfb,stroke:#080,color:#000
 ```
 
 #### PO en Fase 1: Descubrimiento
@@ -269,9 +269,9 @@ flowchart LR
     SM_F2 -->|"contrato"| QA_F2["QA\n🟢"]
     SM_F2 -.->|"si hay UI"| UX_F2["UX\n🟡 condicional"]
 
-    style PO_F2 fill:#bfb,stroke:#080
-    style QA_F2 fill:#bfb,stroke:#080
-    style UX_F2 fill:#ffb,stroke:#880
+    style PO_F2 fill:#bfb,stroke:#080,color:#000
+    style QA_F2 fill:#bfb,stroke:#080,color:#000
+    style UX_F2 fill:#ffb,stroke:#880,color:#000
 ```
 
 #### PO en Fase 2: Formalización
@@ -318,9 +318,9 @@ flowchart LR
     SM_F3 -->|"contrato"| SEC_F3["DevSecOps\n🟡 condicional"]
     SM_F3 -.->|"si hay UI"| UX_F3["UX\n🟡 condicional"]
 
-    style DEV_F3 fill:#bfb,stroke:#080
-    style SEC_F3 fill:#ffb,stroke:#880
-    style UX_F3 fill:#ffb,stroke:#880
+    style DEV_F3 fill:#bfb,stroke:#080,color:#000
+    style SEC_F3 fill:#ffb,stroke:#880,color:#000
+    style UX_F3 fill:#ffb,stroke:#880,color:#000
 ```
 
 #### Dev Lead en Fase 3: Arquitecto
@@ -368,9 +368,9 @@ flowchart LR
     SM_F4 -.->|"si security tasks"| SEC_F4["DevSecOps\n🟡"]
     SM_F4 -.->|"validación"| QA_F4["QA\n🟡"]
 
-    style DEV_F4 fill:#bfb,stroke:#080
-    style SEC_F4 fill:#ffb,stroke:#880
-    style QA_F4 fill:#ffb,stroke:#880
+    style DEV_F4 fill:#bfb,stroke:#080,color:#000
+    style SEC_F4 fill:#ffb,stroke:#880,color:#000
+    style QA_F4 fill:#ffb,stroke:#880,color:#000
 ```
 
 #### Dev Lead en Fase 4: Planificador Técnico
@@ -414,7 +414,7 @@ flowchart LR
 flowchart LR
     SM_F5["SM"] -->|"instrucción"| TPM_F5["TPM\n🟢"]
 
-    style TPM_F5 fill:#bfb,stroke:#080
+    style TPM_F5 fill:#bfb,stroke:#080,color:#000
 ```
 
 > **No hay roles productivos en esta fase.** El TPM compila el handoff
@@ -431,9 +431,9 @@ flowchart LR
     SM_F6 -->|"contrato"| DEV_F6["Dev Lead\n🟢"]
     SM_F6 -.->|"si security"| SEC_F6["DevSecOps\n🟡"]
 
-    style QA_F6 fill:#bfb,stroke:#080
-    style DEV_F6 fill:#bfb,stroke:#080
-    style SEC_F6 fill:#ffb,stroke:#880
+    style QA_F6 fill:#bfb,stroke:#080,color:#000
+    style DEV_F6 fill:#bfb,stroke:#080,color:#000
+    style SEC_F6 fill:#ffb,stroke:#880,color:#000
 ```
 
 #### QA en Fase 6: Verificador
@@ -480,11 +480,11 @@ flowchart LR
     SM_F7 -.->|"si security"| SEC_F7["DevSecOps\n🟡"]
     SM_F7 -.->|"si UI"| UX_F7["UX\n🟡"]
 
-    style PO_F7 fill:#bfb,stroke:#080
-    style QA_F7 fill:#bfb,stroke:#080
-    style DEV_F7 fill:#bfb,stroke:#080
-    style SEC_F7 fill:#ffb,stroke:#880
-    style UX_F7 fill:#ffb,stroke:#880
+    style PO_F7 fill:#bfb,stroke:#080,color:#000
+    style QA_F7 fill:#bfb,stroke:#080,color:#000
+    style DEV_F7 fill:#bfb,stroke:#080,color:#000
+    style SEC_F7 fill:#ffb,stroke:#880,color:#000
+    style UX_F7 fill:#ffb,stroke:#880,color:#000
 ```
 
 En esta fase, cada rol actúa como **juez** con poder de voto:
@@ -514,7 +514,7 @@ APPROVE unánime permite cerrar.
 flowchart LR
     SM_F8["SM"] -->|"facilita"| ALL["Todos los\nroles activos"]
 
-    style ALL fill:#bfb,stroke:#080
+    style ALL fill:#bfb,stroke:#080,color:#000
 ```
 
 En retrospectiva, cada rol evalúa SU PROPIA eficacia:

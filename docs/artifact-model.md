@@ -601,9 +601,9 @@ flowchart TD
     B2 --> MERGE
     C1 --> MERGE
 
-    style LANE_A fill:#e8f5e9,stroke:#2e7d32
-    style LANE_B fill:#e3f2fd,stroke:#1565c0
-    style LANE_C fill:#fff3e0,stroke:#e65100
+    style LANE_A fill:#e8f5e9,stroke:#2e7d32,color:#000
+    style LANE_B fill:#e3f2fd,stroke:#1565c0,color:#000
+    style LANE_C fill:#fff3e0,stroke:#e65100,color:#000
 ```
 
 **Algoritmo de paralelismo**:
@@ -1059,8 +1059,8 @@ flowchart TD
     Q2 -->|"1-7"| PATTERN_B_USE
     Q2 -->|"8+ o búsqueda fuzzy"| PATTERN_A_USE
 
-    style PATTERN_B_USE fill:#bfb,stroke:#080
-    style PATTERN_A_USE fill:#ffb,stroke:#880
+    style PATTERN_B_USE fill:#bfb,stroke:#080,color:#000
+    style PATTERN_A_USE fill:#ffb,stroke:#880,color:#000
 ```
 
 | Situación | Pattern | Por qué |
