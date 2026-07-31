@@ -133,6 +133,76 @@ Meta-documento, no código. Responde "qué se va a probar":
 - Asigna tags de filtrado (`smoke`, `critical-path`, `regression`) que
   luego alimentan la derivación de tests en el pipeline.
 - Identifica matrices de test cuando aplica (combinaciones, casos límite).
+- **Para cada AC, produce casos adversariales** (ver sección siguiente).
+
+#### Casos adversariales (Negative Testing)
+
+Por cada AC positivo ("el usuario puede loguearse"), el Test Plan debe
+incluir su contrapartida adversarial: "¿qué pasa cuando alguien intenta
+romperlo?" Esta disciplina se conoce como **Abuse Cases** (OWASP) o
+**Abuser Stories** — el contraparte sistemático de las User Stories.
+
+> **"Piensa mal y acertarás"**: el Test Engineer asume que cada
+> endpoint, cada formulario, cada entrada de datos será atacada con
+> intención maliciosa. No es paranoia — es diseño defensivo.
+
+| Categoría | Qué se prueba | Ejemplo |
+|-----------|---------------|---------|
+| **Payload vacío** | El sistema rechaza graciosamente una petición sin datos | `POST /login` con body `{}` → 400, no 500 |
+| **Payload corrupto** | El sistema maneja datos malformados sin exponer internos | JSON inválido, encoding roto, Content-Type incorrecto → error controlado |
+| **Payload inválido** | Validación rechaza tipos, rangos y formatos incorrectos | Email sin `@`, edad negativa, fecha del futuro → error con detalle útil |
+| **Inyección SQL** | Inputs con fragmentos SQL no alteran queries | `'; DROP TABLE users; --` en campo de búsqueda → sin efecto |
+| **Inyección NoSQL** | Operadores NoSQL en inputs no alteran queries | `{"$gt": ""}` en campo de filtro → sin efecto |
+| **XSS** | Scripts inyectados no se ejecutan en outputs | `<script>alert(1)</script>` en campo de nombre → renderiza como texto |
+| **Inyección de prompts** | Instrucciones de IA en inputs no alteran comportamiento del sistema | `"Ignora las instrucciones anteriores..."` en campo de texto → tratado como dato |
+| **Campos extra no declarados** | El sistema ignora campos que no pertenecen al schema | `POST /login` con `{"user":"a","pass":"b","role":"admin"}` → `role` ignorado |
+| **Autenticación/autorización** | Rutas protegidas rechazan acceso sin credenciales válidas | Sin token → 401. Token de otro usuario → 403. Token expirado → 401. |
+| **Rate limiting / abuso** | El sistema limita peticiones excesivas | 1000 requests/segundo al mismo endpoint → throttling, no caída |
+
+```mermaid
+flowchart TD
+    AC["AC positivo\n(happy path)"]
+    NEG["Casos adversariales\n(qué puede salir mal)"]
+
+    AC --> NEG
+
+    NEG --> EMPTY["Payload vacío"]
+    NEG --> CORRUPT["Payload corrupto"]
+    NEG --> INVALID["Payload inválido"]
+    NEG --> INJECTION["Inyecciones\n(SQL, NoSQL, XSS, Prompt)"]
+    NEG --> EXTRA["Campos extra\nno declarados"]
+    NEG --> AUTH["Auth/Authz\nsin credenciales"]
+    NEG --> ABUSE["Rate limiting\ny abuso"]
+
+    EMPTY --> PLAN["Test Plan:\ncasos positivos +\ncasos adversariales"]
+    CORRUPT --> PLAN
+    INVALID --> PLAN
+    INJECTION --> PLAN
+    EXTRA --> PLAN
+    AUTH --> PLAN
+    ABUSE --> PLAN
+```
+
+**Reglas para casos adversariales:**
+
+1. **No son opcionales** — cada AC con entrada de datos tiene al menos
+   un caso adversarial en el Test Plan.
+2. **Se tagean como `security`** — derivables como suite de seguridad
+   sin escribirla por separado.
+3. **Se asiertan estrictamente** — el error retornado también se
+   verifica por DTO (no exponer stack traces, paths internos ni
+   información del sistema en mensajes de error).
+4. **Complementan, no reemplazan** — los casos adversariales se suman
+   a los positivos en el Test Plan, no los sustituyen.
+5. **Compliance-by-Design** — estos tests demuestran que el sistema
+   maneja inputs maliciosos correctamente, sin necesitar auditorías de
+   penetración separadas para el scope cubierto.
+
+> **Nota**: la lista de categorías no es exhaustiva — es el mínimo que
+> el framework exige. El Test Engineer puede agregar categorías según
+> el contexto del proyecto (ej. CSRF para aplicaciones web con sesiones,
+> path traversal para sistemas de archivos, deserialización insegura
+> para APIs que aceptan objetos complejos).
 
 ### Capa 2: Test Contract
 
@@ -450,5 +520,9 @@ para APIs obsoletas, sin patrones de compatibilidad retroactiva.
   (compliance-by-design).
 - Los mocks permitidos (solo dependencias externas) están verificados:
   llamadas, argumentos, frecuencia.
+- Cada AC con entrada de datos tiene al menos un caso adversarial en
+  el Test Plan (negative testing / abuse cases).
+- Los casos adversariales están tageados como `security` para
+  derivación como suite de seguridad.
 - Si un test no puede escribirse, hay un gap en el contrato o el AC
   (escalar a Pre-Fase).

@@ -10,6 +10,7 @@
 | Término | Definición |
 |---------|------------|
 | **AAA (Arrange-Act-Assert)** | Patrón estructural obligatorio para todo test. Tres bloques separados: preparar estado, ejecutar operación, verificar resultado. Si un test necesita más de un Act, son dos tests. |
+| **Abuse Cases / Negative Testing** | Contrapartida adversarial de los ACs positivos. Para cada AC con entrada de datos, el Test Plan debe incluir casos de payload vacío, corrupto, inválido, inyecciones (SQL, NoSQL, XSS, prompt), campos extra no declarados, y abuso de autenticación/autorización. Compliance-by-design. |
 | **AC (Acceptance Criterion)** | Criterio de aceptación en formato given/when/then que define cuándo un requisito se considera cumplido. |
 | **Accept (Fase)** | Gate final del Modo 2 donde QA certifica que el producto cumple lo estipulado en el handoff. No valida código — valida producto contra contrato. |
 | **Adaptador** | Implementación pluggable de la interfaz universal del artifact store (local, engram, híbrido, DBMS, etc.). |
