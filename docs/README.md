@@ -1,0 +1,34 @@
+# idea-to-mvp — Índice de Documentación
+
+> Framework de desarrollo de software estructurado.
+> Desde la idea hasta el código operacional.
+
+---
+
+## Mapa General
+
+- [Vista general del framework](overview.md) — diagramas de alto nivel, entrada recomendada
+- [Glosario](glossary.md) — definiciones de términos especializados del framework
+- [Adaptaciones ágiles](agile-adaptations.md) — cómo el framework adapta los 12 principios del Manifiesto Ágil para agentes IA
+
+---
+
+## Modo 1: Planificación (idea → handoff)
+
+- [Índice del modo](planning/README.md)
+- [Modelo operativo](planning/operational-model.md) — modos, ownership, adaptadores
+- [Artefactos](planning/artifacts/README.md) — 6 artefactos, TPM, state machine
+- [Comportamiento SM](planning/behavior/README.md) — fases, delegación, PDC, recovery
+- [Roles](planning/roles/README.md) — 5 roles default + ad-hoc
+
+## Modo 2: Ejecución (handoff → código)
+
+- [Índice del modo](execution/README.md)
+- [Contratos](execution/contracts.md) — contract-first, desarrollo paralelo
+- [Fase Red](execution/red.md) — estrategia de testing
+- [Fase Green](execution/green.md) — implementación
+- [Fase Refactor](execution/refactor.md) — gate de calidad
+
+## Modo 3: Operación (TBD)
+
+- [Índice del modo](operation/README.md)

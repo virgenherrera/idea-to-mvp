@@ -1,7 +1,14 @@
 # Diseño del Modelo Operativo — idea-to-mvp
 
+← [Índice principal](../README.md) | [Modo Planificación](README.md)
+
 > Documento de trabajo. Objetivo: definir CÓMO opera el framework antes de
 > decidir CÓMO implementarlo (skills, agentes, paquetes, etc.).
+>
+> **Scope del framework**: Optimizado para el caso "1 humano (MIM) + N
+> agentes IA." Para equipos humanos, las fases y artefactos son
+> reutilizables pero el modelo de delegación (contratos rígidos, SM como
+> único punto de interacción) debe adaptarse.
 
 ---
 
@@ -30,7 +37,7 @@ y HACER CUMPLIR ese AGENTS.md debe vivir en otro lugar.
 
 ## Comportamiento Global
 
-Ver [behavior-scrum-master-routing.md](behavior-scrum-master-routing.md) —
+Ver [comportamiento SM](behavior/README.md) —
 el SM actúa como router de fases, convoca roles, valida gates, y bloquea
 avances prematuros.
 
@@ -244,50 +251,19 @@ encuentra un gap, el sistema regresa al ciclo de preguntas para esa fase.
 
 **Propósito**: implementar lo que la planificación produjo. Se escribe código.
 
-**Quién participa**: el orquestador y los sub-agentes (minions).
+**Entrada**: documentos de handoff del Modo 1, AGENTS.md del repo destino,
+compact rules resueltas.
 
-**Qué consume**:
-
-- Documentos de handoff del Modo 1
-- El AGENTS.md del repo destino (reglas de gobernanza)
-- Compact rules resueltas y estándares del proyecto
-
-**Qué produce**:
-
-- Cambios de código en el repo destino
-- Resultados de pruebas
-- Reportes de verificación
-- Commits (siguiendo las convenciones del repo)
-
-**Cómo funciona**:
-
-- El orquestador lee el handoff y el AGENTS.md del repo
-- El orquestador delega a sub-agentes con:
-  - Alcance específico de tarea (del handoff)
-  - Personalidad/contexto (apropiado para el rol de la tarea)
-  - Compact rules inyectadas (de AGENTS.md, resueltas una vez)
-  - Axiomas del proyecto inyectados (de AGENTS.md, si están definidos)
-- Los sub-agentes escriben código, ejecutan pruebas, reportan
-- El orquestador verifica, hace commit, pasa a la siguiente tarea
+**Salida**: código implementado, probado y refactorizado en el working tree
+del repo destino.
 
 **Restricción clave**: el modo ejecución SOLO escribe en el working tree del
 repo destino. NO crea artefactos de planificación, documentos de feedback ni
 archivos de estado del proceso en el repo.
 
-**Estructura interna**: el Modo 2 opera en 4 fases macro:
-
-1. **Pre-Fase: Contratos** — Contract-first. Define interfaces públicas
-   (API, DB, componentes) antes de cualquier código. Habilita paralelismo.
-2. **Fase Red** — Escribe la suite completa de tests (integración primero,
-   E2E segundo, unit mínimo). Todos fallan. La suite ES la especificación
-   ejecutable.
-3. **Fase Green** — Implementa código que pase todos los tests. Sin
-   optimización prematura. Commits frecuentes.
-4. **Fase Refactor** — Gate de calidad: SOLID, DRY, KISS, seguridad
-   (OWASP), performance, alineación con `design.md`. Tests deben seguir
-   pasando.
-
-> Detalle: [execution-model.md](execution-model.md).
+Para la definición completa del Modo 2 (fases, roles, ciclo iterativo,
+modelo de delegación del orquestador, y conexión con Modo 1), ver
+[Modelo de Ejecución](../execution/README.md).
 
 ---
 
@@ -350,11 +326,11 @@ y es LEÍDO por el modo ejecución.
 ## Adaptadores del Artifact Store
 
 El framework necesita una capa de persistencia pluggable. Cada adaptador
-implementa la misma interfaz universal (ver `artifact-model.md` →
+implementa la misma interfaz universal (ver `artifacts/README.md` →
 "Adaptadores de Persistencia" para la definición completa de las 9
 operaciones: `ingest`, `save`, `read`, `search`, `list`,
 `verifyConsistency`, `delete`, `history`, `transition`). Todas las
-operaciones de escritura son mediadas por el TPM (ver `artifact-model.md`
+operaciones de escritura son mediadas por el TPM (ver `artifacts/README.md`
 → "TPM como DBMS"); las lecturas pueden ser directas vía Pattern B.
 La gestión de estado de artefactos usa `transition` exclusivamente
 (la anterior `markComplete` fue absorbida por `transition`).
@@ -399,7 +375,7 @@ El scrum team es una herramienta de PLANIFICACIÓN, no de ejecución.
 
 > **Nota**: los 6 roles de arriba son el equipo **default**. El SM puede
 > extender el equipo con roles ad-hoc cuando el proyecto requiere expertise
-> que ningun rol default cubre. Ver `role-profiles.md` seccion "Roles Ad-Hoc".
+> que ningun rol default cubre. Ver `roles/README.md` seccion "Roles Ad-Hoc".
 
 **Durante ejecucion**, el scrum team esta en silencio. El orquestador y los
 sub-agentes hacen el trabajo. Si la ejecución revela un gap de planificación,
@@ -408,8 +384,8 @@ el orquestador puede escalar DE VUELTA al modo planificación.
 **Post-ejecución** (Verificar, Aceptar, Retrospectiva), el scrum team se
 RE-ACTIVA como panel de revisión. Estas fases son parte del modo
 planificación — operan sobre los resultados de la ejecución, no sobre
-código directamente. Ver `behavior-scrum-master-routing.md` Fases 6-8 y
-`role-profiles.md` para los contratos de delegación de cada rol en estas
+código directamente. Ver `behavior/README.md` Fases 6-8 y
+`roles/README.md` para los contratos de delegación de cada rol en estas
 fases.
 
 ---
@@ -514,7 +490,7 @@ de selección, no el modelo específico.
 
 5. ~~**¿Cómo afectan los tiers de activación a la separación de modos?**~~
    **RESUELTO**: los tiers de activación (Ligero, Estándar, Completo)
-   están definidos en `behavior-scrum-master-routing.md` → sección
+   están definidos en `behavior/README.md` → sección
    "Tiers de Activación". El SM determina el tier al inicio del ciclo
    usando el score F1-F4 de fast-forward. Los tiers escalan ceremonia
    (roles, gates, dispatch), no artefactos.
@@ -523,4 +499,4 @@ de selección, no el modelo específico.
    **RESUELTO**: Verify (Fase 6) y Accept (Fase 7) son fases
    POST-ejecución del modo planificación. El scrum team se reactiva
    como panel de revisión. Retro (Fase 8) cierra el ciclo y alimenta
-   el siguiente. Ver `behavior-scrum-master-routing.md` Fases 6-8.
+   el siguiente. Ver `behavior/README.md` Fases 6-8.
