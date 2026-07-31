@@ -2,6 +2,28 @@
 
 ← [Ejecución](README.md)
 
+```mermaid
+sequenceDiagram
+    participant OE as Orquestador de Ejecución
+    participant IMP as Implementor
+    participant WT as Working Tree
+    participant CI as Tests
+
+    OE->>IMP: Contrato: implementar código<br/>que pase los tests rojos
+    activate IMP
+    IMP->>WT: Escribe código
+    IMP->>CI: Ejecuta tests
+    CI-->>IMP: Resultados
+
+    alt Test incorrecto detectado
+        IMP-->>OE: "Test X verifica comportamiento<br/>incorrecto según AC-Y"
+        OE->>OE: Decide: re-delegar a<br/>Test Engineer o autorizar fix
+    end
+
+    IMP-->>OE: Status Report + commits
+    deactivate IMP
+```
+
 ## Reglas de Green
 
 La unica meta es hacer que los tests pasen. Nada mas.
@@ -20,7 +42,7 @@ flowchart TD
     WRITE --> RUN
     RUN --> CHECK
     CHECK -->|"No"| FIX{{"¿Test incorrecto?"}}
-    FIX -->|"Si"| FIX_TEST["Corregir test primero\n(volver a Red)"]
+    FIX -->|"Si"| FIX_TEST["Escalar al Orquestador\n(volver a Red)"]
     FIX -->|"No"| WRITE
     FIX_TEST --> WRITE
     CHECK -->|"Si"| COMMIT
@@ -60,6 +82,10 @@ flowchart TD
     Q1{{"¿El test verifica\nel comportamiento correcto\nsegun el AC?"}}
     Q1 -->|"Si"| FIX_CODE["Corregir el CODIGO\n(el test esta bien)"]
     Q1 -->|"No"| Q2{{"¿El AC esta mal\no el test lo\ninterpreta mal?"}}
-    Q2 -->|"Test mal escrito"| FIX_TEST["Corregir el TEST\n(reescribir segun el AC)"]
+    Q2 -->|"Test mal escrito"| FIX_TEST["Escalar al Orquestador\n(re-delegar a Test Engineer\no autorizar correccion)"]
     Q2 -->|"AC ambiguo"| ESCALATE["Escalar al Orquestador\n→ re-evaluar contrato"]
 ```
+
+> **Separación de responsabilidades**: El Implementor NO corrige tests directamente. Si sospecha
+> que un test es incorrecto, escala al Orquestador con evidencia (qué test, qué AC contradice,
+> por qué). El Orquestador decide si re-delega al Test Engineer o autoriza la corrección in situ.

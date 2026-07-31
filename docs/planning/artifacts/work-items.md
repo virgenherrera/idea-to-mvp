@@ -85,10 +85,18 @@ work_item:
 
   # — Trazabilidad —
   traces_to: string[] # IDs de items en otros niveles (trazabilidad vertical)
+  files:                    # Opcional. Archivos que esta tarea modifica.
+    - src/auth/login.ts     # Usado por el Orquestador para detectar solapamiento
+    - src/auth/login.spec.ts # entre lanes y decidir paralelismo vs serialización.
   methodology_stamp:
     name: string
     iteration: string
 ```
+
+> **Campo `files`**: Opcional pero recomendado. El Dev Lead lo asigna en
+> Fase 4 para que el Orquestador de Ejecución pueda detectar solapamiento
+> de archivos entre lanes y decidir si ejecutar en paralelo (worktrees) o
+> en serie. Si está ausente, el Orquestador asume solapamiento y serializa.
 
 Complemento visual: el ER diagram muestra la misma jerarquía como entidades
 y relaciones, útil para visualizar cardinalidad de un vistazo.

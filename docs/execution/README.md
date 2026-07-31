@@ -43,7 +43,7 @@ flowchart LR
     HANDOFF -->|"consume"| C
     RF -->|"produce"| CODE
 
-    RF -.->|"tests fallan"| G
+    RF -.->|"regresión → revertir"| RF
     G -.->|"test incorrecto"| R
     R -.->|"contrato ambiguo"| C
     C -.->|"gap critico"| HANDOFF
@@ -102,15 +102,20 @@ flowchart TD
     GAP -->|"AC ambiguo"| SPEC["Escalar a Fase 2\n(Especificar)"]
     GAP -->|"Arquitectura insuficiente"| DESIGN["Escalar a Fase 3\n(Disenar)"]
     GAP -->|"Tarea faltante"| TASKS["Escalar a Fase 4\n(Desglosar)"]
-    GAP -->|"Contradiccion en handoff"| HANDOFF["Escalar a Fase 5\n(Re-generar handoff)"]
+    GAP -->|"Contradicción entre\nartefactos fuente"| SOURCE["Escalar a la fase\nque posee el artefacto\ncontradictorio"]
 
     SPEC --> RESOLVE["Modo 1 resuelve el gap"]
     DESIGN --> RESOLVE
     TASKS --> RESOLVE
-    HANDOFF --> RESOLVE
+    SOURCE --> RESOLVE
 
     RESOLVE --> EXEC
 ```
+
+> **Nota**: Si la contradicción es entre ACs de spec → Fase 2. Si es
+> entre decisiones de design → Fase 3. Si es entre tareas → Fase 4. Fase
+> 5 se re-ejecuta DESPUÉS de resolver la contradicción upstream para
+> regenerar el handoff con los artefactos corregidos.
 
 El Orquestador de Ejecucion NO resuelve gaps de planificacion --- los
 escala. El Modo 1 tiene los roles y la ceremonia para resolverlos. El
@@ -130,8 +135,6 @@ flowchart LR
         H_SPEC["ACs de spec.md"]
         H_DESIGN["Stack y arquitectura\nde design.md"]
         H_TASKS["Tareas ordenadas\nde tasks.md"]
-        H_STRATEGY["Estrategia de pruebas"]
-        H_DAG["DAG de dependencias\n+ lanes paralelos"]
     end
 
     subgraph PREFASE["Pre-Fase: Contratos"]
@@ -146,8 +149,14 @@ flowchart LR
     H_DESIGN -->|"modelos y\nrelaciones"| P_DB
     H_DESIGN -->|"capas y\ndependencias"| P_INT
     H_DESIGN -->|"eventos\ny mensajes"| P_EVENTS
-    H_TASKS -->|"orden de\nimplementacion"| P_API
+    H_TASKS -->|"prioriza orden\nde definición"| P_API
 ```
+
+> **Nota**: `Estrategia de pruebas` alimenta la Fase Red (no la
+> Pre-Fase). `DAG + lanes` alimenta al Orquestador para decisiones de
+> paralelismo (ver [git-strategy.md](git-strategy.md)). No se incluyen
+> en el diagrama de la Pre-Fase porque no alimentan directamente la
+> definición de contratos.
 
 ### Artefactos del Modo 1 que informan al Modo 2
 
@@ -270,8 +279,8 @@ Areas dentro del Modo 2 que requieren definicion adicional:
 | Area | Estado | Descripcion |
 |------|--------|-------------|
 | Contratos de delegacion detallados | TBD | Plantillas completas para cada rol del Modo 2 (como `roles/` en Modo 1) |
-| Paralelismo en ejecucion | TBD | Como el Orquestador usa los lanes del DAG para ejecutar tareas en paralelo |
-| Commit strategy | TBD | Convencion de commits durante Green y Refactor. Squash vs granular. |
+| ~~Paralelismo en ejecucion~~ | DEFINIDO | Ver [git-strategy.md](git-strategy.md) — worktrees por lane, detección de conflictos, merge controlado |
+| ~~Commit strategy~~ | DEFINIDO | Ver [git-strategy.md](git-strategy.md) — convención por fase, trazabilidad AC→test→commit, squash policy |
 | CI/CD integration | TBD | Como la suite Red se integra con pipelines de CI |
 | Metricas de ejecucion | TBD | Coverage thresholds, tiempos de ciclo, tasa de re-delegacion |
 | Modo 3 (Operacion) | TBD | Como el output del Modo 2 transiciona a operacion via `ops-runbook.md` |
@@ -280,7 +289,7 @@ Areas dentro del Modo 2 que requieren definicion adicional:
 
 ## Contenido de esta sección
 
-Este documento se divide en cinco páginas:
+Este documento se divide en seis páginas:
 
 | Página | Contenido |
 |--------|-----------|
@@ -289,6 +298,7 @@ Este documento se divide en cinco páginas:
 | [Fase Red](red.md) | Estrategia de testing, piramide invertida, jerarquia de tests |
 | [Fase Green](green.md) | Reglas de implementacion, estrategia de commits, test vs codigo |
 | [Fase Refactor](refactor.md) | Gate de calidad, dimensiones de revision, checklist |
+| [Estrategia Git](git-strategy.md) | Gitflow, worktrees para paralelismo, commits, merge strategy |
 
 ---
 

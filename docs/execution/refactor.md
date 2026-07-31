@@ -55,6 +55,21 @@ flowchart TD
 
 ---
 
+### Asignación de dimensiones por rol
+
+| Reviewer | Dimensiones que cubre |
+|----------|----------------------|
+| **Reviewer (Arquitectura)** | SOLID, DRY, KISS, Arquitectura, DDD/Patrones, DI |
+| **Reviewer (Seguridad)** | Seguridad (OWASP Top 10, secrets, dependencias, CORS) |
+| **Reviewer (Performance)** | Performance (memory leaks, N+1, lazy loading, operaciones bloqueantes) |
+
+> En ejecución paralela con worktrees, el agente compuesto del lane
+> ejecuta las 3 perspectivas secuencialmente. En ejecución secuencial,
+> el Orquestador puede lanzar los 3 Reviewers en paralelo sobre el mismo
+> código verde.
+
+---
+
 ## Reglas del refactor
 
 1. **Tests DEBEN seguir pasando** despues de cada refactor --- si fallan,

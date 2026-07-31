@@ -20,7 +20,7 @@ flowchart TD
     end
 
     subgraph NUESTRA["Piramide invertida\n(SI usamos)"]
-        direction TB
+        direction BT
         N_UNIT["Unit\n(minimos:\nsolo logica pura)"]
         N_E2E["E2E\n(rutas criticas)"]
         N_INT["Integracion\n(PRIMARIOS:\ncobertura real)"]
