@@ -209,6 +209,10 @@ contradictorias para el mismo punto del flujo.
   ejecucion y las fases post-ejecucion (Verify/Accept/Retro) se
   reconcilian cuando se disene ese modo.
 
+*Ver Pendientes Unificados (review-003) → A6: reclasificado como
+DIFERIDO (depende de Modo de Ejecucion). Mismo hallazgo, misma causa
+raiz que A1.*
+
 ---
 
 ## HIGH — Ambigüedad que un agente interpretaría mal
@@ -571,3 +575,7 @@ que el happy path.
 
 41 de 42 hallazgos corregidos. El unico pendiente es C9
 (Verify/Accept/Retro) que queda TBD hasta disenar el Execution Mode.
+
+*Actualizacion: ver Pendientes Unificados (review-003) → A6, reclasificado
+como DIFERIDO (mismo hallazgo, misma causa raiz que A1: depende del
+diseno del Modo de Ejecucion).*

@@ -241,16 +241,16 @@ posterior fueron actualizados en sus reviews respectivos.
 | ~~D6~~ | ~~R002-M14~~ | ~~Token overhead Pattern B~~ | ~~RESUELTO~~ | ~~Threshold 500 tokens: < 500 → Pattern A, >= 500 → Pattern B~~ |
 | ~~D7~~ | ~~R001-M1~~ | ~~RAG multi-dev~~ | ~~RESUELTO~~ | ~~Capa de adaptadores con 6 implementaciones~~ |
 
-### ABIERTOS — Concerns de producto o diseno no auto-fixables
+### ABIERTOS — TODOS DIFERIDOS O RESUELTOS
 
 | # | Origen | Hallazgo | Tipo | Nota |
 |---|--------|----------|------|------|
-| A1 | R001-H3 | Escalacion ejecucion → planificacion sin protocolo completo | Depende de Execution Mode | `escalate(gap)` existe con 3 targets. Protocolo completo requiere disenar el Execution Mode. |
-| A2 | R001-H5 | Preguntas pre-definidas de Fase 1 son rigidas | Producto | Las 6 preguntas del PO son una lista estatica. No se adaptan al tipo de proyecto. |
-| A3 | R001-H6 | Carga cognitiva insostenible para nuevos usuarios | Producto | 4 docs, ~5000 lineas, sin onboarding guide ni quick-start. |
+| A1 | R001-H3 | Escalacion ejecucion → planificacion sin protocolo completo | DIFERIDO (depende de Modo de Ejecucion) | `escalate(gap)` existe con 3 targets. Protocolo completo requiere disenar el Execution Mode. |
+| A2 | R001-H5 | Preguntas pre-definidas de Fase 1 son rigidas | DIFERIDO (concern de producto) | Las 6 preguntas del PO son una lista estatica. No se adaptan al tipo de proyecto. |
+| A3 | R001-H6 | Carga cognitiva insostenible para nuevos usuarios | DIFERIDO (concern de producto) | 4 docs, ~5000 lineas, sin onboarding guide ni quick-start. |
 | ~~A4~~ | ~~R001-M4~~ | ~~Feedback del proceso~~ | ~~RESUELTO~~ | ~~Fase 8 Retrospectiva~~ |
-| A5 | R001-C5p | Estrategia de delegacion multi-modelo no documentada | Diseno | Tiers mencionados, no concretados (que modelo para que tipo de tarea). |
-| A6 | R002-C9 | Verify/Accept/Retro contradicen operational-model.md | Depende de Execution Mode | TBD hasta disenar el modo ejecucion. |
+| ~~A5~~ | ~~R001-C5p~~ | ~~Estrategia de delegacion multi-modelo no documentada~~ | ~~RESUELTO~~ | ~~Documentada en `operational-model.md`: tier Local (Docker/Ollama) para tareas mecanicas, tier Cloud (Claude/Codex) para tareas de razonamiento. Criterio: determinismo vs juicio (commit 500b79f).~~ |
+| A6 | R002-C9 | Verify/Accept/Retro contradicen operational-model.md | DIFERIDO (depende de Modo de Ejecucion) | TBD hasta disenar el modo ejecucion. Misma razon que A1. |
 
 ### COSMETICOS — ~~Review-002 LOW~~ TODOS CORREGIDOS
 
@@ -265,17 +265,22 @@ posterior fueron actualizados en sus reviews respectivos.
 
 ### Totales
 
-| Categoria | Cantidad | Corregidos | Pendientes |
-|-----------|----------|------------|------------|
-| Diferidos | 7 | 6 | 1 (D1: write path) |
-| Abiertos | 6 | 1 | 5 (A1-A3, A5-A6) |
+| Categoria | Cantidad | Resueltos | Diferidos |
+|-----------|----------|-----------|-----------|
+| Diferidos (arquitectura) | 7 | 6 | 1 (D1: write path — requiere decision MIM) |
+| Abiertos (producto/diseno) | 6 | 2 (A4, A5) | 4 (A1, A2, A3, A6) |
 | Cosmeticos | 6 | 6 | 0 |
-| **Total** | **19** | **13** | **6** |
+| **Total** | **19** | **14** | **5** |
 
-**Resumen**: de ~81 hallazgos brutos a traves de 3 reviews, quedan **6**
-genuinamente pendientes. D1 (write path) requiere decision MIM. A1 y A6
-dependen del diseno del Execution Mode. A2, A3, A5 son concerns de
-producto/diseno para iteracion futura.
+**Resumen**: de ~81 hallazgos brutos a traves de 3 reviews, quedan **5**
+diferidos a fases futuras — ninguno permanece abierto sin clasificar.
+D1 (write path) y A6 requieren decision arquitectonica sobre el Modo de
+Ejecucion. A1 depende del mismo diseno. A2 y A3 son concerns de producto
+para iteracion futura (preguntas adaptativas, onboarding guide).
+
+**Todos los hallazgos han sido resueltos o diferidos a fases futuras
+(Modo Ejecución, decisiones de producto). Las revisiones adversariales
+del Modo de Planificación están cerradas.**
 
 ---
 
@@ -305,4 +310,5 @@ producto/diseno para iteracion futura.
 | TPM anti-drift (nivel 1 vs nivel 2) | Completo |
 | Multi-stakeholder routing | Completo |
 | Retrospectiva con meta-config | Completo |
+| Estrategia de delegacion multi-modelo (Local/Cloud) | Completo |
 | Write path Pattern B | **DIFERIDO — decision MIM** |

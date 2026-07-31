@@ -102,9 +102,11 @@ después, cuando el modo planificación esté sólido.
 El costo no se reduce por magia — se reduce porque el SM da tareas bien
 acotadas en vez de dumping de contexto.
 
-*Pendiente: documentar estrategia de delegacion multi-modelo — ABIERTO.
-Tiers de activacion mencionados pero no concretados (que modelo para
-que tipo de tarea).*
+*Estrategia de delegacion multi-modelo → RESUELTO. Documentada en
+`operational-model.md`: tier Local (Docker/Ollama) para tareas
+mecanicas (TPM, checks estructurales), tier Cloud (Claude/Codex) para
+tareas de razonamiento (roles, coordinacion del SM, review adversarial).
+Criterio de seleccion: determinismo vs juicio (commit 500b79f).*
 
 ---
 
@@ -125,13 +127,15 @@ Gates separados en completitud estructural (TPM, mecanico) +
 completitud semantica (rol validador, juicio). Ownership Matrix
 ahora asigna validadores independientes a los 6 artefactos.
 
-### H3. La escalación ejecución → planificación no tiene protocolo — PARCIAL
+### H3. La escalación ejecución → planificación no tiene protocolo — DIFERIDO (depende de Modo de Ejecución)
 
 *Fuente: viabilidad técnica (#5), producto (#8)*
 
 `escalate(gap)` existe en la API del SM con 3 targets (Idea, Spec,
 Design) segun tipo de gap. Protocolo completo depende del diseno
 del Execution Mode (pendiente).
+
+*Ver Pendientes Unificados (review-003) → A1.*
 
 ### ~~H4. Tablas de roles inconsistentes entre archivos~~ → RESUELTO
 
@@ -140,7 +144,7 @@ del Execution Mode (pendiente).
 QA eliminado de Fase 3, DevSecOps/QA como condicionales en Fase 4,
 tablas reconciliadas entre los 4 documentos.
 
-### H5. Preguntas pre-definidas son rígidas — ABIERTO
+### H5. Preguntas pre-definidas son rígidas — DIFERIDO (concern de producto)
 
 *Fuente: producto (#5)*
 
@@ -148,13 +152,17 @@ Las 6 preguntas de Fase 1 (linea 323 de behavior.md) siguen siendo
 una lista estatica. El fast-forward evalua certeza, pero las preguntas
 del PO al MIM no se adaptan al contexto del proyecto.
 
-### H6. Carga cognitiva insostenible para nuevos usuarios — ABIERTO
+*Ver Pendientes Unificados (review-003) → A2.*
+
+### H6. Carga cognitiva insostenible para nuevos usuarios — DIFERIDO (concern de producto)
 
 *Fuente: producto (#4)*
 
 El framework tiene 4 documentos interrelacionados con ~4000 lineas.
 No hay onboarding guide ni quick-start. Concern de producto, no
 auto-fixable.
+
+*Ver Pendientes Unificados (review-003) → A3.*
 
 ### ~~H7. Terminología SDD residual en modelo operativo~~ → RESUELTO
 
@@ -215,10 +223,10 @@ Los hallazgos convergen en tres temas transversales:
    derivada del RAG (C1), supervision post-hoc en vez de heartbeat (C2).
    El diseno ahora asume agentes efimeros y fire-and-forget.
 
-2. **Ceremonia desproporcionada** → **MITIGADO**. Fast-forward contextual
+2. **Ceremonia desproporcionada** → **RESUELTO**. Fast-forward contextual
    (C3) con scoring numerico (review-002 C2), tiers de activacion
-   (condensed contracts), Pattern B reduce dispatches. Pendiente:
-   estrategia de delegacion multi-modelo (C5 pendiente).
+   (condensed contracts), Pattern B reduce dispatches, y estrategia de
+   delegacion multi-modelo documentada (C5, commit 500b79f).
 
 3. ~~**Dos documentos divergentes**~~ → **RESUELTO**. operational-model.md
    reconciliado en review-002 (C7, C9, H9, M7, M8) y review-003 (H10,
