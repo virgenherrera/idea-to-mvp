@@ -687,11 +687,6 @@ sequenceDiagram
     SM->>MIM: "Fase completada. Artefacto: idea.md"
 ```
 
-> Este diagrama modela el caso default (artefacto pequeño, ver umbral en
-> "Write Path: Acoplado vs Desacoplado" más abajo). Para artefactos que
-> superan el umbral, el resultado NO pasa por el SM — el rol persiste
-> directo vía TPM y el SM solo recibe el Status Report.
-
 | Aspecto | Detalle |
 |---------|---------|
 | **Nombre** | TPM (Technical Program Manager) |
@@ -805,64 +800,7 @@ sequenceDiagram
 ```
 
 El PDC NO es opcional. No se puede lanzar otro sub-agente sin haber
-completado los 4 pasos del PDC anterior. El diagrama de arriba modela
-el **write path acoplado** (default). Para artefactos que superan el
-umbral de tamaño, el paso ECHO cambia de forma — ver subsección
-siguiente.
-
-#### 2.1 Write Path: Acoplado vs Desacoplado (resuelve R003-H1)
-
-**Problema que resuelve esta sección**: en el write path acoplado, el
-sub-agente devuelve el resultado completo al SM (`Resultado + Status
-Report`), y el SM ejecuta ECHO usando ese contenido dentro de su propio
-contexto, antes de instruir al TPM que lo persista. Esto fuerza CADA
-artefacto completo a pasar por el contexto del orquestador — caro en
-tokens y en tensión con el principio de contexto acotado (ver
-`adversarial-review-001.md` C5).
-
-**Regla de umbral** — reutiliza el mismo threshold ya definido para
-Pattern A/B (`adversarial-review-002.md` M14):
-
-| Tamaño del artefacto | Write path | Quién hace ECHO |
-|----------------------|-----------|------------------|
-| < 500 tokens | **Acoplado** (diagrama de arriba) — el sub-agente devuelve el resultado, el SM hace ECHO inline con ese contenido en su contexto | SM |
-| >= 500 tokens | **Desacoplado** — el sub-agente persiste directo vía TPM. Al SM solo le llega el Status Report, nunca el contenido | Delegado (ver abajo) |
-
-**Write path desacoplado — 3 pasos**:
-
-1. **Persistencia directa**: el sub-agente llama al TPM para persistir su
-   resultado (create/update) sin pasar por el SM. Al SM le devuelve
-   SOLO el Status Report (`Status/Progress/Blocker/Artifacts`) — el
-   campo `Artifacts` describe QUÉ se produjo, no el contenido en sí.
-2. **ECHO estructural** (equivalente al tier Local de la Estrategia de
-   Delegación Multi-Modelo en `operational-model.md`): el TPM valida el
-   artefacto ya persistido contra el schema del contrato — secciones
-   requeridas, formato, campos obligatorios. Devuelve PASS/FAIL + lista
-   de gaps si aplica. Es una extensión de la responsabilidad de
-   "Tracking de completitud" que el TPM ya tiene (tabla de operaciones
-   de arriba, fila `Marcar completo`), no un rol nuevo.
-3. **ECHO semántico** (tier Cloud), solo si el estructural pasa: un
-   sub-agente fresco recibe el `topic_key` del artefacto y hace
-   `read()` directo contra el RAG vía Patrón B — nunca recibe el
-   contenido por empuje del SM. Devuelve un veredicto corto
-   (`COHERENTE` / `NO COHERENTE` + razón en 1-3 líneas), no el artefacto
-   completo.
-
-El SM, en su propio contexto, solo ve: Status Report + veredicto
-estructural + veredicto semántico. Nunca el artefacto completo. El
-resto del PDC (VERIFY, MARK, DECIDE) opera igual sobre esos veredictos.
-
-> **Nota de alcance — esto es comportamiento, no implementación.** Esta
-> subsección define QUÉ debe pasar (qué se persiste, cuándo, quién
-> valida qué, en qué orden) y CUÁNDO aplica cada write path (el
-> umbral). NO define CÓMO se implementa el "sub-agente fresco" del paso
-> 3 (¿un dispatch de Task tool? ¿una función local?), ni qué protocolo
-> de transporte usa la lectura directa del RAG (¿MCP, como en el
-> adaptador engram? ¿lectura de filesystem, como en el adaptador
-> local?). Esas son decisiones de tooling — mismo criterio ya aplicado
-> en `adversarial-review-002.md` C7. Se resuelven cuando se diseñe el
-> Modo de Ejecución o cuando se elija adaptador de persistencia
-> concreto, no aquí.
+completado los 4 pasos del PDC anterior.
 
 **Excepción: Fase 7 (Aceptar) — lanzamiento paralelo.** En Fase 7,
 los roles de aceptación votan en paralelo (ver `role-profiles.md`). Esto
