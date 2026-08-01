@@ -214,6 +214,13 @@ arquitectura, QA evalúa calidad, DevSecOps evalúa seguridad, UX evalúa
 experiencia. Si el panel no aprueba, se especifica qué falta y se
 regresa a la fase correspondiente para resolverlo.
 
+> **Relación con Accept del Modo 2**: La Fase 7 de planificación y la Fase
+> Accept de ejecución son gates DISTINTOS. Accept (Modo 2) certifica que el
+> código cumple el handoff — opera dentro de cada iteración de ejecución.
+> Fase 7 (Modo 1) acepta el entregable completo desde la perspectiva del
+> scrum team — opera al cierre del ciclo de planificación. Ver
+> [Fase Accept](../../execution/accept.md).
+
 ### Fase 8 — Retrospectiva
 
 | | Detalle |

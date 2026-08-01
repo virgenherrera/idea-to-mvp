@@ -11,9 +11,9 @@
 ## Vision General
 
 El Modo 2 transforma un `handoff.md` aprobado en codigo funcional
-mediante cuatro fases estructurales. La secuencia **Contrato - Red -
-Green - Refactor** no es un ciclo micro por funcion --- es la columna
-vertebral macro de toda la ejecucion.
+mediante cinco fases estructurales. La secuencia **Contrato - Red -
+Green - Refactor - Accept** no es un ciclo micro por funcion --- es la
+columna vertebral macro de toda la ejecucion.
 
 > **TDD a nivel batch, no micro**: Este framework reinterpreta
 > Red-Green-Refactor como fases macro — primero toda la suite de tests,
@@ -45,6 +45,8 @@ flowchart LR
     A -->|"produce"| CODE
 
     A -.->|"rechazado:\nre-trabajo"| RF
+    A -.->|"gap de tests"| R
+    A -.->|"gap de contrato"| C
     RF -.->|"regresión → revertir"| RF
     G -.->|"test incorrecto"| R
     R -.->|"contrato ambiguo"| C
@@ -56,10 +58,10 @@ flowchart LR
 | Fase | Entrada | Salida | Actores |
 |------|---------|--------|---------|
 | Pre-Fase: Contratos | `handoff.md` (spec, design, tasks) | Contratos formales (API, DB, interfaces) | Orquestador + Contract Architect |
-| Red | Contratos + ACs de `spec.md` | Suite de tests (todos fallan) + cobertura configurada | Test Engineer |
+| Red | Contratos + ACs de `spec.md` | Test Plan + Test Contract + Test Implementation (todos fallan) + cobertura configurada | Test Engineer |
 | Green | Tests rojos + contratos | Codigo que pasa todos los tests | Implementor |
 | Refactor | Codigo verde + tests | Codigo limpio, revisado, alineado a `design.md` | Reviewers (multiples) |
-| Accept: Certificación QA | Código refactorizado + reports de Reviewers | Certificación formal de cumplimiento del handoff | QA (Modo 2) |
+| Accept: Certificación QA | Código refactorizado + test reports + reports de Reviewers + handoff.md | Certificación formal de cumplimiento del handoff | QA (Modo 2) |
 
 ---
 
@@ -190,9 +192,9 @@ flowchart LR
 
 | Rol | Personalidad | Fase activa | Responsabilidad | Input | Output |
 |-----|-------------|-------------|-----------------|-------|--------|
-| **Orquestador de Ejecucion** | Metodico, orientado a flujo. Delega, no ejecuta. Analogo al SM en planificacion. | Todas | Lee handoff, coordina las 4 fases, delega a sub-agentes, valida resultados, gestiona commits. | `handoff.md` + AGENTS.md del repo | Codigo implementado en el working tree |
+| **Orquestador de Ejecucion** | Metodico, orientado a flujo. Delega, no ejecuta. Analogo al SM en planificacion. | Todas | Lee handoff, coordina las 5 fases, delega a sub-agentes, valida resultados, gestiona commits. | `handoff.md` + AGENTS.md del repo | Codigo implementado en el working tree |
 | **Contract Architect** | Preciso, orientado a interfaces. Piensa en consumidores del contrato. | Pre-Fase | Define contratos formales basados en la arquitectura y ACs. | `design.md` + `spec.md` (via handoff) | Contratos tipados (OpenAPI, schemas, interfaces) |
-| **Test Engineer** | Esceptico, orientado a cobertura real. Prioriza integracion sobre unit. | Red | Escribe la suite completa de tests mapeada a ACs y contratos. | Contratos + ACs | Suite de tests (todos fallan) + coverage config |
+| **Test Engineer** | Esceptico, orientado a cobertura real. Prioriza App tests (stack real) sobre cualquier forma de mocking; unit prohibido, integración derivada por filtrado. | Red | Escribe la suite completa de tests mapeada a ACs y contratos. | Contratos + ACs | Test Plan + Test Contract + Test Implementation (todos fallan) + coverage config |
 | **Implementor** | Pragmatico, orientado a "que funcione". Sin perfeccionismo prematuro. | Green | Escribe codigo que pase los tests. Commits frecuentes. | Tests rojos + contratos | Codigo que pasa los tests |
 | **Reviewer (Arquitectura)** | Critico, orientado a mantenibilidad. Compara contra design.md. | Refactor | Revisa alineacion arquitectonica, SOLID, DRY, KISS, patrones. | Codigo verde + design.md | Reporte de revision + sugerencias de refactor |
 | **Reviewer (Seguridad)** | Paranoico constructivo. Busca vulnerabilidades. | Refactor | Revisa OWASP Top 10, secrets, dependencias, surface area. | Codigo verde + spec.md (no-funcionales) | Reporte de seguridad |

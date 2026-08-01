@@ -254,8 +254,8 @@ encuentra un gap, el sistema regresa al ciclo de preguntas para esa fase.
 **Entrada**: documentos de handoff del Modo 1, AGENTS.md del repo destino,
 compact rules resueltas.
 
-**Salida**: código implementado, probado y refactorizado en el working tree
-del repo destino.
+**Salida**: código implementado, probado, refactorizado y certificado por QA
+en el working tree del repo destino.
 
 **Restricción clave**: el modo ejecución SOLO escribe en el working tree del
 repo destino. NO crea artefactos de planificación, documentos de feedback ni

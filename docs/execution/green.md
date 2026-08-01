@@ -24,6 +24,11 @@ sequenceDiagram
     deactivate IMP
 ```
 
+> **Input de Red**: El Implementor recibe la Capa 3 (Test Implementation)
+> como entrada directa — los tests ejecutables que debe hacer pasar. Las
+> Capas 1 (Test Plan) y 2 (Test Contract) proporcionan trazabilidad pero no
+> son input operativo de Green.
+
 ## Reglas de Green
 
 La unica meta es hacer que los tests pasen. Nada mas.
@@ -58,6 +63,12 @@ flowchart TD
 | **Cumplir contratos** | El codigo DEBE respetar los contratos definidos en la Pre-Fase |
 | **Commits frecuentes** | Cada test que pasa = un posible commit. Incrementos verdes pequenos |
 | **Test incorrecto → corregir test** | Si un test verifica algo equivocado, arreglarlo ANTES de implementar |
+
+> **Excepción: TDD micro para complejidad algorítmica**: Para tareas de
+> alta complejidad algorítmica (algoritmos, parsers, cálculos financieros),
+> el Implementor puede usar TDD micro (test-implement-test por función)
+> como herramienta complementaria dentro de Green. Esta excepción no
+> aplica a código de aplicación estándar (CRUD, endpoints, flujos de UI).
 
 ---
 

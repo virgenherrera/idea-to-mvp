@@ -129,7 +129,11 @@ flowchart TD
 >
 > 1. **Personalidad Test Engineer** → escribe la suite de tests (Red)
 > 2. **Personalidad Implementor** → escribe código que pase los tests (Green)
-> 3. **Personalidad Reviewer** → revisa calidad y aplica refactors (Refactor)
+> 3. **Personalidad Reviewer** → revisa calidad y aplica refactors (Refactor).
+>    Dentro de esta personalidad, el agente ejecuta 3 perspectivas de
+>    forma secuencial: Arquitectura, Seguridad y Performance — replicando
+>    en un solo agente compuesto lo que en ejecución secuencial harían los
+>    3 Reviewers independientes.
 >
 > El Orquestador valida cada transición de personalidad con un mini-PDC
 > entre fases.
@@ -163,6 +167,13 @@ sequenceDiagram
     OE->>CI: Ejecuta tests de integración (branch iter-1)
     CI-->>OE: ✅ PASS → lane mergeado
 ```
+
+> **Nota**: Este diagrama cubre el ciclo de vida de un worktree individual
+> (Red-Green-Refactor). La fase Accept (Certificación QA) NO ocurre por
+> worktree — se ejecuta una única vez por iteración, después de que TODOS
+> los lanes convergen en `exec/iter-N` y los tests de integración pasan,
+> y ANTES del merge de `exec/iter-N` hacia `develop`. Ver el diagrama
+> "Flujo Completo de una Iteración" más abajo.
 
 ### Cuándo usar worktrees vs secuencial
 
@@ -274,6 +285,10 @@ flowchart TD
         RESOLVE{{"¿Conflictos?"}}
     end
 
+    subgraph ACCEPT["Certificación QA"]
+        QA_CHECK["QA verifica\nproducto vs handoff"]
+    end
+
     subgraph CLOSE["Cierre de iteración"]
         MERGE_DEV["Merge iter-N → develop"]
         NEXT{{"¿Más iteraciones?"}}
@@ -292,10 +307,11 @@ flowchart TD
     MERGE_C --> INT_TEST
 
     INT_TEST --> RESOLVE
-    RESOLVE -->|"No"| MERGE_DEV
+    RESOLVE -->|"No"| QA_CHECK
     RESOLVE -->|"Sí"| FIX["Resolver conflictos\n+ re-run tests"]
     FIX --> INT_TEST
 
+    QA_CHECK --> MERGE_DEV
     MERGE_DEV --> NEXT
     NEXT -->|"Sí"| START
     NEXT -->|"No"| RELEASE["Merge develop → main"]

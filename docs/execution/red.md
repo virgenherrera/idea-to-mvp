@@ -297,6 +297,11 @@ flowchart TD
 
 ### Capa 2: Test Contract
 
+> **Nota terminológica**: "Test Contract" en este contexto es un manifiesto
+> de casos de test, no un contrato de API/interfaz. Los contratos de API, DB
+> e interfaces se definen en la Pre-Fase (ver [contracts.md](contracts.md)).
+> Las dos acepciones coexisten en el framework con significados distintos.
+
 Código, pero declarativo — no contiene lógica de test, solo la
 enumera. Un manifiesto por sujeto bajo prueba, donde cada entrada es un
 caso con nombre inmutable, legible por humanos y ligado a un AC.
@@ -324,7 +329,7 @@ classDiagram
         +referencia : TestContract
     }
     TestPlan --> TestContract : se traduce en
-    TestContract --> TestImplementation : se referencia desde
+    TestImplementation --> TestContract : referencia
 ```
 
 El Test Contract es el puente entre el Test Plan y la implementación.
@@ -419,6 +424,8 @@ flowchart TD
 |-----------|--------|-----------|
 | Tests de App (solo módulo tocado) | Pre-commit / pre-push | Feedback rápido sobre lo que cambió |
 | Tests de App (todos los módulos afectados) | CI (en PR) | Confianza completa antes del merge |
+| Tests de App + E2E (tag `security`) | CI (en PR) | Suite de seguridad derivada — casos adversariales |
+| Tests de App (tag `structural`) | CI (en PR) | Suite de compliance estructural — persistencia, frontend, IaC |
 | Tests E2E | Deploys, tags, merges a develop/main | Confianza a nivel de solución completa |
 | Subconjunto E2E (tag smoke) | Post-deploy a un ambiente | "¿Desplegó correctamente?" |
 

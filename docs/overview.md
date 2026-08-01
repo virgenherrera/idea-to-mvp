@@ -20,7 +20,7 @@ flowchart TD
     MIM["MIM\n(Humano)\nDecide, aprueba,\ndesbloquea"]
 
     subgraph INFRA["Infraestructura"]
-        SM["SM\n(Scrum Master)\nFacade / Orquestador"]
+        SM["SM\n(Session Manager)\nFacade / Orquestador"]
         TPM["TPM\n(Technical Program Manager)\nDBMS del artifact store"]
     end
 
@@ -121,7 +121,8 @@ flowchart TD
         EX_R["Fase Red\nTests"]
         EX_G["Fase Green\nImplementación"]
         EX_RF["Fase Refactor\nCalidad"]
-        EX_C --> EX_R --> EX_G --> EX_RF
+        EX_A["Fase Accept\nCertificación QA"]
+        EX_C --> EX_R --> EX_G --> EX_RF --> EX_A
     end
 
     subgraph POST["Post-Ejecución (DEFINIDO)"]
@@ -138,7 +139,7 @@ flowchart TD
     end
 
     F5 -->|"handoff.md"| EX_C
-    EX_RF -->|"código\nimplementado"| F6
+    EX_A -->|"código\ncertificado"| F6
     F8 -->|"siguiente ciclo"| F1
     F7 -->|"ops-runbook.md"| OPS
 
@@ -163,6 +164,7 @@ timeline
         Fase Red : suite de tests completa
         Fase Green : tests pasando
         Fase Refactor : calidad aprobada
+        Fase Accept : certificación QA
     section Cierre
         Verificar : QA aprueba
         Aceptar : panel vota
@@ -410,7 +412,7 @@ definidas:
 
 | Área | Estado | Descripción |
 |------|--------|-------------|
-| Modo Ejecución | **DEFINIDO** | 4 fases (Contratos → Red → Green → Refactor). Contract-first, pirámide de testing invertida, revisión multi-dimensional. Ver [modelo de ejecución](execution/README.md). |
+| Modo Ejecución | **DEFINIDO** | 5 fases (Contratos → Red → Green → Refactor → Accept). Contract-first, modelo de boundaries (App + E2E), revisión multi-dimensional. Ver [modelo de ejecución](execution/README.md). |
 | Modo Operación | TBD | Para proyectos con servicios vivos: monitoreo, runbooks, SRE, alertas. Consumidor de `ops-runbook.md`. |
 | Adaptadores avanzados | TBD | Jira, DBMS, Git repo, MS Project como adaptadores del artifact store. |
 | Routing no-Scrum | TBD | Routing tables para Kanban (WIP limits), Shape Up (bets), SAFe (PIs). Los artefactos son universales; la orquestación no. |

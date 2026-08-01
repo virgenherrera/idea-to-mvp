@@ -24,6 +24,11 @@ flowchart TD
     INFRA --> MERGE
 ```
 
+> **Nota**: Los roles "Frontend", "Backend" e "Infra" del diagrama son
+> ilustrativos --- representan dominios de implementación, no roles
+> formales del Modo 2. En el modelo de ejecución, estos dominios los
+> cubren instancias del Implementor asignadas a lanes distintos.
+
 **Principio: Contract over Methodology.** El contrato importa mas que el
 proceso. Como implementes detras del contrato es tu problema --- pero
 DEBES cumplirlo. El contrato es el acuerdo verificable; la metodologia

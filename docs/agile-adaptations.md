@@ -20,7 +20,7 @@
 | 4 | Negocio y desarrollo trabajan juntos diariamente | Bien servido | El MIM interactúa en todas las fases vía el SM. No hay "muro" entre negocio y desarrollo. |
 | 5 | Construir proyectos alrededor de individuos motivados y darles confianza | Adaptado | La confianza se reemplaza por verificación sistémica (PDC). Ver justificación abajo. |
 | 6 | Comunicación cara a cara como método más eficiente | No aplica | Los agentes IA no tienen "cara". El SM como intermediario estructurado es necesario. Ver justificación abajo. |
-| 7 | Software funcionando como medida principal de progreso | Bien servido | Tests pasan = progreso. Trazabilidad AC → test → código. |
+| 7 | Software funcionando como medida principal de progreso | Bien servido | Modelo de boundaries (App + E2E) con cadena de trazabilidad AC → Test Plan → Contrato de Test → Implementación → Cobertura. |
 | 8 | Ritmo sostenible de desarrollo | No abordado | Sin mención explícita de límites de carga o throttling de agentes. |
 | 9 | Excelencia técnica continua y buen diseño | Excelente | Refactor con 7 dimensiones de revisión, ADRs, respaldo ISO, gates de calidad. |
 | 10 | Simplicidad: maximizar el trabajo no hecho | Bien servido | Fast-forward evita fases innecesarias, tiers de activación escalan ceremonia, roles se condensan. |

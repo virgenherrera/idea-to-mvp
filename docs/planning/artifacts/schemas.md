@@ -259,7 +259,11 @@ Qué se construye y por qué, en 3-5 oraciones.
 Referencia a design.md, decisiones clave resumidas.
 
 ## Tareas a ejecutar
-Referencia a tasks.md, orden de ejecución, dependencias.
+- Referencia a tasks.md, orden de ejecución, dependencias
+- DAG completo de work items con dependencias (FS/SS/FF)
+- Lanes paralelos pre-calculados (campo `lane` de cada work item)
+- Ruta crítica identificada
+- Blockers conocidos
 
 ## Estrategia de pruebas
 Qué tipo de pruebas, cobertura esperada, herramientas.

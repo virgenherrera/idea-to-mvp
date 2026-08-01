@@ -12,12 +12,14 @@
 | **AAA (Arrange-Act-Assert)** | Patrón estructural obligatorio para todo test. Tres bloques separados: preparar estado, ejecutar operación, verificar resultado. Si un test necesita más de un Act, son dos tests. |
 | **Abuse Cases / Negative Testing** | Contrapartida adversarial de los ACs positivos. Para cada AC con entrada de datos, el Test Plan debe incluir casos de payload vacío, corrupto, inválido, inyecciones (SQL, NoSQL, XSS, prompt), campos extra no declarados, y abuso de autenticación/autorización. Compliance-by-design. |
 | **AC (Acceptance Criterion)** | Criterio de aceptación en formato given/when/then que define cuándo un requisito se considera cumplido. |
-| **Accept (Fase)** | Gate final del Modo 2 donde QA certifica que el producto cumple lo estipulado en el handoff. No valida código — valida producto contra contrato. |
+| **Accept (Fase)** | Gate final de cada iteración del Modo 2 donde QA certifica que el producto cumple lo estipulado en el handoff. No valida código — valida producto contra contrato. |
 | **Adaptador** | Implementación pluggable de la interfaz universal del artifact store (local, engram, híbrido, DBMS, etc.). |
 | **ADR (Architecture Decision Record)** | Registro de una decisión arquitectónica con contexto, alternativas evaluadas y justificación. Parte de `design.md`. |
 | **Agente compuesto** | Sub-agente que asume múltiples personalidades secuencialmente dentro de un worktree (Test Engineer → Implementor → Reviewer). Se usa en ejecución paralela para evitar conflictos de filesystem. |
 | **App Test / Service Test** | Test que ejerce el stack real de la aplicación sin mocks. Boundary = la app. Tier primario del framework. Detecta código droppable vía coverage alto obligatorio. |
 | **Artifact store** | Capa de persistencia donde viven los artefactos de planificación. Fuera del repo destino. Accesible vía interfaz universal de 9 operaciones. |
+| **Boundary (modelo de)** | Criterio que determina el tipo de test según dónde se ubica la frontera del mock: File (unit, prohibido), Module (integración, derivado), App (servicio/componente, desarrollo explícito), Solution (E2E, desarrollo explícito). Eje organizador de la Fase Red. |
+| **Builder Pattern (testing)** | Patrón para construir datos de test mediante factories reutilizables. Centraliza la creación de datos y permite variar solo lo relevante al caso. Evita datos hardcodeados en el cuerpo del test. |
 | **Circuit breaker** | Mecanismo de protección: si 3 delegaciones consecutivas al mismo rol fallan, el SM detiene la cadena y escala al MIM. |
 | **Código droppable** | Código con 0% de cobertura en App tests. Si ningún test lo toca a través de interacciones reales de producto, no tiene justificación de existir. Candidato a eliminación. |
 | **Compact rules** | Reglas de código y convenciones del proyecto, extraídas del skill registry, que el orquestador inyecta pre-digeridas en cada sub-agente. |
@@ -27,8 +29,9 @@
 | **Contrato de delegación** | Estructura con campos obligatorios (rol, personalidad, contexto, input, output, restricciones, status report) que el SM usa para lanzar un sub-agente. |
 | **DAG (Directed Acyclic Graph)** | Grafo de dependencias entre tareas en `tasks.md`. Define el orden de ejecución y los lanes paralelos. |
 | **Drift semántico** | Desalineación entre un artefacto downstream y su upstream después de que el upstream fue modificado. Detectado por `verifyConsistency`. |
+| **E2E (End-to-End)** | Test que ejerce la solución completa desplegada, multi-servicio, con cero mocks. Boundary = la solución. Segundo tier explícito del framework. Se ejecuta en deploys, tags y merges a main/develop. |
 | **Fast-forward** | Mecanismo que permite al SM avanzar múltiples fases cuando el gradiente de certeza (F1-F4) es alto. Aplica al inicio y mid-cycle. |
-| **Gate** | Punto de validación entre fases. Un artefacto debe alcanzar el estado `approved` (check estructural + check semántico) para que el SM desbloquee la siguiente fase. |
+| **Gate** | En planificación: punto de validación donde un artefacto debe alcanzar `approved` para desbloquear la siguiente fase. En ejecución: checkpoint operacional (tests pasan, cobertura cumple umbral, QA certifica). |
 | **Handoff** | Artefacto (`handoff.md`) que actúa como contrato autocontenido entre Modo 1 (planificación) y Modo 2 (ejecución). Portable y acotado. |
 | **Implementor** | Rol del Modo 2 que escribe código para pasar los tests. Activo en Fase Green. Pragmático, sin perfeccionismo prematuro. |
 | **Interfaz universal** | Las 9 operaciones que todo adaptador del artifact store debe implementar: `ingest`, `save`, `read`, `search`, `list`, `delete`, `verifyConsistency`, `history`, `transition`. |
@@ -49,11 +52,12 @@
 | **SM (Session Manager / Orquestador)** | El agente principal que actúa como facade del proyecto. Orquesta fases, convoca roles, valida gates y controla transiciones. No produce contenido. No es un Scrum Master en el sentido del Scrum Guide. |
 | **Sub-agente** | Agente instanciado por el SM con un contrato de delegación acotado. Recibe personalidad, contexto y restricciones específicas para su tarea. Los roles del scrum team son sub-agentes. |
 | **Test Contract** | Manifiesto enumerable por sujeto bajo prueba. Cada entrada vincula un caso de test con un nombre inmutable y trazable a un AC. Previene código de test spaghetti. |
-| **Test Engineer** | Rol del Modo 2 que escribe la suite de tests mapeada a ACs y contratos. Activo en Fase Red. Escéptico, prioriza integración sobre unit. |
+| **Test Engineer** | Rol del Modo 2 que escribe la suite de tests mapeada a ACs y contratos. Activo en Fase Red. Escéptico, prioriza App tests (stack real) sobre cualquier forma de mocking; unit prohibido, integración derivada por filtrado. |
+| **Test Implementation (Capa 3)** | Tests ejecutables que referencian el Test Contract. Incluyen tests de App (stack real, sin mocks) y tests E2E (solución desplegada). Todos deben fallar al finalizar la Fase Red (no hay implementación aún). |
 | **Test Plan** | Meta-documento que mapea ACs a casos de prueba, asigna boundaries (App/E2E), y etiqueta tests para filtrado (smoke, critical, regression). |
 | **Testing de Alto Valor** | Filosofía del framework: solo tests que ejercen interacciones REALES de producto aportan valor. Tests con mocks extensivos dan falsa confianza. |
 | **Tier (de activación)** | Nivel de ceremonia del framework (Ligero, Estándar, Completo). El SM determina el tier usando el score F1-F4. Los tiers escalan ceremonia, no artefactos. |
 | **TPM (Technical Program Manager)** | Agente de infraestructura que actúa como DBMS del artifact store. Único actor que escribe en el store. Valida integridad, formato y completitud con criterio editorial. |
 | **`transition()`** | Operación del adaptador que cambia el estado de un artefacto en la state machine (draft, review, approved, rejected, cancelled). |
-| **Work item (L0-L4)** | Jerarquía de descomposición de trabajo: L0 (epic/proyecto), L1 (feature), L2 (story/tarea), L3 (sub-tarea), L4 (paso atómico). Definidos en `tasks.md`. |
+| **Work item (L0-L4)** | Jerarquía de descomposición de trabajo: L0 (Initiative), L1 (Feature), L2 (Requirement), L3 (Activity), L4 (Sub-activity). Definidos en `tasks.md`. |
 | **Worktree** | Mecanismo de git que crea un directorio de trabajo aislado con su propia rama. El Orquestador de Ejecución los usa para ejecutar lanes paralelos sin conflictos de archivos. |

@@ -28,6 +28,8 @@
 - [Fase Red](execution/red.md) — estrategia de testing
 - [Fase Green](execution/green.md) — implementación
 - [Fase Refactor](execution/refactor.md) — gate de calidad
+- [Fase Accept](execution/accept.md) — certificación QA
+- [Estrategia Git](execution/git-strategy.md) — Gitflow, worktrees, commits
 
 ## Modo 3: Operación (TBD)
 
