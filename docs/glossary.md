@@ -1,3 +1,11 @@
+---
+id: glossary
+title: "Glosario"
+mode: framework
+type: reference
+tags: [definiciones, términos, vocabulario]
+---
+
 # Glosario
 
 ← [Índice](README.md)

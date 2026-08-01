@@ -1,3 +1,11 @@
+---
+id: index
+title: "Índice de Documentación"
+mode: framework
+type: index
+tags: [navegación, índice, mapa]
+---
+
 # idea-to-mvp — Índice de Documentación
 
 > Framework de desarrollo de software estructurado.

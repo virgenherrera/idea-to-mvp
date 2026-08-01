@@ -1,3 +1,11 @@
+---
+id: planning/behavior/recovery
+title: "Recovery y Manejo de Fallos"
+mode: planning
+type: spec
+tags: [recovery, circuit-breaker, fallos, escalación, rollback]
+---
+
 # Protocolo de Recuperación
 
 ← [Índice principal](../../README.md) | [Planificación](../README.md) | [Comportamiento SM](README.md)

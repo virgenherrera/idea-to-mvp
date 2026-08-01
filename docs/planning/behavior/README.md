@@ -1,3 +1,11 @@
+---
+id: planning/behavior/index
+title: "Comportamiento del SM"
+mode: planning
+type: index
+tags: [sm, fases, delegación, pdc, tiers, fast-forward, session-manager]
+---
+
 # Comportamiento del Scrum Master
 
 ← [Índice principal](../../README.md) | [Planificación](../README.md)

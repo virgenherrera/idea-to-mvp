@@ -1,3 +1,11 @@
+---
+id: planning/artifacts/state-machine
+title: "State Machine de Artefactos"
+mode: planning
+type: spec
+tags: [state-machine, transiciones, draft, review, approved, rejected, cancelled]
+---
+
 # Máquina de Estados y Transiciones
 
 ← [Índice principal](../../README.md) | [Planificación](../README.md) | [Artefactos](README.md)

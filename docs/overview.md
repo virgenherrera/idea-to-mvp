@@ -1,3 +1,11 @@
+---
+id: overview
+title: "Vista General del Framework"
+mode: framework
+type: reference
+tags: [actores, pipeline, modos, roles, artefactos, diagrama]
+---
+
 # idea-to-mvp --- Vista General del Framework
 
 ← [Índice](README.md)

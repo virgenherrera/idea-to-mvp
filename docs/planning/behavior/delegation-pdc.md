@@ -1,3 +1,11 @@
+---
+id: planning/behavior/delegation-pdc
+title: "Delegación y PDC"
+mode: planning
+type: spec
+tags: [delegación, pdc, echo, verify, mark, decide, contrato-delegación, status-report, circuit-breaker]
+---
+
 # Delegación, PDC y Circuit Breaker
 
 ← [Índice principal](../../README.md) | [Planificación](../README.md) | [Comportamiento SM](README.md)

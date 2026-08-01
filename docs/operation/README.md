@@ -1,3 +1,11 @@
+---
+id: operation/index
+title: "Modelo de Operación — Modo 3"
+mode: operation
+type: index
+tags: [operación, usuario, asistente-operativo, producto, opcional, reactivo]
+---
+
 # Modelo de Operación — Modo 3
 
 ← [Índice principal](../README.md)

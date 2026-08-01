@@ -1,3 +1,11 @@
+---
+id: execution/green
+title: "Fase Green — Implementación"
+mode: execution
+type: process
+tags: [implementación, commits, tdd-micro, código, escalación]
+---
+
 # Fase Green — Implementación
 
 ← [Índice principal](../README.md) | [Ejecución](README.md)

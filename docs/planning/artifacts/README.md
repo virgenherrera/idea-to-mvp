@@ -1,3 +1,11 @@
+---
+id: planning/artifacts/index
+title: "Modelo de Artefactos"
+mode: planning
+type: index
+tags: [artefactos, tpm, state-machine, adaptadores, rag]
+---
+
 # Modelo de Artefactos
 
 ← [Índice principal](../../README.md) | [Planificación](../README.md)

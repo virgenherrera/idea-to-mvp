@@ -1,3 +1,11 @@
+---
+id: execution/accept
+title: "Fase Accept — Certificación QA"
+mode: execution
+type: process
+tags: [certificación, qa, handoff, documentación-operativa, gate]
+---
+
 # Fase Accept — Certificación QA
 
 ← [Índice principal](../README.md) | [Ejecución](README.md)

@@ -1,3 +1,11 @@
+---
+id: execution/refactor
+title: "Fase Refactor — Calidad"
+mode: execution
+type: process
+tags: [refactor, calidad, arquitectura, seguridad, performance, review, reviewer]
+---
+
 # Fase Refactor — Gate de Calidad
 
 ← [Índice principal](../README.md) | [Ejecución](README.md)

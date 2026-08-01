@@ -1,3 +1,11 @@
+---
+id: execution/red
+title: "Fase Red — Testing"
+mode: execution
+type: process
+tags: [testing, boundary-model, test-plan, test-contract, compliance-by-design, negative-testing, abuse-cases, schema-strict, app-test, e2e]
+---
+
 # Fase Red — Arquitectura de Testing
 
 ← [Índice principal](../README.md) | [Ejecución](README.md)

@@ -1,3 +1,11 @@
+---
+id: planning/behavior/phases
+title: "Detalle de Fases 1-8"
+mode: planning
+type: process
+tags: [fases, gates, roles-por-fase, retrospectiva, verificación, aceptación]
+---
+
 # Detalle de Fases 1-8
 
 ← [Índice principal](../../README.md) | [Planificación](../README.md) | [Comportamiento SM](README.md)

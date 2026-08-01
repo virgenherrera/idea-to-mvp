@@ -1,3 +1,11 @@
+---
+id: execution/contracts
+title: "Pre-Fase — Contratos"
+mode: execution
+type: process
+tags: [contratos, api, schema, interfaces, contract-first, desarrollo-paralelo]
+---
+
 # Pre-Fase: Definición de Contratos
 
 ← [Índice principal](../README.md) | [Ejecución](README.md)

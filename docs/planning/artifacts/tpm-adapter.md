@@ -1,3 +1,11 @@
+---
+id: planning/artifacts/tpm-adapter
+title: "TPM y Adaptadores"
+mode: planning
+type: spec
+tags: [tpm, adaptador, interfaz-universal, acid, persistencia, operaciones]
+---
+
 # TPM e Interfaz del Adaptador
 
 ← [Índice principal](../../README.md) | [Planificación](../README.md) | [Artefactos](README.md)

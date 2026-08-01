@@ -1,3 +1,11 @@
+---
+id: execution/index
+title: "Modelo de Ejecución — Modo 2"
+mode: execution
+type: index
+tags: [ejecución, fases, roles, delegación, ciclo-iterativo]
+---
+
 # Modelo de Ejecución — Modo 2
 
 ← [Índice principal](../README.md)

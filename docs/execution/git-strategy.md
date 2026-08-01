@@ -1,3 +1,11 @@
+---
+id: execution/git-strategy
+title: "Estrategia Git"
+mode: execution
+type: process
+tags: [git, worktrees, branches, commits, merge, paralelismo, agente-compuesto, gitflow]
+---
+
 # Estrategia Git y Paralelismo
 
 ← [Índice principal](../README.md) | [Ejecución](README.md)

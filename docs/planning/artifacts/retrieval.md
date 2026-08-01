@@ -1,3 +1,11 @@
+---
+id: planning/artifacts/retrieval
+title: "Estrategia de Retrieval"
+mode: planning
+type: spec
+tags: [retrieval, pattern-a, pattern-b, rag, contexto, sub-agentes]
+---
+
 # Estrategia de Retrieval
 
 ← [Índice principal](../../README.md) | [Planificación](../README.md) | [Artefactos](README.md)

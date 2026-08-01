@@ -1,3 +1,11 @@
+---
+id: planning/roles/profiles-by-phase
+title: "Perfiles de Roles por Fase"
+mode: planning
+type: reference
+tags: [roles, contratos-por-fase, personalidad, input, output, ops-runbook]
+---
+
 # Contratos por Fase
 
 ← [Índice principal](../../README.md) | [Planificación](../README.md) | [Roles](README.md)

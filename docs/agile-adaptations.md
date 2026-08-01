@@ -1,3 +1,11 @@
+---
+id: agile-adaptations
+title: "Adaptaciones Ágiles"
+mode: framework
+type: reference
+tags: [agile, principios, manifiesto, session-manager]
+---
+
 # Adaptaciones al Manifiesto Ágil para Agentes IA
 
 ← [Índice](README.md)

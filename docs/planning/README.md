@@ -1,3 +1,11 @@
+---
+id: planning/index
+title: "Modo 1 — Planificación"
+mode: planning
+type: index
+tags: [planificación, idea, handoff, artefactos, fases]
+---
+
 # Modo 1: Planificación
 
 ← [Índice principal](../README.md)

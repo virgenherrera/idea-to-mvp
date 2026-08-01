@@ -1,3 +1,11 @@
+---
+id: planning/operational-model
+title: "Modelo Operativo"
+mode: planning
+type: spec
+tags: [modos, ownership, contexto, artifact-store, adaptadores, delegación, multi-modelo, límites]
+---
+
 # Diseño del Modelo Operativo — idea-to-mvp
 
 ← [Índice principal](../README.md) | [Planificación](README.md)

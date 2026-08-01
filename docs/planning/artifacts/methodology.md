@@ -1,3 +1,11 @@
+---
+id: planning/artifacts/methodology
+title: "Gobernanza Metodológica"
+mode: planning
+type: spec
+tags: [gobernanza, lock, cambios, trazabilidad, metodologías, iso, ieee]
+---
+
 # Metodología como Capa Intercambiable
 
 ← [Índice principal](../../README.md) | [Planificación](../README.md) | [Artefactos](README.md)

@@ -1,3 +1,11 @@
+---
+id: planning/artifacts/schemas
+title: "Schemas de Artefactos"
+mode: planning
+type: reference
+tags: [schemas, idea, spec, design, tasks, handoff, ops-runbook, iso, documentación-operativa]
+---
+
 # Schemas de los 6 Artefactos
 
 ← [Índice principal](../../README.md) | [Planificación](../README.md) | [Artefactos](README.md)

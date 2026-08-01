@@ -1,3 +1,11 @@
+---
+id: planning/behavior/fast-forward
+title: "Fast-Forward"
+mode: planning
+type: spec
+tags: [fast-forward, gradiente-certeza, f1-f4, tiers, activación]
+---
+
 # Fast-Forward y Tiers de Activación
 
 ← [Índice principal](../../README.md) | [Planificación](../README.md) | [Comportamiento SM](README.md)

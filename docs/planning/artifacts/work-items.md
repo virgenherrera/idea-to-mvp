@@ -1,3 +1,11 @@
+---
+id: planning/artifacts/work-items
+title: "Work Items"
+mode: planning
+type: reference
+tags: [work-items, L0-L4, dag, dependencias, lanes, initiative, feature, requirement]
+---
+
 # Jerarquía de Work Items
 
 ← [Índice principal](../../README.md) | [Planificación](../README.md) | [Artefactos](README.md)

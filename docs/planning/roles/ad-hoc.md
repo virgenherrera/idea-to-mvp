@@ -1,3 +1,11 @@
+---
+id: planning/roles/ad-hoc
+title: "Roles Ad-Hoc"
+mode: planning
+type: reference
+tags: [roles-ad-hoc, dba, performance-engineer, domain-expert, extensibilidad]
+---
+
 # Roles Ad-Hoc
 
 ← [Índice principal](../../README.md) | [Planificación](../README.md) | [Roles](README.md)
