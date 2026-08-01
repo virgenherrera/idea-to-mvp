@@ -1,6 +1,6 @@
 # Detalle de Fases 1-8
 
-← [Comportamiento SM](README.md)
+← [Índice principal](../../README.md) | [Planificación](../README.md) | [Comportamiento SM](README.md)
 
 ## Detalle por fase
 

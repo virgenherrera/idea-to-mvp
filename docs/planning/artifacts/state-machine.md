@@ -1,6 +1,6 @@
 # Máquina de Estados y Transiciones
 
-← [Artefactos](README.md)
+← [Índice principal](../../README.md) | [Planificación](../README.md) | [Artefactos](README.md)
 
 Esta página detalla la máquina de estados que gobierna el ciclo de vida
 de un artefacto (`idea.md`, `spec.md`, `design.md`, `tasks.md`,

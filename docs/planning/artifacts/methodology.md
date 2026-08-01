@@ -1,6 +1,6 @@
 # Metodología como Capa Intercambiable
 
-← [Artefactos](README.md)
+← [Índice principal](../../README.md) | [Planificación](../README.md) | [Artefactos](README.md)
 
 La metodología define COMO se organiza el trabajo. Los artefactos definen
 QUE se produce. Son capas independientes.

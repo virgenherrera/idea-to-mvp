@@ -1,6 +1,6 @@
 # Comportamiento del Scrum Master
 
-← [Índice principal](../../README.md) | [Modo Planificación](../README.md)
+← [Índice principal](../../README.md) | [Planificación](../README.md)
 
 > El agente principal actúa como Scrum Master (SM). Es el **facade** del
 > proyecto: la única interfaz a través de la cual se interactúa con el

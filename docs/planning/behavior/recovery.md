@@ -1,6 +1,6 @@
 # Protocolo de Recuperación
 
-← [Comportamiento SM](README.md)
+← [Índice principal](../../README.md) | [Planificación](../README.md) | [Comportamiento SM](README.md)
 
 ## Recovery protocol (inicio de sesión)
 

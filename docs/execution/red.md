@@ -1,6 +1,6 @@
 # Fase Red — Arquitectura de Testing
 
-← [Ejecución](README.md)
+← [Índice principal](../README.md) | [Ejecución](README.md)
 
 Este documento define el modelo de testing de la Fase Red: qué tipos de test
 existen, quién los escribe explícitamente, quién los deriva por filtrado, y

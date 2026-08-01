@@ -1,6 +1,6 @@
 # Jerarquía de Work Items
 
-← [Artefactos](README.md)
+← [Índice principal](../../README.md) | [Planificación](../README.md) | [Artefactos](README.md)
 
 ## Jerarquía de Work Items — Sprints, Epics, Stories, Tasks
 

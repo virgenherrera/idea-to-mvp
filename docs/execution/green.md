@@ -1,6 +1,6 @@
 # Fase Green — Implementación
 
-← [Ejecución](README.md)
+← [Índice principal](../README.md) | [Ejecución](README.md)
 
 ```mermaid
 sequenceDiagram

@@ -1,6 +1,6 @@
 # Fast-Forward y Tiers de Activación
 
-← [Comportamiento SM](README.md)
+← [Índice principal](../../README.md) | [Planificación](../README.md) | [Comportamiento SM](README.md)
 
 ## Fast-Forward Contextual — Gradiente de Certeza
 

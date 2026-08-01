@@ -1,6 +1,6 @@
 # Schemas de los 6 Artefactos
 
-← [Artefactos](README.md)
+← [Índice principal](../../README.md) | [Planificación](../README.md) | [Artefactos](README.md)
 
 ## Los 6 Artefactos Universales
 

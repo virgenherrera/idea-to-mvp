@@ -1,6 +1,6 @@
 # TPM e Interfaz del Adaptador
 
-← [Artefactos](README.md)
+← [Índice principal](../../README.md) | [Planificación](../README.md) | [Artefactos](README.md)
 
 ## El TPM como DBMS del Modelo de Artefactos
 

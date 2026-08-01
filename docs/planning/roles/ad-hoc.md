@@ -1,6 +1,6 @@
 # Roles Ad-Hoc
 
-← [Roles](README.md)
+← [Índice principal](../../README.md) | [Planificación](../README.md) | [Roles](README.md)
 
 El SM tiene autoridad para definir y convocar roles que no existen en la
 tabla default. El principio: si el proyecto necesita un experto que

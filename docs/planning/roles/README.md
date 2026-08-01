@@ -1,6 +1,6 @@
 # Perfiles de Roles
 
-← [Índice principal](../../README.md) | [Modo Planificación](../README.md)
+← [Índice principal](../../README.md) | [Planificación](../README.md)
 
 > Este documento define CÓMO opera cada rol en cada fase. Es el manual de
 > delegación del SM: cuando convoca a un sub-agente, consulta este documento

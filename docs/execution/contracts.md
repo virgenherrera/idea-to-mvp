@@ -1,6 +1,6 @@
 # Pre-Fase: Definición de Contratos
 
-← [Ejecución](README.md)
+← [Índice principal](../README.md) | [Ejecución](README.md)
 
 ## Por que Contract-First
 

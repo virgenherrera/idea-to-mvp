@@ -1,6 +1,6 @@
 # Estrategia Git y Paralelismo
 
-← [Ejecución](README.md)
+← [Índice principal](../README.md) | [Ejecución](README.md)
 
 > Define cómo el Orquestador de Ejecución usa ramas, worktrees y commits
 > para ejecutar el ciclo Red-Green-Refactor con paralelismo real. Resuelve

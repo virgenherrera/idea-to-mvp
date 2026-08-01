@@ -1,6 +1,6 @@
 # Modelo de Artefactos
 
-← [Índice principal](../../README.md) | [Modo Planificación](../README.md)
+← [Índice principal](../../README.md) | [Planificación](../README.md)
 
 > El modelo de artefactos define QUÉ documentos produce un proyecto y qué
 > contiene cada uno. Es **independiente de la metodología** (Scrum, Kanban,

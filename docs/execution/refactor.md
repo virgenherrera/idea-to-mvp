@@ -1,6 +1,6 @@
 # Fase Refactor — Gate de Calidad
 
-← [Ejecución](README.md)
+← [Índice principal](../README.md) | [Ejecución](README.md)
 
 ## Principio
 

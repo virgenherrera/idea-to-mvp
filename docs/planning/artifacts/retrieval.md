@@ -1,6 +1,6 @@
 # Estrategia de Retrieval
 
-← [Artefactos](README.md)
+← [Índice principal](../../README.md) | [Planificación](../README.md) | [Artefactos](README.md)
 
 ## Estrategia de Retrieval — Quién Consulta el RAG
 

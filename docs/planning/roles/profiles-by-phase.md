@@ -1,6 +1,6 @@
 # Contratos por Fase
 
-← [Roles](README.md)
+← [Índice principal](../../README.md) | [Planificación](../README.md) | [Roles](README.md)
 
 Cada sección es un contrato que el SM puede copiar directamente al lanzar
 un sub-agente. La **personalidad cambia por fase** — el mismo rol actúa

@@ -1,6 +1,6 @@
 # Fase Accept — Certificación QA
 
-← [Ejecución](README.md)
+← [Índice principal](../README.md) | [Ejecución](README.md)
 
 > La Fase Accept es el gate final antes de cerrar una iteración.
 > QA verifica que el producto implementado cumple TODO lo que el

@@ -1,6 +1,6 @@
 # Diseño del Modelo Operativo — idea-to-mvp
 
-← [Índice principal](../README.md) | [Modo Planificación](README.md)
+← [Índice principal](../README.md) | [Planificación](README.md)
 
 > Documento de trabajo. Objetivo: definir CÓMO opera el framework antes de
 > decidir CÓMO implementarlo (skills, agentes, paquetes, etc.).
