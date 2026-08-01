@@ -206,23 +206,29 @@ flowchart TD
 
 #### Dimensiones de compliance estructural
 
-Además de los casos adversariales (que verifican comportamiento ante
-inputs maliciosos), el Test Plan debe incluir tests que verifican la
-**estructura** de cada capa arquitectónica. Estos tests no validan "qué
-hace el sistema" sino "cómo está construido" — y son la evidencia de que
-las decisiones arquitectónicas de `design.md` se respetan en la
-implementación.
+> **Activación condicional**: NINGUNA de estas dimensiones es
+> obligatoria por default. Cada una se activa SOLO cuando la naturaleza
+> del proyecto lo requiere, según lo definido en `design.md`:
+>
+> - ¿El proyecto tiene base de datos? → activa **Persistencia**
+> - ¿El proyecto tiene interfaz visual? → activa **Frontend**
+> - ¿El proyecto tiene infraestructura desplegable? → activa **Infraestructura**
+> - ¿Es una librería sin I/O? → probablemente ninguna aplica
+>
+> El principio es el mismo que rige la activación de roles en Modo 1 y
+> la carga de skills en los agentes: **solo lo necesario, cuando sea
+> necesario**. No se carga todo de un golpe.
+
+Cuando una dimensión aplica, el Test Plan incluye tests que verifican
+la **estructura** de esa capa arquitectónica — no "qué hace el sistema"
+sino "cómo está construido." Son la evidencia de que las decisiones de
+`design.md` se respetan en la implementación.
 
 > **Frecuencia de ejecución**: estos tests son exhaustivos y rara vez
 > fallan después del setup inicial. Se ejecutan en CI (no en pre-commit)
-> y se tagean como `structural` para derivación independiente. Son el
-> tipo de test que "más vale tener y no necesitar, que necesitar y no
-> tener."
+> y se tagean como `structural` para derivación independiente.
 
-##### Persistencia (Data-at-Rest Compliance)
-
-Tests que verifican la estructura del almacenamiento, no su
-funcionalidad:
+##### Persistencia (Data-at-Rest Compliance) — si el proyecto tiene DB
 
 | Qué se verifica | Por qué | Cómo se detecta |
 |-----------------|---------|-----------------|
@@ -232,11 +238,7 @@ funcionalidad:
 | **Sin campos obsoletos** | Columnas que ningún endpoint lee/escribe son código droppable a nivel de schema | Coverage de schema: columnas no tocadas por ningún test de App = candidatas a eliminación |
 | **Índices para queries frecuentes** | Queries sin índice en tablas grandes son problemas de performance latentes | Test estructural que verifica que las queries del plan de ejecución usan índices |
 
-##### Frontend (UI Compliance)
-
-Tests que verifican que la interfaz cumple estándares de accesibilidad,
-internacionalización y adaptabilidad. Aplican cuando el proyecto tiene
-interfaz visual (web, mobile, desktop):
+##### Frontend (UI Compliance) — si el proyecto tiene interfaz visual
 
 | Qué se verifica | Estándar | Cómo se detecta |
 |-----------------|----------|-----------------|
@@ -249,11 +251,7 @@ interfaz visual (web, mobile, desktop):
 > (ADA, EAA, Section 508). Un test de accesibilidad que falla es un
 > defecto de compliance, no un nice-to-have.
 
-##### Infraestructura (IaC Compliance)
-
-Tests que verifican que la configuración de infraestructura y entorno
-sigue las mejores prácticas. Aplican cuando el proyecto tiene
-infraestructura como código o configuración de despliegue:
+##### Infraestructura (IaC Compliance) — si el proyecto despliega servicios
 
 | Qué se verifica | Por qué | Cómo se detecta |
 |-----------------|---------|-----------------|
@@ -284,15 +282,15 @@ flowchart TD
 
 **Reglas para compliance estructural:**
 
-1. **Condicionales al proyecto** — no todo proyecto tiene UI, no todo
-   proyecto tiene IaC. El Test Plan incluye solo las dimensiones que
-   aplican según `design.md`.
-2. **Se tagean como `structural`** — derivables como suite de
+1. **Se tagean como `structural`** — derivables como suite de
    compliance sin escribirla aparte.
-3. **Se ejecutan en CI, no en pre-commit** — son exhaustivos y su
+2. **Se ejecutan en CI, no en pre-commit** — son exhaustivos y su
    frecuencia de cambio es baja.
-4. **QA no los diseña, pero los avala** — el Test Engineer los incluye
+3. **QA no los diseña, pero los avala** — el Test Engineer los incluye
    en el Test Plan; QA en la Fase Accept verifica que existen y pasan.
+4. **Solo lo necesario** — si `design.md` no declara una capa, sus
+   tests estructurales no se incluyen. Una librería sin DB ni UI no
+   carga Persistencia ni Frontend.
 5. **Compliance-by-Design** — estos tests son la EVIDENCIA para
    auditorías. Cuando un auditor pregunta "¿cómo saben que no guardan
    passwords en plano?", la respuesta es el test, no un documento.
