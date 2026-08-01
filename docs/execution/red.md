@@ -204,6 +204,99 @@ flowchart TD
 > path traversal para sistemas de archivos, deserialización insegura
 > para APIs que aceptan objetos complejos).
 
+#### Dimensiones de compliance estructural
+
+Además de los casos adversariales (que verifican comportamiento ante
+inputs maliciosos), el Test Plan debe incluir tests que verifican la
+**estructura** de cada capa arquitectónica. Estos tests no validan "qué
+hace el sistema" sino "cómo está construido" — y son la evidencia de que
+las decisiones arquitectónicas de `design.md` se respetan en la
+implementación.
+
+> **Frecuencia de ejecución**: estos tests son exhaustivos y rara vez
+> fallan después del setup inicial. Se ejecutan en CI (no en pre-commit)
+> y se tagean como `structural` para derivación independiente. Son el
+> tipo de test que "más vale tener y no necesitar, que necesitar y no
+> tener."
+
+##### Persistencia (Data-at-Rest Compliance)
+
+Tests que verifican la estructura del almacenamiento, no su
+funcionalidad:
+
+| Qué se verifica | Por qué | Cómo se detecta |
+|-----------------|---------|-----------------|
+| **Schema normalizado** | Un schema desnormalizado sin justificación es deuda técnica oculta | Test estructural que inspecciona el schema (migraciones, DDL) y valida relaciones |
+| **Passwords hasheados** | Almacenar passwords en texto plano es la vulnerabilidad más grave y común | Test que inserta un usuario y verifica que el campo password NO es igual al input (está hasheado) |
+| **Datos sensibles cifrados** | PHI, PII, datos financieros deben estar cifrados at-rest | Test que verifica que columnas marcadas como sensibles en el schema no contienen texto legible |
+| **Sin campos obsoletos** | Columnas que ningún endpoint lee/escribe son código droppable a nivel de schema | Coverage de schema: columnas no tocadas por ningún test de App = candidatas a eliminación |
+| **Índices para queries frecuentes** | Queries sin índice en tablas grandes son problemas de performance latentes | Test estructural que verifica que las queries del plan de ejecución usan índices |
+
+##### Frontend (UI Compliance)
+
+Tests que verifican que la interfaz cumple estándares de accesibilidad,
+internacionalización y adaptabilidad. Aplican cuando el proyecto tiene
+interfaz visual (web, mobile, desktop):
+
+| Qué se verifica | Estándar | Cómo se detecta |
+|-----------------|----------|-----------------|
+| **Accesibilidad (A11y)** | WCAG 2.1 AA (mínimo) | Auditoría automatizada de contraste, roles ARIA, navegación por teclado, alt text, foco visible |
+| **Internacionalización (i18n)** | ISO 639 / ICU | Strings no hardcodeados, formatos de fecha/número localizables, dirección de texto (RTL/LTR) |
+| **Mobile-first / Responsive** | — | Viewports mínimos renderizados correctamente. Si el diseño es mobile-first, los breakpoints escalan hacia arriba. Si es desktop-first (graceful degradation), escalan hacia abajo. |
+| **Semántica HTML** | W3C | Uso correcto de landmarks, headings jerárquicos, formularios con labels asociados |
+
+> **A11y no es opcional** — es requisito legal en muchas jurisdicciones
+> (ADA, EAA, Section 508). Un test de accesibilidad que falla es un
+> defecto de compliance, no un nice-to-have.
+
+##### Infraestructura (IaC Compliance)
+
+Tests que verifican que la configuración de infraestructura y entorno
+sigue las mejores prácticas. Aplican cuando el proyecto tiene
+infraestructura como código o configuración de despliegue:
+
+| Qué se verifica | Por qué | Cómo se detecta |
+|-----------------|---------|-----------------|
+| **Versiones exactas** | Versiones flotantes (`latest`, `^`, `~`) producen builds no reproducibles | Test que parsea archivos de configuración y verifica que toda versión es exacta (pinned) |
+| **Variables de entorno validadas** | Leer `process.env.X` sin validación produce errores silenciosos | Test que verifica que la app falla rápido (fail-fast) si una variable requerida es `undefined`, vacía o inválida |
+| **Sin secrets en código** | Secrets hardcodeados en el repo son la fuente #1 de brechas de seguridad | Test que escanea el codebase buscando patrones de secrets (API keys, tokens, passwords en código) |
+| **Configuración de despliegue** | Un Dockerfile/Helm chart/Terraform con malas prácticas es un vector de ataque | Test que verifica: imagen base con tag exacto, usuario no-root, health checks definidos, recursos limitados |
+| **Fail-fast en arranque** | Una app que arranca con configuración inválida y falla en runtime es peor que una que no arranca | Test que verifica que la app rechaza arrancar si la configuración no pasa validación de schema |
+
+```mermaid
+flowchart TD
+    PLAN["Test Plan\n(por cada AC)"]
+
+    PLAN --> POS["Casos positivos\n(happy path)"]
+    PLAN --> ADV["Casos adversariales\n(negative testing)"]
+    PLAN --> STRUCT["Compliance estructural"]
+
+    STRUCT --> PERSIST["Persistencia\n(schema, hashing,\ncifrado, índices)"]
+    STRUCT --> UI["Frontend\n(A11y, i18n,\nresponsive)"]
+    STRUCT --> IAC["Infraestructura\n(versiones, env vars,\nsecrets, fail-fast)"]
+
+    POS --> TAG_FUNC["tag: functional"]
+    ADV --> TAG_SEC["tag: security"]
+    PERSIST --> TAG_STRUCT["tag: structural"]
+    UI --> TAG_STRUCT
+    IAC --> TAG_STRUCT
+```
+
+**Reglas para compliance estructural:**
+
+1. **Condicionales al proyecto** — no todo proyecto tiene UI, no todo
+   proyecto tiene IaC. El Test Plan incluye solo las dimensiones que
+   aplican según `design.md`.
+2. **Se tagean como `structural`** — derivables como suite de
+   compliance sin escribirla aparte.
+3. **Se ejecutan en CI, no en pre-commit** — son exhaustivos y su
+   frecuencia de cambio es baja.
+4. **QA no los diseña, pero los avala** — el Test Engineer los incluye
+   en el Test Plan; QA en la Fase Accept verifica que existen y pasan.
+5. **Compliance-by-Design** — estos tests son la EVIDENCIA para
+   auditorías. Cuando un auditor pregunta "¿cómo saben que no guardan
+   passwords en plano?", la respuesta es el test, no un documento.
+
 ### Capa 2: Test Contract
 
 Código, pero declarativo — no contiene lógica de test, solo la
@@ -524,5 +617,8 @@ para APIs obsoletas, sin patrones de compatibilidad retroactiva.
   el Test Plan (negative testing / abuse cases).
 - Los casos adversariales están tageados como `security` para
   derivación como suite de seguridad.
+- Los tests de compliance estructural (persistencia, frontend, IaC)
+  están tageados como `structural` y aplican según el contexto del
+  proyecto.
 - Si un test no puede escribirse, hay un gap en el contrato o el AC
   (escalar a Pre-Fase).

@@ -21,7 +21,8 @@
 | **Circuit breaker** | Mecanismo de protección: si 3 delegaciones consecutivas al mismo rol fallan, el SM detiene la cadena y escala al MIM. |
 | **Código droppable** | Código con 0% de cobertura en App tests. Si ningún test lo toca a través de interacciones reales de producto, no tiene justificación de existir. Candidato a eliminación. |
 | **Compact rules** | Reglas de código y convenciones del proyecto, extraídas del skill registry, que el orquestador inyecta pre-digeridas en cada sub-agente. |
-| **Compliance-by-Design** | Principio del framework: si los tests asiertan DTOs estrictamente (forma completa, no parcial), se obtiene verificación de compliance regulatorio (HIPAA, PCI DSS, GDPR, SOC 2) como efecto secundario — sin suites adicionales ni rewrites. |
+| **Compliance-by-Design** | Principio del framework: si los tests asiertan DTOs estrictamente, incluyen casos adversariales, y verifican compliance estructural (persistencia, frontend, IaC), se obtiene verificación de compliance regulatorio (HIPAA, PCI DSS, GDPR, SOC 2, WCAG, ADA) como efecto secundario — sin suites adicionales ni rewrites. |
+| **Compliance estructural** | Tests que verifican la ESTRUCTURA de cada capa arquitectónica, no su comportamiento. Tres dimensiones: persistencia (schema, hashing, cifrado), frontend (A11y, i18n, responsive), infraestructura (versiones exactas, env vars validadas, fail-fast). Tageados como `structural`, ejecutados en CI. |
 | **Contract Architect** | Rol del Modo 2 que define contratos formales (APIs, schemas, interfaces) a partir del handoff. Activo en la Pre-Fase. |
 | **Contrato de delegación** | Estructura con campos obligatorios (rol, personalidad, contexto, input, output, restricciones, status report) que el SM usa para lanzar un sub-agente. |
 | **DAG (Directed Acyclic Graph)** | Grafo de dependencias entre tareas en `tasks.md`. Define el orden de ejecución y los lanes paralelos. |
