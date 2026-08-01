@@ -31,6 +31,6 @@
 - [Fase Accept](execution/accept.md) — certificación QA
 - [Estrategia Git](execution/git-strategy.md) — Gitflow, worktrees, commits
 
-## Modo 3: Operación (TBD)
+## Modo 3: Operación (opcional)
 
-- [Índice del modo](operation/README.md)
+- [Índice del modo](operation/README.md) — el usuario consume el producto con asistencia del agente

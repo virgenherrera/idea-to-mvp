@@ -75,7 +75,11 @@ tarea actual.
 
 ---
 
-## Dos Modos
+## Modos del Framework
+
+Este documento detalla el Modo 1 en profundidad. El Modo 2 se resume aquí
+y se detalla en [Modelo de Ejecución](../execution/README.md). El Modo 3
+se resume aquí y se detalla en [Modelo de Operación](../operation/README.md).
 
 ### Modo 1 — Planificación (idea → handoffs)
 
@@ -267,6 +271,22 @@ modelo de delegación del orquestador, y conexión con Modo 1), ver
 
 ---
 
+### Modo 3 — Operación (producto → uso)
+
+**Propósito**: el MIM usa el producto construido; el agente asiste como
+operador. Modo opcional y reactivo — sin fases, sin scrum team.
+
+**Entrada**: producto construido (salida del Modo 2), `ops-runbook.md`
+(si existe), documentación del proyecto.
+
+**Restricción clave**: no hay artefactos de planificación ni ceremonia.
+Si la operación revela un gap, escala de vuelta a Modo 1 o Modo 2.
+
+Para la definición completa (cuándo se activa, tipos de operación, flujo),
+ver [Modelo de Operación](../operation/README.md).
+
+---
+
 ## Límites
 
 ```mermaid
@@ -289,7 +309,18 @@ flowchart TD
         E_OUT["Escribe en: working tree del repo ÚNICAMENTE"]
     end
 
+    EXEC -->|"producto construido"| OP
+
+    subgraph OP["MODO OPERACIÓN (opcional)"]
+        direction TB
+        O_IN["Entrada: producto construido + ops-runbook.md"]
+        O_WHO["Participantes: usuario (MIM) + agente asistente"]
+        O_OUT["Sin fases, sin artefactos de planificación"]
+    end
+
     EXEC -->|"gap detectado"| PLAN
+    OP -->|"bug / gap"| EXEC
+    OP -->|"feature request"| PLAN
 ```
 
 ---

@@ -18,6 +18,7 @@
 | **Agente compuesto** | Sub-agente que asume múltiples personalidades secuencialmente dentro de un worktree (Test Engineer → Implementor → Reviewer). Se usa en ejecución paralela para evitar conflictos de filesystem. |
 | **App Test / Service Test** | Test que ejerce el stack real de la aplicación sin mocks. Boundary = la app. Tier primario del framework. Detecta código droppable vía coverage alto obligatorio. |
 | **Artifact store** | Capa de persistencia donde viven los artefactos de planificación. Fuera del repo destino. Accesible vía interfaz universal de 9 operaciones. |
+| **Asistente operativo** | Rol del agente en Modo 3. Ejecuta lo que el usuario pide dentro del contexto del proyecto construido. No planifica ni construye — opera. |
 | **Boundary (modelo de)** | Criterio que determina el tipo de test según dónde se ubica la frontera del mock: File (unit, prohibido), Module (integración, derivado), App (servicio/componente, desarrollo explícito), Solution (E2E, desarrollo explícito). Eje organizador de la Fase Red. |
 | **Builder Pattern (testing)** | Patrón para construir datos de test mediante factories reutilizables. Centraliza la creación de datos y permite variar solo lo relevante al caso. Evita datos hardcodeados en el cuerpo del test. |
 | **Circuit breaker** | Mecanismo de protección: si 3 delegaciones consecutivas al mismo rol fallan, el SM detiene la cadena y escala al MIM. |
@@ -37,6 +38,7 @@
 | **Interfaz universal** | Las 9 operaciones que todo adaptador del artifact store debe implementar: `ingest`, `save`, `read`, `search`, `list`, `delete`, `verifyConsistency`, `history`, `transition`. |
 | **Lane** | Rama paralela en el DAG de tareas que puede ejecutarse concurrentemente con otras. |
 | **MIM (Mind behind the Idea and the Money)** | El humano que dirige el proyecto. Decide, aprueba y desbloquea. Es el nodo de decisión final. |
+| **Modo 3 (Operación)** | Modo opcional y reactivo donde el MIM se convierte en usuario del producto y el agente en asistente operativo. Sin fases ni ceremonia. Se activa solo si el proyecto tiene superficie operativa. |
 | **Ops-runbook** | Artefacto (`ops-runbook.md`) que documenta operación, monitoreo, troubleshooting y escalación para proyectos con servicios vivos. Respaldado por ISO 20000 + ITIL 4. |
 | **Orquestador de Ejecución** | Coordinador del Modo 2. Análogo al SM de planificación pero opera sobre el working tree del repositorio, no sobre el artifact store. Delega, no ejecuta. |
 | **Pattern A** | Estrategia de retrieval donde el SM busca, cura y re-inyecta contexto en el prompt del sub-agente. Útil para búsquedas fuzzy o fan-out alto (8+). |

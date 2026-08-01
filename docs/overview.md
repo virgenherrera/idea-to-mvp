@@ -99,8 +99,9 @@ flowchart LR
 
 ## Pipeline Completo
 
-El ciclo tiene 4 macro-fases. Las dos primeras están definidas. Las
-fases post-ejecución están definidas como parte del Modo 1.
+El ciclo tiene 4 macro-fases, todas definidas. Las fases post-ejecución
+están definidas como parte del Modo 1; la macro-fase de operación es el
+Modo 3, opcional y reactivo.
 
 ```mermaid
 %% Pipeline completo con macro-fases
@@ -133,17 +134,16 @@ flowchart TD
         F6 --> F7 --> F8
     end
 
-    subgraph MACRO_3["Ejecución a Operación (TBD)"]
+    subgraph MACRO_3["Ejecución a Operación (DEFINIDO)"]
         direction LR
-        OPS["Operación\nMonitoreo,\nrunbooks,\nSRE"]
+        OPS["Modo 3\nOperación\nUsuario + agente\nasistente"]
     end
 
     F5 -->|"handoff.md"| EX_C
     EX_A -->|"código\ncertificado"| F6
     F8 -->|"siguiente ciclo"| F1
     F7 -->|"ops-runbook.md"| OPS
-
-    style MACRO_3 stroke-dasharray: 5 5
+    OPS -->|"gap detectado"| F1
 ```
 
 Vista alternativa: la línea de tiempo pone el foco en el **orden temporal**
@@ -413,7 +413,7 @@ definidas:
 | Área | Estado | Descripción |
 |------|--------|-------------|
 | Modo Ejecución | **DEFINIDO** | 5 fases (Contratos → Red → Green → Refactor → Accept). Contract-first, modelo de boundaries (App + E2E), revisión multi-dimensional. Ver [modelo de ejecución](execution/README.md). |
-| Modo Operación | TBD | Para proyectos con servicios vivos: monitoreo, runbooks, SRE, alertas. Consumidor de `ops-runbook.md`. |
+| Modo Operación | **DEFINIDO** | Opcional. Para proyectos con superficie operativa: el usuario consume el producto con asistencia del agente. Reactivo, sin fases. Ver [modelo de operación](operation/README.md). |
 | Adaptadores avanzados | TBD | Jira, DBMS, Git repo, MS Project como adaptadores del artifact store. |
 | Routing no-Scrum | TBD | Routing tables para Kanban (WIP limits), Shape Up (bets), SAFe (PIs). Los artefactos son universales; la orquestación no. |
 | Tiers de activación | TBD | Cómo escala hacia abajo el modo planificación para proyectos simples o challenges con timebox. |
@@ -430,3 +430,4 @@ definidas:
 | [Comportamiento SM](planning/behavior/README.md) | SM como facade, state machine del proyecto, fast-forward, PDC, circuit breaker |
 | [Roles](planning/roles/README.md) | Contratos de delegación por fase, personalidades, activación condicional, roles ad-hoc |
 | [Modo Ejecución](execution/README.md) | Modo 2: Contract-first, Red-Green-Refactor macro, roles de ejecución, conexión con Modo 1 |
+| [Modo Operación](operation/README.md) | Modo 3: opcional y reactivo, sin fases, usuario + agente asistente, conexión con Modo 1 y Modo 2 |

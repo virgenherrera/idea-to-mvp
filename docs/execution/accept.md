@@ -31,6 +31,7 @@ pasan" es condición necesaria pero NO suficiente. QA certifica que:
 | Código droppable | Coverage report | Código con 0% cobertura identificado y reportado |
 | Arquitectura | `design.md` (via handoff) | Refactor alineó la implementación con las decisiones arquitectónicas |
 | Seguridad | Reportes de Reviewers | Vulnerabilidades críticas resueltas antes de certificar |
+| Documentación operativa | `handoff.md` sección "Documentación operativa esperada" | Si el handoff la requiere: documentación existe, es usable, cubre lo declarado. Si el handoff dice "no requerida": omitir verificación. |
 
 ---
 

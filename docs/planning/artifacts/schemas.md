@@ -277,11 +277,30 @@ Convenciones del repo (AGENTS.md), reglas de commits, hooks.
 ## Contexto que NO se incluye
 Qué se decidió NO hacer y por qué (para evitar scope creep).
 
+## Documentación operativa esperada (condicional)
+> Solo si el proyecto tiene servicios vivos, CLI con comandos,
+> integraciones externas, o cualquier superficie que un usuario
+> necesite operar post-entrega.
+
+- Qué documentación operativa debe producirse durante la ejecución
+- Formato esperado (ops-runbook.md, README de uso, guía CLI, etc.)
+- Audiencia (NOC/Ops, usuario final, equipo de desarrollo)
+- Si no aplica: declarar explícitamente "sin documentación operativa requerida"
+
 ## Metadata
 - Fecha de generación
 - Artefactos fuente: [idea.md, spec.md, design.md, tasks.md]
 - Estado: generado | entregado | en ejecución | completado
 ```
+
+> **Nota**: La sección de documentación operativa conecta el handoff con
+> el Modo 3 (Operación). Si el handoff declara documentación esperada,
+> la Fase Accept del Modo 2 DEBE verificar que existe antes de certificar.
+> Proyectos sin superficie operativa (librerías, paquetes, entregables
+> únicos) declaran "sin documentación operativa requerida" y Accept omite
+> esta verificación.
+
+---
 
 > **El handoff es el CONTRATO entre modos**. Cuando el modo ejecución lo
 > recibe, debe poder operar sin consultar otros artefactos de planificación

@@ -61,7 +61,7 @@ flowchart LR
 | Red | Contratos + ACs de `spec.md` | Test Plan + Test Contract + Test Implementation (todos fallan) + cobertura configurada | Test Engineer |
 | Green | Tests rojos + contratos | Codigo que pasa todos los tests | Implementor |
 | Refactor | Codigo verde + tests | Codigo limpio, revisado, alineado a `design.md` | Reviewers (multiples) |
-| Accept: Certificación QA | Código refactorizado + test reports + reports de Reviewers + handoff.md | Certificación formal de cumplimiento del handoff | QA (Modo 2) |
+| Accept: Certificación QA | Código refactorizado + test reports + reports de Reviewers + handoff.md + documentación operativa (si requerida por handoff) | Certificación formal de cumplimiento del handoff | QA (Modo 2) |
 
 ---
 
@@ -199,7 +199,7 @@ flowchart LR
 | **Reviewer (Arquitectura)** | Critico, orientado a mantenibilidad. Compara contra design.md. | Refactor | Revisa alineacion arquitectonica, SOLID, DRY, KISS, patrones. | Codigo verde + design.md | Reporte de revision + sugerencias de refactor |
 | **Reviewer (Seguridad)** | Paranoico constructivo. Busca vulnerabilidades. | Refactor | Revisa OWASP Top 10, secrets, dependencias, surface area. | Codigo verde + spec.md (no-funcionales) | Reporte de seguridad |
 | **Reviewer (Performance)** | Analitico, orientado a metricas. Busca bottlenecks. | Refactor | Revisa memory leaks, N+1, operaciones bloqueantes. | Codigo verde | Reporte de performance |
-| **QA (Modo 2)** | Verificador exhaustivo. Contrasta producto contra handoff. No asume que "tests pasan" es suficiente. | Accept | Verifica que CADA AC del handoff se cumple en el producto, que la cobertura no bajó, que el comportamiento de producto es el esperado. Certifica formalmente. | Código refactorizado + test reports + handoff.md | Certificación formal (mecanismo definido por el consumidor del framework) |
+| **QA (Modo 2)** | Verificador exhaustivo. Contrasta producto contra handoff. No asume que "tests pasan" es suficiente. | Accept | Verifica que CADA AC del handoff se cumple en el producto, que la cobertura no bajó, que el comportamiento de producto es el esperado, y que la documentación operativa declarada en el handoff existe. Certifica formalmente. | Código refactorizado + test reports + handoff.md + documentación operativa (si requerida por handoff) | Certificación formal (mecanismo definido por el consumidor del framework) |
 | **MIM** | Humano. Decide, aprueba, desbloquea. | Todas (on-demand) | Aprueba contratos, resuelve ambiguedades, acepta resultado final. | Reportes del Orquestador | Decisiones y aprobaciones |
 
 ### Mapeo a roles de planificacion
@@ -291,7 +291,7 @@ Areas dentro del Modo 2 que requieren definicion adicional:
 | ~~Commit strategy~~ | DEFINIDO | Ver [git-strategy.md](git-strategy.md) — convención por fase, trazabilidad AC→test→commit, squash policy |
 | CI/CD integration | TBD | Como la suite Red se integra con pipelines de CI |
 | Metricas de ejecucion | TBD | Coverage thresholds, tiempos de ciclo, tasa de re-delegacion |
-| Modo 3 (Operacion) | TBD | Como el output del Modo 2 transiciona a operacion via `ops-runbook.md` |
+| Modo 3 (Operacion) | DEFINIDO | Opcional y reactivo. El MIM opera el producto con asistencia del agente. Ver [modelo de operación](../operation/README.md) |
 
 ---
 
