@@ -211,7 +211,7 @@ satisface el gate.
 
 | | Detalle |
 |---|---------|
-| **Rol convocado** | Todos los roles del scrum team (default + ad-hoc con voto declarado) |
+| **Rol convocado** | Todos los roles del equipo (default + ad-hoc con voto declarado) |
 | **Función** | Votación formal sobre el entregable, cada rol evalúa desde su perspectiva |
 | **NO hace** | NO re-ejecuta la verificación técnica (eso es Fase 6). NO redefine scope. |
 | **Artefacto de salida** | Registro de votos y justificaciones en metadata |
@@ -226,7 +226,7 @@ regresa a la fase correspondiente para resolverlo.
 > Accept de ejecución son gates DISTINTOS. Accept (Modo 2) certifica que el
 > código cumple el handoff — opera dentro de cada iteración de ejecución.
 > Fase 7 (Modo 1) acepta el entregable completo desde la perspectiva del
-> scrum team — opera al cierre del ciclo de planificación. Ver
+> equipo — opera al cierre del ciclo de planificación. Ver
 > [Fase Accept](../../execution/accept.md).
 
 ### Fase 8 — Retrospectiva
@@ -492,7 +492,7 @@ flowchart LR
 | 7. Aceptar | Dar veredicto sobre la experiencia de usuario. Aprobar, solicitar cambios, o bloquear. |
 | 8. Retrospectiva | Evaluar feedback de usabilidad. Proponer mejoras de UX. |
 
-### SM (Scrum Master)
+### SM (Session Manager)
 
 | Etapa | Tareas permitidas |
 |-------|-------------------|

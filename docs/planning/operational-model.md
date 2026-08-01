@@ -10,8 +10,8 @@ tags: [modos, ownership, contexto, artifact-store, adaptadores, delegación, mul
 
 ← [Índice principal](../README.md) | [Planificación](README.md)
 
-> Documento de trabajo. Objetivo: definir CÓMO opera el framework antes de
-> decidir CÓMO implementarlo (skills, agentes, paquetes, etc.).
+> Objetivo: definir CÓMO opera el framework antes de decidir CÓMO
+> implementarlo (skills, agentes, paquetes, etc.).
 >
 > **Scope del framework**: Optimizado para el caso "1 humano (MIM) + N
 > agentes IA." Para equipos humanos, las fases y artefactos son
@@ -27,7 +27,7 @@ El framework actualmente mezcla tres concerns en un solo repositorio:
 1. **Reglas de gobernanza** — axiomas de AGENTS.md, compact rules, fases del
    pipeline. Estas SÍ PERTENECEN a cada repo que adopta el framework.
 2. **Tooling de planificación** — fases del ciclo (idea, spec, diseño,
-   tareas, handoff), roles del scrum team, persistencia de artefactos
+   tareas, handoff), roles del equipo, persistencia de artefactos
    (engram, local, híbrido). Son OPERACIONALES y no deben contaminar los
    repos adoptantes.
 3. **Tooling de ejecución** — patrón orquestador-minion, delegación a
@@ -65,7 +65,7 @@ a su ventana de contexto lo que la decision actual requiere.
 
 ### Sub-agentes — Ownership acotado por contrato de delegación
 
-Los sub-agentes (roles del scrum team, TPM, agentes ad-hoc) reciben
+Los sub-agentes (roles del equipo, TPM, agentes ad-hoc) reciben
 UNICAMENTE lo que su rol y fase requieren, definido en el contrato de
 delegación. No saben que existe el resto del contexto, ni necesitan saberlo.
 Su scope es el contrato — nada mas.
@@ -93,7 +93,7 @@ se resume aquí y se detalla en [Modelo de Operación](../operation/README.md).
 
 **Propósito**: producir fuentes de verdad y planes. Sin ejecución de código.
 
-**Quién participa**: el scrum team (PO, Dev Lead, SM, UX, QA, DevSecOps)
+**Quién participa**: el equipo (PO, Dev Lead, SM, UX, QA, DevSecOps)
 como lentes de revisión — no como agentes que escriben código.
 
 #### Entradas aceptadas
@@ -234,9 +234,9 @@ directamente. Si no lo es, las usa como guía para obtener las respuestas.
 
 #### Adaptador por defecto: archivos locales como RAG
 
-- Path por defecto: `~/.idea-to-mvp/projects/{nombre}/docs/` — **fuera**
-  del repo destino (garantiza que el modo planificación nunca contamine
-  el working tree)
+- Path por defecto (ruta configurable): `~/.idea-to-mvp/projects/{nombre}/docs/`
+  — **fuera** del repo destino (garantiza que el modo planificación nunca
+  contamine el working tree)
 - Formato: archivos markdown, uno por artefacto
 - Legible por humanos, opcionalmente versionable con git
 - Los agentes hacen fetch de archivos específicos, no crawl completo
@@ -246,7 +246,7 @@ directamente. Si no lo es, las usa como guía para obtener las respuestas.
 repo destino. Lee el codebase para informar decisiones, pero toda la salida
 va al artifact store — no a archivos `.tmp-*` dispersos en el repo.
 
-#### Scrum team en este modo
+#### Equipo en este modo
 
 Cada rol es un LENTE que revisa artefactos de planificación desde su
 perspectiva. PO valida alcance contra valor de usuario. QA valida
@@ -282,7 +282,7 @@ modelo de delegación del orquestador, y conexión con Modo 1), ver
 ### Modo 3 — Operación (producto → uso)
 
 **Propósito**: el MIM usa el producto construido; el agente asiste como
-operador. Modo opcional y reactivo — sin fases, sin scrum team.
+operador. Modo opcional y reactivo — sin fases, sin equipo.
 
 **Entrada**: producto construido (salida del Modo 2), `ops-runbook.md`
 (si existe), documentación del proyecto.
@@ -295,6 +295,22 @@ ver [Modelo de Operación](../operation/README.md).
 
 ---
 
+### Punto de entrada: Takeover de codebase
+
+Para codebases heredados o existentes que se incorporan al framework:
+
+| Situación | Punto de entrada |
+|-----------|-----------------|
+| Codebase heredado sin cambios planificados | Modo 3 (Operación) — el equipo opera y aprende el sistema |
+| Codebase heredado con cambios planificados | Fast-forward desde el tier que corresponda — la documentación existente (README, specs, CI, tests) cuenta como artefactos parciales para el scoring F1-F4 |
+| Codebase heredado con deuda técnica | Modo 1 con fast-forward — el SM evalúa qué artefactos existen y los acredita |
+
+El SM no exige recrear artefactos que ya existen en forma equivalente (un
+README detallado puede cumplir la función de `idea.md`, una suite de tests
+existente informa `spec.md`).
+
+---
+
 ## Límites
 
 ```mermaid
@@ -303,7 +319,7 @@ flowchart TD
         direction TB
         P_IN["Entrada: idea, problema, feature request"]
         P_TOOLS["Herramientas: idea, spec, diseño, tareas, handoff"]
-        P_WHO["Participantes: scrum team como lentes de revisión"]
+        P_WHO["Participantes: equipo como lentes de revisión"]
         P_OUT["Escribe en: artifact store — NUNCA en el repo destino"]
     end
 
@@ -376,7 +392,9 @@ La gestión de estado de artefactos usa `transition` exclusivamente
 
 ### Adaptador local (por defecto)
 
-- Almacena artefactos como archivos markdown en `~/.idea-to-mvp/projects/{nombre}/docs/`
+- Almacena artefactos como archivos markdown en
+  `~/.idea-to-mvp/projects/{nombre}/docs/` (ruta configurable, por defecto
+  la indicada)
 - **Fuera** del repositorio destino — el modo planificación nunca toca el working tree del repo
 - Ventajas: cero dependencias, legible por humanos, opcionalmente versionable
 - Desventaja: sin acceso cross-machine, sin búsqueda semántica
@@ -398,9 +416,9 @@ La gestión de estado de artefactos usa `transition` exclusivamente
 
 ---
 
-## Scrum Team — Cuándo y Cómo
+## Equipo — Cuándo y Cómo
 
-El scrum team es una herramienta de PLANIFICACIÓN, no de ejecución.
+El equipo de planificación es una herramienta de PLANIFICACIÓN, no de ejecución.
 
 | Rol | Cuándo se activa | Qué hace | Qué NO hace |
 |-----|-----------------|----------|-------------|
@@ -412,15 +430,16 @@ El scrum team es una herramienta de PLANIFICACIÓN, no de ejecución.
 | DevSecOps | Diseño, Tareas(cond), Verificar, Aceptar, Retro | Valida superficie de seguridad, decisiones de infra, postura de seguridad | Desplegar |
 | *Ad-hoc* | Cualquier fase, segun contrato | Expertise especializado fuera del equipo default (DBA, Performance Engineer, Domain Expert, etc.). El SM los define y convoca con contrato completo. | Depende del contrato |
 
-> **Nota**: los 6 roles de arriba son el equipo **default**. El SM puede
-> extender el equipo con roles ad-hoc cuando el proyecto requiere expertise
-> que ningun rol default cubre. Ver `roles/README.md` seccion "Roles Ad-Hoc".
+> **Nota**: los 5 roles productivos de arriba (más el SM como
+> infraestructura) forman el equipo **default**. El SM puede extender el
+> equipo con roles ad-hoc cuando el proyecto requiere expertise que ningun
+> rol default cubre. Ver `roles/README.md` seccion "Roles Ad-Hoc".
 
-**Durante ejecucion**, el scrum team esta en silencio. El orquestador y los
+**Durante ejecucion**, el equipo esta en silencio. El orquestador y los
 sub-agentes hacen el trabajo. Si la ejecución revela un gap de planificación,
 el orquestador puede escalar DE VUELTA al modo planificación.
 
-**Post-ejecución** (Verificar, Aceptar, Retrospectiva), el scrum team se
+**Post-ejecución** (Verificar, Aceptar, Retrospectiva), el equipo se
 RE-ACTIVA como panel de revisión. Estas fases son parte del modo
 planificación — operan sobre los resultados de la ejecución, no sobre
 código directamente. Ver `behavior/README.md` Fases 6-8 y
@@ -465,10 +484,15 @@ gobernanza.
 El SM selecciona el tier de modelo por tarea usando un criterio simple:
 **¿La salida correcta es derivable de reglas/templates, o requiere juicio?**
 
+> En escenarios de operación con múltiples agentes simultáneos, el
+> protocolo de delegación del PDC (ver `delegation-pdc.md`) define niveles
+> de autonomía basados en riesgo para evitar que el MIM se convierta en
+> cuello de botella.
+
 | Tier | Runtime | Criterio de selección | Costo |
 |------|---------|----------------------|-------|
-| **Local** (Docker / Ollama) | Modelo local, cero costo por token | La salida es determinista o template-driven. No requiere razonamiento complejo. | Cero (solo compute local) |
-| **Cloud** (Claude / Codex / equivalente) | API remota, costo por token | Requiere síntesis, juicio, creatividad, o razonamiento sobre contexto ambiguo. | Proporcional al uso |
+| **Local** (modelo on-premise) | Modelo local (e.g., Docker, Ollama), cero costo por token | La salida es determinista o template-driven. No requiere razonamiento complejo. | Cero (solo compute local) |
+| **Cloud** (modelo vía API) | API remota (e.g., Claude, Codex), costo por token | Requiere síntesis, juicio, creatividad, o razonamiento sobre contexto ambiguo. | Proporcional al uso |
 
 ### Asignación por componente
 
@@ -510,8 +534,9 @@ de selección, no el modelo específico.
 ## Preguntas Abiertas
 
 1. **¿Dónde vive el tooling?**
-   Opciones: skills de Claude Code (instalables), un paquete npm separado,
-   una convención de dotfiles (`~/.idea-to-mvp/`), o una combinación.
+   Opciones: skills de Claude Code (instalables), un paquete distribuible
+   (npm, pip, cargo, etc.), una convención de dotfiles (`~/.idea-to-mvp/`),
+   o una combinación.
 
 2. **¿Cómo hace un repo "opt in" al framework?**
    Actualmente: copiar AGENTS.md. ¿Debería existir un comando bootstrap
@@ -536,6 +561,18 @@ de selección, no el modelo específico.
 
 6. ~~**¿Verificación en modo ejecución — quién la hace?**~~
    **RESUELTO**: Verify (Fase 6) y Accept (Fase 7) son fases
-   POST-ejecución del modo planificación. El scrum team se reactiva
+   POST-ejecución del modo planificación. El equipo se reactiva
    como panel de revisión. Retro (Fase 8) cierra el ciclo y alimenta
    el siguiente. Ver `behavior/README.md` Fases 6-8.
+
+7. ~~**¿Deben comprimirse los artefactos de planificación para cambios
+   pequeños (Tier Ligero), o se produce siempre el set completo
+   (idea/spec/design/tasks/handoff)?**~~
+   **RESUELTO**: En Tier Ligero, los artefactos de planificación PUEDEN
+   comprimirse en un documento único (`plan.md`) que contiene las
+   secciones esenciales de idea + spec + design + tasks en formato
+   abreviado. El alineamiento ISO se mantiene (las secciones de contenido
+   existen), pero el conteo físico de artefactos se reduce. Para
+   hot-fixes vía fast-forward mid-cycle, el mínimo requerido es: (1)
+   descripción del problema, (2) test de reproducción, (3) fix, (4)
+   verificación.

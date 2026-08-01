@@ -6,11 +6,11 @@ type: index
 tags: [sm, fases, delegación, pdc, tiers, fast-forward, session-manager]
 ---
 
-# Comportamiento del Scrum Master
+# Comportamiento del SM (Session Manager)
 
 ← [Índice principal](../../README.md) | [Planificación](../README.md)
 
-> El agente principal actúa como Scrum Master (SM). Es el **facade** del
+> El agente principal actúa como Session Manager (SM). Es el **facade** del
 > proyecto: la única interfaz a través de la cual se interactúa con el
 > ciclo de vida. Posee el ownership del proceso, mantiene la state machine
 > de las iteraciones, y es el punto de consulta para cualquier pregunta de
@@ -26,7 +26,7 @@ El SM es al proyecto lo que un controller es a una API:
 flowchart LR
     MIM["MIM (Humano)"] -->|"toda interacción"| SM["SM\n(Facade)"]
     SM -->|"CRUD artefactos"| TPM["TPM\n(Data Layer)"]
-    SM -->|"contratos"| ROLES["Roles del\nScrum Team"]
+    SM -->|"contratos"| ROLES["Roles del\nEquipo"]
     SM -->|"estado"| STATE["State Machine\ndel Proyecto"]
 ```
 

@@ -32,7 +32,7 @@ tags: [definiciones, términos, vocabulario]
 | **Circuit breaker** | Mecanismo de protección: si 3 delegaciones consecutivas al mismo rol fallan, el SM detiene la cadena y escala al MIM. |
 | **Código droppable** | Código con 0% de cobertura en App tests. Si ningún test lo toca a través de interacciones reales de producto, no tiene justificación de existir. Candidato a eliminación. |
 | **Compact rules** | Reglas de código y convenciones del proyecto, extraídas del skill registry, que el orquestador inyecta pre-digeridas en cada sub-agente. |
-| **Compliance-by-Design** | Principio del framework: si los tests asiertan DTOs estrictamente, incluyen casos adversariales, y verifican compliance estructural (persistencia, frontend, IaC), se obtiene verificación de compliance regulatorio (HIPAA, PCI DSS, GDPR, SOC 2, WCAG, ADA) como efecto secundario — sin suites adicionales ni rewrites. |
+| **Compliance-by-Design** | Principio del framework: si los tests asiertan DTOs estrictamente, incluyen casos adversariales, y verifican compliance estructural (persistencia, frontend, IaC), se obtiene verificación de la CAPA DE DATOS del compliance regulatorio (HIPAA, PCI DSS, GDPR, SOC 2, WCAG, ADA) como efecto secundario — sin suites adicionales ni rewrites. No cubre controles organizacionales, físicos, legales ni procedurales de cada regulación. |
 | **Compliance estructural** | Tests que verifican la ESTRUCTURA de cada capa arquitectónica, no su comportamiento. Tres dimensiones condicionales (se activan solo si el proyecto las tiene): persistencia (schema, hashing, cifrado), frontend (A11y, i18n, responsive), infraestructura (versiones exactas, env vars validadas, fail-fast). Tageados como `structural`, ejecutados en CI. |
 | **Contract Architect** | Rol del Modo 2 que define contratos formales (APIs, schemas, interfaces) a partir del handoff. Activo en la Pre-Fase. |
 | **Contrato de delegación** | Estructura con campos obligatorios (rol, personalidad, contexto, input, output, restricciones, status report) que el SM usa para lanzar un sub-agente. |
@@ -46,6 +46,7 @@ tags: [definiciones, términos, vocabulario]
 | **Interfaz universal** | Las 9 operaciones que todo adaptador del artifact store debe implementar: `ingest`, `save`, `read`, `search`, `list`, `delete`, `verifyConsistency`, `history`, `transition`. |
 | **Lane** | Rama paralela en el DAG de tareas que puede ejecutarse concurrentemente con otras. |
 | **MIM (Mind behind the Idea and the Money)** | El humano que dirige el proyecto. Decide, aprueba y desbloquea. Es el nodo de decisión final. |
+| **Mini-PDC** | Versión abreviada del Post-Delegation Checkpoint. Se aplica cuando la delegación es de bajo riesgo y el resultado es verificable mecánicamente. |
 | **Modo 3 (Operación)** | Modo opcional y reactivo donde el MIM se convierte en usuario del producto y el agente en asistente operativo. Sin fases ni ceremonia. Se activa solo si el proyecto tiene superficie operativa. |
 | **Ops-runbook** | Artefacto (`ops-runbook.md`) que documenta operación, monitoreo, troubleshooting y escalación para proyectos con servicios vivos. Respaldado por ISO 20000 + ITIL 4. |
 | **Orquestador de Ejecución** | Coordinador del Modo 2. Análogo al SM de planificación pero opera sobre el working tree del repositorio, no sobre el artifact store. Delega, no ejecuta. |
@@ -60,13 +61,14 @@ tags: [definiciones, términos, vocabulario]
 | **Reviewer** | Rol del Modo 2 activo en Fase Refactor. Tres variantes: Arquitectura (SOLID, DRY, KISS), Seguridad (OWASP), Performance (memory leaks, N+1). |
 | **Schema-Strict Assertions** | Regla de disciplina de test: toda aserción sobre objetos de respuesta verifica la forma COMPLETA del DTO (campos presentes, campos ausentes, tipos). Detecta campos extra que podrían violar compliance regulatorio. |
 | **SM (Session Manager / Orquestador)** | El agente principal que actúa como facade del proyecto. Orquesta fases, convoca roles, valida gates y controla transiciones. No produce contenido. No es un Scrum Master en el sentido del Scrum Guide. |
-| **Sub-agente** | Agente instanciado por el SM con un contrato de delegación acotado. Recibe personalidad, contexto y restricciones específicas para su tarea. Los roles del scrum team son sub-agentes. |
+| **SM-Process** | Sub-agente especializado que el SM instancia para extraer reglas de proceso de archivos del proyecto (e.g., reglas de un challenge). Instanciado bajo demanda, no es un rol permanente. |
+| **Sub-agente** | Agente instanciado por el SM con un contrato de delegación acotado. Recibe personalidad, contexto y restricciones específicas para su tarea. Los roles del equipo son sub-agentes. |
 | **Test Contract** | Manifiesto enumerable por sujeto bajo prueba. Cada entrada vincula un caso de test con un nombre inmutable y trazable a un AC. Previene código de test spaghetti. |
 | **Test Engineer** | Rol del Modo 2 que escribe la suite de tests mapeada a ACs y contratos. Activo en Fase Red. Escéptico, prioriza App tests (stack real) sobre cualquier forma de mocking; unit prohibido, integración derivada por filtrado. |
 | **Test Implementation (Capa 3)** | Tests ejecutables que referencian el Test Contract. Incluyen tests de App (stack real, sin mocks) y tests E2E (solución desplegada). Todos deben fallar al finalizar la Fase Red (no hay implementación aún). |
 | **Test Plan** | Meta-documento que mapea ACs a casos de prueba, asigna boundaries (App/E2E), y etiqueta tests para filtrado (smoke, critical, regression). |
 | **Testing de Alto Valor** | Filosofía del framework: solo tests que ejercen interacciones REALES de producto aportan valor. Tests con mocks extensivos dan falsa confianza. |
-| **Tier (de activación)** | Nivel de ceremonia del framework (Ligero, Estándar, Completo). El SM determina el tier usando el score F1-F4. Los tiers escalan ceremonia, no artefactos. |
+| **Tier (de activación)** | Nivel de ceremonia del framework (Ligero, Estándar, Completo). El SM determina el tier usando el score F1-F4. Los tiers escalan ceremonia; en Tier Ligero, los artefactos pueden comprimirse en un documento único (`plan.md`) manteniendo las secciones de contenido ISO. |
 | **TPM (Technical Program Manager)** | Agente de infraestructura que actúa como DBMS del artifact store. Único actor que escribe en el store. Valida integridad, formato y completitud con criterio editorial. |
 | **`transition()`** | Operación del adaptador que cambia el estado de un artefacto en la state machine (draft, review, approved, rejected, cancelled). |
 | **Work item (L0-L4)** | Jerarquía de descomposición de trabajo: L0 (Initiative), L1 (Feature), L2 (Requirement), L3 (Activity), L4 (Sub-activity). Definidos en `tasks.md`. |

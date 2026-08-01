@@ -46,7 +46,7 @@ es la ceremonia alrededor.
 
 ## Tipos de contrato
 
-| Tipo | Formato | Cuando aplica | Ejemplo |
+| Tipo | Formato (ejemplo) | Cuando aplica | Ejemplo |
 |------|---------|----------------|---------|
 | API Contract | OpenAPI 3.x / AsyncAPI | Proyecto con endpoints HTTP o eventos | `POST /auth/login` con request/response schema |
 | SDK / Library Interface | TypeScript interfaces, Rust traits | Librerias, modulos reutilizables | `interface AuthService { login(credentials): Token }` |
@@ -54,6 +54,10 @@ es la ceremonia alrededor.
 | Event Schema | JSON Schema / AsyncAPI | Sistemas event-driven | `UserCreatedEvent { id, email, timestamp }` |
 | Component Interface | Props/inputs tipados | Frontend con componentes | `LoginFormProps { onSubmit, initialValues }` |
 | Connector / Adapter Interface | Ports & adapters | Integraciones con terceros | `interface PaymentGateway { charge(amount): Receipt }` |
+
+> Los formatos son ilustrativos. Cualquier especificación formal que
+> cumpla los requisitos del contrato (tipada, verificable por máquina,
+> schema-completo) es válida.
 
 ---
 

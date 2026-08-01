@@ -111,9 +111,9 @@ y relaciones, útil para visualizar cardinalidad de un vistazo.
 
 ```mermaid
 erDiagram
-    INITIATIVE ||--|{ THEME : contains
-    THEME ||--|{ FEATURE : contains
-    FEATURE ||--|{ ACTIVITY : contains
+    INITIATIVE ||--|{ FEATURE : contains
+    FEATURE ||--|{ REQUIREMENT : contains
+    REQUIREMENT ||--|{ ACTIVITY : contains
     ACTIVITY ||--|{ SUB-ACTIVITY : contains
     ACTIVITY {
         string id

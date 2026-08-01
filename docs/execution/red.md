@@ -48,8 +48,16 @@ dos tiers, no por escritura de suites adicionales.
 | Module | Integración | **Sin desarrollo explícito** — se deriva por filtros desde los tests de App cuando se toca un módulo |
 | App (stack real, sin mocks) | Servicio/Componente | **DESARROLLO EXPLÍCITO** — tier primario, cobertura alta obligatoria, interacciones reales con el producto, detección de código droppable |
 | Solution (multi-servicio, cero mocks) | E2E | **DESARROLLO EXPLÍCITO** — para deploys, tags, merges a main/develop |
-| Cualquiera | Performance/stress/load | **TBD** — post-MVP, delegado como historias al propio framework |
+| Cualquiera | Performance/Stress/Load | **CONDICIONAL** — se activa cuando `design.md` declara SLAs de latencia, throughput o concurrencia. El Test Plan incluye perfiles de carga derivados de los ACs. Ubicación en pipeline: stage CI separado, no bloqueante para el ciclo Red-Green-Refactor |
 | Cualquiera | Regression/smoke/sanity | **Sin desarrollo explícito** — se deriva por tags/nomenclatura desde los tests de App + E2E existentes |
+
+> **Excepción: librerías sin infraestructura runtime.** Para proyectos sin
+> servidor, base de datos, ni contenedor DI (librerías algorítmicas,
+> utilidades puras, parsers), el boundary App colapsa a la API pública
+> del módulo. Los tests contra esta API pública con inputs y outputs
+> reales SON los App tests — ejercen la interacción real del producto.
+> La prohibición del boundary File (funciones internas privadas en
+> aislamiento) sigue aplicando.
 
 ```mermaid
 flowchart LR
@@ -84,7 +92,8 @@ File está prohibido, Module se deriva del boundary App.
 - **Tests de Unit** (boundary File) — no se escriben bajo ninguna
   circunstancia en este framework. Si un test necesita mockear el propio
   archivo bajo prueba para pasar, esa es la señal de que el test no
-  pertenece a este modelo.
+  pertenece a este modelo. Ver la excepción para librerías sin
+  infraestructura runtime en [Modelo de Boundaries](#modelo-de-boundaries).
 
 ### Sin desarrollo explícito (derivado por filtrado)
 
@@ -95,11 +104,12 @@ File está prohibido, Module se deriva del boundary App.
   E2E existentes, seleccionados por tag o nomenclatura. Ver
   [Tests Derivados y Pipeline Placement](#tests-derivados-y-pipeline-placement).
 
-### TBD (post-MVP)
+### Condicional
 
-- **Performance / Stress / Load** — no definido en el alcance del MVP.
-  Se delega como historias de trabajo al propio framework en una
-  iteración futura.
+- **Performance / Stress / Load** — se activa cuando `design.md` declara
+  SLAs de latencia, throughput o concurrencia. El Test Plan incluye
+  perfiles de carga derivados de los ACs. Ubicación en pipeline: stage
+  CI separado, no bloqueante para el ciclo Red-Green-Refactor.
 
 ---
 
@@ -264,9 +274,9 @@ sino "cómo está construido." Son la evidencia de que las decisiones de
 | Qué se verifica | Por qué | Cómo se detecta |
 |-----------------|---------|-----------------|
 | **Versiones exactas** | Versiones flotantes (`latest`, `^`, `~`) producen builds no reproducibles | Test que parsea archivos de configuración y verifica que toda versión es exacta (pinned) |
-| **Variables de entorno validadas** | Leer `process.env.X` sin validación produce errores silenciosos | Test que verifica que la app falla rápido (fail-fast) si una variable requerida es `undefined`, vacía o inválida |
+| **Variables de entorno validadas** | Leer variables de entorno sin validación produce errores silenciosos | Test que verifica que la app falla rápido (fail-fast) si una variable requerida es `undefined`, vacía o inválida |
 | **Sin secrets en código** | Secrets hardcodeados en el repo son la fuente #1 de brechas de seguridad | Test que escanea el codebase buscando patrones de secrets (API keys, tokens, passwords en código) |
-| **Configuración de despliegue** | Un Dockerfile/Helm chart/Terraform con malas prácticas es un vector de ataque | Test que verifica: imagen base con tag exacto, usuario no-root, health checks definidos, recursos limitados |
+| **Configuración de despliegue** | Un archivo de configuración de despliegue (contenedor, orquestador, IaC) con malas prácticas es un vector de ataque | Test que verifica: imagen base con tag exacto, usuario no-root, health checks definidos, recursos limitados |
 | **Fail-fast en arranque** | Una app que arranca con configuración inválida y falla en runtime es peor que una que no arranca | Test que verifica que la app rechaza arrancar si la configuración no pasa validación de schema |
 
 ```mermaid
@@ -411,7 +421,7 @@ en el pipeline.
 | "Smoke tests" | E2E seleccionados por tag. Post-deploy: "¿desplegó correctamente?" |
 | "Regresión" | Todo test de App/E2E escrito para reproducir un bug ES regresión. Tag opcional. |
 | "Sanity" | Subconjunto mínimo de tests de App (ruta crítica), seleccionable por tag. |
-| "Performance/stress/load" | TBD post-MVP — historias dedicadas. |
+| "Performance/stress/load" | Condicional — se activa cuando `design.md` declara SLAs. Stage CI separado, no bloqueante para Red-Green-Refactor. |
 
 ```mermaid
 flowchart TD
@@ -545,6 +555,14 @@ terceros. Esta sección define las reglas para esos mocks permitidos:
 | **Argumentos exactos** | No verificar solo que "fue llamado" — verificar CON QUÉ fue llamado. Un mock que se llamó con los argumentos incorrectos es peor que un mock que no se llamó. |
 
 ### Aserciones estrictas por DTO (Schema-Strict Assertions)
+
+> **Alcance**: Esta disciplina cubre exclusivamente la capa de DATOS del
+> compliance (data minimization, control de acceso campo-a-campo, shape
+> validation). No reemplaza los controles organizacionales, físicos,
+> legales o procedurales que cada regulación exige (HIPAA requiere BAAs,
+> training, physical security; PCI DSS requiere network segmentation,
+> quarterly scans; GDPR requiere DPIAs, consent management). Consulta
+> con un profesional de compliance para los requisitos completos.
 
 Esta es la regla más importante de la disciplina de test del framework.
 Tiene implicaciones directas en compliance regulatorio.

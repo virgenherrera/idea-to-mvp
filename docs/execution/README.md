@@ -282,7 +282,7 @@ sequenceDiagram
 |---------|-------------|------------------------|
 | Donde escribe | Artifact store (fuera del repo) | Working tree del repo |
 | Que produce | Artefactos de planificacion | Codigo, tests, commits |
-| Roles que convoca | Scrum team (lentes) | Ejecutores (code writers) |
+| Roles que convoca | Equipo (lentes) | Ejecutores (code writers) |
 | Validacion | Gates de artefactos | Tests pasan + coverage |
 | Escalacion | Al MIM | Al MIM o de vuelta a Modo 1 |
 

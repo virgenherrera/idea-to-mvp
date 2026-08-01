@@ -15,7 +15,7 @@ tags: [delegación, pdc, echo, verify, mark, decide, contrato-delegación, statu
 El SM NO produce artefactos de contenido. El SM:
 
 1. **Detecta** en qué fase está el proyecto
-2. **Convoca** a los roles del scrum team (default o ad-hoc) que corresponden a esa fase
+2. **Convoca** a los roles del equipo (default o ad-hoc) que corresponden a esa fase
 3. **Extiende** el equipo con roles ad-hoc cuando el proyecto requiere expertise fuera del equipo default
 4. **Acota** la función de cada rol convocado (qué esperamos, qué NO)
 5. **Valida** que el artefacto de salida quede aprobado (vía TPM)
@@ -116,7 +116,7 @@ racionalización que causa drifts. Si hay que hacerlo, hay que delegarlo.
 
 ## El TPM: gestor operativo del RAG
 
-Existe un sub-agente permanente que NO es parte del scrum team: el
+Existe un sub-agente permanente que NO es parte del equipo: el
 **TPM (Technical Program Manager)**. Es el dueño operativo del RAG y el
 puente entre las decisiones del equipo y su materialización como artefactos.
 
@@ -169,7 +169,7 @@ sequenceDiagram
 | Aspecto | Detalle |
 |---------|---------|
 | **Nombre** | TPM (Technical Program Manager) |
-| **Parte del scrum team** | NO — es infraestructura operativa permanente |
+| **Parte del equipo** | NO — es infraestructura operativa permanente |
 | **Personalidad** | Riguroso, metódico, con criterio editorial. Mantiene estándares sin imponer opinión de producto o técnica. |
 | **Responsabilidades** | CRUD sobre RAG, estándares de escritura, serving de contexto acotado, tracking de completitud, release readiness |
 | **Cuándo se invoca** | Cada vez que hay que persistir, leer, o verificar artefactos en el RAG |
@@ -205,6 +205,21 @@ Si el MIM responde "no sé" o "tú decide" a una pregunta de gate:
    evidencia concreta: "Asumimos X, pero la implementación mostró Y.
    Decisión requerida."
 
+### Clasificación de decisiones por riesgo
+
+Para escalar eficientemente en el modelo de operación con múltiples
+agentes, el SM clasifica las decisiones pendientes por nivel de riesgo:
+
+| Nivel | Criterio | Acción del SM |
+|-------|----------|---------------|
+| Bajo | Reversible, bien definida, precedente existente | Resuelve autónomamente, documenta asunción, notifica al MIM de forma asíncrona |
+| Medio | Parcialmente reversible, sin precedente claro | Presenta opciones con recomendación al MIM |
+| Alto | Irreversible, arquitectural, sin precedente | Bloquea hasta respuesta del MIM |
+
+Esta clasificación complementa el protocolo de delegación existente y
+permite que el MIM gestione múltiples proyectos sin convertirse en
+cuello de botella.
+
 ---
 
 ## Contrato de Delegación a Sub-Agentes
@@ -216,7 +231,7 @@ explícito con estos campos:
 
 | Campo | Descripción | Ejemplo |
 |-------|-------------|---------|
-| **Rol** | Qué rol del scrum team representa | `PO`, `QA`, `Dev Lead` |
+| **Rol** | Qué rol del equipo representa | `PO`, `QA`, `Dev Lead` |
 | **Personalidad** | Cómo se comporta el sub-agente (tono, enfoque, prioridades) | "Riguroso con la testeabilidad, escéptico de ACs vagos" |
 | **Contexto** | Qué información recibe del RAG (y SOLO esa) | `idea.md` para fase de spec |
 | **Input** | Qué se le pide que haga, con alcance acotado | "Validar que cada AC de spec.md sea verificable" |
@@ -229,8 +244,8 @@ Los sub-agentes son fire-and-forget: el SM los lanza y recibe el resultado
 final. NO hay canal bidireccional en tiempo real. La supervisión es
 **reactiva**: se evalúa DESPUÉS de cada retorno, no durante la ejecución.
 
-Este patrón está validado empíricamente en `nest-base`, `virgenherrera` y
-`fullstack-base`.
+Este patrón está validado empíricamente en proyectos precursores del
+framework.
 
 > **Trust but verify**: El PDC y el circuit breaker son el equivalente de
 > "confiar pero verificar" adaptado a agentes IA. No es desconfianza — es

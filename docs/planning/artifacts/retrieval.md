@@ -48,18 +48,18 @@ Para **2,000 tokens de contexto** por delegación:
 | SM regenera en prompt del agente | 2,000 tokens **output** (5x costo) | ~50 tokens output (topic_key) |
 | Sub-agente recibe contexto | 2,000 tokens input | 2,000 tokens input |
 | Sub-agente emite query al RAG | — | ~30 tokens output |
-| **Costo total** | **~$0.042** | **~$0.007** |
-| **Relación** | **6x más caro** | **baseline** |
+| **Costo total (proporcional)** | **~6x el baseline** | **baseline (1x)** |
 
-Para **20,000 tokens** (un `spec.md` o `design.md` completo):
-Pattern A ≈ $0.42 vs Pattern B ≈ $0.066 — **la diferencia escala
-linealmente con el tamaño del artefacto**.
+Para **20,000 tokens** (un `spec.md` o `design.md` completo), la misma
+proporción se mantiene — **la diferencia escala linealmente con el
+tamaño del artefacto**.
 
 > **El driver principal NO es "leer dos veces"** — es que el SM tiene
 > que GENERAR el contenido como output tokens para ponerlo en el prompt
-> del sub-agente. Output tokens cuestan ~5x más que input tokens en
-> todos los modelos actuales (Claude, GPT-4). Ese impuesto de
-> regeneración es el 71% del costo de Pattern A.
+> del sub-agente. Output tokens cuestan varias veces más que input
+> tokens (típicamente ~5x) en la mayoría de los modelos LLM a la fecha
+> de escritura. Ese impuesto de regeneración es el grueso del costo
+> extra de Pattern A.
 
 ### La regla: híbrido (no todo es Pattern B)
 
@@ -194,7 +194,7 @@ de contexto promedio por delegación:
 |---------|--------------------------|-------------------------------------|
 | Delegaciones | 15 | 15 |
 | Tokens de contexto movidos | 45K (15 × 3K) | 45K |
-| Costo del contexto | ~$0.94 (dominado por output-tax) | ~$0.16 |
+| Costo del contexto (proporcional) | ~6x el baseline (dominado por output-tax) | baseline (1x) |
 | **Ahorro** | — | **~83%** en costo de retrieval |
 
 > El ahorro es en la CAPA DE RETRIEVAL, no en el total del proyecto.

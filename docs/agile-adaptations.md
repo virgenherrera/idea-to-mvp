@@ -128,3 +128,25 @@ humanos, pero el modelo de delegación (contratos rígidos, SM como único
 punto de interacción, PDC como mecanismo de verificación) debe adaptarse
 para contextos donde los participantes tienen persistencia, autonomía y
 capacidad de comunicación directa.
+
+---
+
+## Excepciones documentadas
+
+El framework es prescriptivo por diseño, pero reconoce que existen casos
+legítimos donde una regla específica no aplica (e.g., una librería
+algorítmica pura donde el boundary App colapsa a la API pública).
+
+El MIM puede declarar una excepción documentada a cualquier regla del
+framework. La excepción debe especificar:
+
+| Campo | Descripción |
+|-------|-------------|
+| Regla afectada | Referencia exacta a la regla que se overridea |
+| Justificación | Por qué la regla no aplica en este contexto |
+| Scope | Qué iteraciones, artefactos o fases cubre la excepción |
+| Condición de terminación | Cuándo la excepción deja de aplicar |
+
+Las excepciones se documentan en el `handoff.md` (sección de restricciones)
+y el SM las respeta durante la ejecución. La excepción no elimina la
+regla — la suspende para un contexto acotado.

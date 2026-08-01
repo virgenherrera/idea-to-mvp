@@ -84,13 +84,15 @@ completo.
 
 | Operación | Qué hace | Quién la invoca | Ejemplo |
 |-----------|----------|-----------------|---------|
-| **Create** | Crea un artefacto nuevo con metadata inicial. **Precondición**: verifica que todos los artefactos upstream estén aprobados antes de crear. Si un upstream falta o no está aprobado, rechaza y reporta al SM. | SM (instrucción) | "Crea idea.md para el proyecto X" |
-| **Read** | Retorna un slice acotado del artefacto | SM, Roles | "Dame la sección de ACs de spec.md" |
-| **Update** | Modifica contenido existente, mantiene trazabilidad | SM (instrucción) | "Actualiza el ADR #3 en design.md" |
-| **Delete** | Elimina contenido obsoleto (raro, con justificación) | SM (instrucción) | "Elimina la tarea T-07, fue descartada" |
-| **Transition** | Cambia el estado del artefacto en la state machine (`draft` → `review` → `approved`/`rejected`). Lo que antes era "marcar completo" ahora es `transition(artifact, "approved", "gate passed")`. | SM (vía gate) | "spec.md pasó el gate: `transition('spec', 'approved', 'QA + SM gate passed')`" |
-| **Verify consistency** | Verifica integridad referencial entre artefactos | SM (pre-gate) | "¿Todos los ACs de spec trazan a ideas?" |
-| **Serve context** | Sirve el contexto ACOTADO que un agente necesita | SM o sub-agente directo | "Dame solo las tareas T-01..T-03" |
+| **ingest** | Incorpora material fuente al store (sintetizado o verbatim), con citaciones a la fuente original. **Precondición**: `source` es un array no vacío. | SM (instrucción), vía TPM | "Ingesta los 3 archivos del challenge" |
+| **save** | Crea o actualiza un artefacto con su contenido y metadata (upsert). **Precondición**: verifica que todos los artefactos upstream estén aprobados antes de crear uno nuevo. Si un upstream falta o no está aprobado, rechaza y reporta al SM. | SM (instrucción) | "Guarda idea.md para el proyecto X" |
+| **read** | Retorna un slice acotado del artefacto | SM, Roles | "Dame la sección de ACs de spec.md" |
+| **search** | Busca contenido por query dentro de uno o más artefactos | SM, Roles | "Busca 'JWT' en todo el store" |
+| **list** | Lista artefactos con filtros (estado, productor, fecha) | SM, Roles | "Lista los artefactos en estado `review`" |
+| **delete** | Elimina contenido obsoleto (raro, con justificación) | SM (instrucción) | "Elimina la tarea T-07, fue descartada" |
+| **verifyConsistency** | Verifica integridad referencial y semántica entre artefactos | SM (pre-gate) | "¿Todos los ACs de spec trazan a ideas?" |
+| **history** | Retorna el historial de versiones y acciones de un artefacto | SM (recovery, auditoría) | "¿Qué pasó con design.md en Fase 3?" |
+| **transition** | Cambia el estado del artefacto en la state machine (`draft` → `review` → `approved`/`rejected`). Lo que antes era "marcar completo" ahora es `transition(artifact, "approved", "gate passed")`. | SM (vía gate) | "spec.md pasó el gate: `transition('spec', 'approved', 'QA + SM gate passed')`" |
 
 Ver [Máquina de Estados y Transiciones](state-machine.md) para el detalle
 de la operación `transition`.
@@ -186,7 +188,7 @@ como un contrato de tipos — cada implementación (`LocalAdapter`,
 classDiagram
     class AdapterInterface {
         <<interface>>
-        +create(artifact, metadata) void
+        +ingest(source[], synthesize?) void
         +read(artifact) Content
         +save(artifact, content) void
         +delete(artifact) void
@@ -198,20 +200,20 @@ classDiagram
     }
     class LocalAdapter {
         -basePath string
-        +create()
+        +ingest()
         +read()
         +save()
     }
     class EngramAdapter {
         -projectId string
-        +create()
+        +ingest()
         +read()
         +save()
     }
     class HybridAdapter {
         -local LocalAdapter
         -engram EngramAdapter
-        +create()
+        +ingest()
         +read()
         +save()
     }
@@ -364,7 +366,7 @@ MVP de persistencia.
 | Aspecto | Contrato |
 |---------|----------|
 | Precondicion | Ninguna (lista vacia es valida). |
-| Postcondicion | Retorna lista de artefactos con: `artifact`, `status` (draft/complete), `last_modified`, `producer`. |
+| Postcondicion | Retorna lista de artefactos con: `artifact`, `status` (draft/review/approved/rejected/cancelled), `last_modified`, `producer`. |
 | Filtros | `status`, `producer`, `modified_after`, `modified_before`. |
 | Given | Store con `idea` (approved) y `spec` (draft) |
 | When | `list({status: "approved"})` |

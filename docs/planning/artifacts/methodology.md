@@ -27,8 +27,8 @@ almacena en el artifact store como configuracion del proyecto. No es
 un artefacto de producto — es un **meta-artifact** que configura el
 comportamiento del SM.
 
-- **Cuando se define**: el SM pregunta al MIM durante setup (Fase 0/1):
-  "Que metodología prefieres? Default: Scrum."
+- **Cuando se define**: el SM pregunta al MIM durante setup (Fase 1,
+  configuración inicial): "Que metodología prefieres? Default: Scrum."
 - **Donde se almacena**: en el artifact store, seccion de metadata del
   proyecto (no en un artefacto de producto).
 - **Cuando se revisa**: durante la retrospectiva (Fase 8), como

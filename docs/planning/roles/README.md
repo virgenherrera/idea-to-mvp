@@ -1,9 +1,9 @@
 ---
 id: planning/roles/index
-title: "Roles del Scrum Team"
+title: "Roles del Equipo"
 mode: planning
 type: index
-tags: [roles, po, dev-lead, qa, devsecops, ux, scrum-team]
+tags: [roles, po, dev-lead, qa, devsecops, ux, equipo]
 ---
 
 # Perfiles de Roles

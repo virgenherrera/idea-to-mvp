@@ -174,7 +174,7 @@ Cada decisión traza a spec.md (qué requisito resuelve).
 > cuales se describe la arquitectura (stakeholders, concerns, views). No
 > impone un formato específico, solo exige que cada viewpoint tenga
 > stakeholders identificados, concerns que aborda, y convenciones de
-> modelado. Esto se alinea con nuestro concepto de "lentes" del scrum team.
+> modelado. Esto se alinea con nuestro concepto de "lentes" del equipo.
 
 ---
 
@@ -301,6 +301,10 @@ Qué se decidió NO hacer y por qué (para evitar scope creep).
 - Estado: generado | entregado | en ejecución | completado
 ```
 
+> **Nota sobre los estados**: Estos estados son específicos del ciclo de
+> vida del handoff y complementan la state machine universal de
+> artefactos (draft → review → approved).
+
 > **Nota**: La sección de documentación operativa conecta el handoff con
 > el Modo 3 (Operación). Si el handoff declara documentación esperada,
 > la Fase Accept del Modo 2 DEBE verificar que existe antes de certificar.
@@ -360,11 +364,21 @@ Quién es responsable, cadena de escalación.
 - Estado: borrador | validado | en producción
 ```
 
+> **Nota sobre los estados**: Estos estados son específicos del ciclo de
+> vida del ops-runbook y complementan la state machine universal de
+> artefactos (draft → review → approved).
+
 > **Este artefacto cierra el ciclo completo**: de la idea hasta la
 > operación en producción. ISO 20000 define los requisitos formales del
 > sistema de gestión de servicios. ITIL 4 provee el checklist práctico
 > de transición. Google SRE Production Readiness Review es la
 > implementación más concreta del gate "¿está listo para producción?".
+
+> **Nota de aplicabilidad**: El schema anterior aplica a proyectos con
+> servicios desplegados. Para otros tipos de proyecto: CLI →
+> documentación de flags, exit codes y ejemplos de uso; librería →
+> referencia de API, guía de migración y changelog. El estándar de
+> respaldo para estos casos es IEEE 1063 (Software User Documentation).
 
 ---
 

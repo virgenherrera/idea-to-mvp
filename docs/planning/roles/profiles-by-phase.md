@@ -122,11 +122,11 @@ flowchart LR
 ```mermaid
 flowchart LR
     SM_F3["SM"] -->|"contrato"| DEV_F3["Dev Lead\n🟢"]
-    SM_F3 -->|"contrato"| SEC_F3["DevSecOps\n🟡 condicional"]
+    SM_F3 -->|"contrato"| SEC_F3["DevSecOps\n🟢 scope variable"]
     SM_F3 -.->|"si hay UI"| UX_F3["UX\n🟡 condicional"]
 
     style DEV_F3 fill:#bfb,stroke:#080
-    style SEC_F3 fill:#ffb,stroke:#880
+    style SEC_F3 fill:#bfb,stroke:#080
     style UX_F3 fill:#ffb,stroke:#880
 ```
 

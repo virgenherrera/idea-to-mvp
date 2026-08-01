@@ -76,7 +76,7 @@ flowchart LR
     subgraph PLAN["MODO PLANIFICACIÓN"]
         direction TB
         P1["Entrada: idea, ticket,\nchallenge, spec parcial"]
-        P2["Scrum team como\nlentes de revisión"]
+        P2["Equipo como\nlentes de revisión"]
         P3["Escribe en:\nartifact store\n(NUNCA en el repo)"]
     end
 
@@ -97,7 +97,7 @@ flowchart LR
 | Aspecto | Planificación | Ejecución |
 |---------|---------------|-----------|
 | Propósito | Producir fuentes de verdad | Implementar código |
-| Participantes | Scrum team (lentes) | Orquestador + minions |
+| Participantes | Equipo (lentes) | Orquestador + minions |
 | Dónde escribe | Artifact store (fuera del repo) | Working tree del repo |
 | Estado actual | **DEFINIDO** | **DEFINIDO** |
 
@@ -150,7 +150,7 @@ flowchart TD
     F5 -->|"handoff.md"| EX_C
     EX_A -->|"código\ncertificado"| F6
     F8 -->|"siguiente ciclo"| F1
-    F7 -->|"ops-runbook.md"| OPS
+    F6 -->|"ops-runbook.md"| OPS
     OPS -->|"gap detectado"| F1
 ```
 
@@ -233,6 +233,11 @@ flowchart LR
 | `ops-runbook.md` | DevSecOps + Dev Lead | SM (gate) |
 
 > Regla cardinal: **quién produce nunca valida su propio artefacto**.
+>
+> DevSecOps contribuye al assessment de seguridad en Fase 3 (input a
+> `design.md`) y evalúa la postura de seguridad en Fase 7 (validación). Son
+> scopes distintos: el input de Fase 3 no equivale a producción del
+> artefacto completo.
 >
 > Detalle: [artefactos](planning/artifacts/README.md) (schemas, contenido
 > mínimo, jerarquía de work items, adaptadores de persistencia).
@@ -391,7 +396,7 @@ flowchart TD
 
     subgraph ADAPTERS["Implementaciones"]
         direction LR
-        LOCAL["Local (DEFAULT)\nArchivos .md en\n~/.idea-to-mvp/"]
+        LOCAL["Local (DEFAULT)\nArchivos .md en\nruta configurable"]
         ENGRAM["Engram\nCross-session\nbuscable"]
         FUTURE["Jira | DBMS | Git\n(TBD)"]
     end

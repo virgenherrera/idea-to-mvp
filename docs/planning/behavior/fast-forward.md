@@ -92,6 +92,14 @@ Razón: {resumen}.` Esto garantiza auditabilidad cross-session.
 | "Implementa pagos con Stripe" (sin codebase) | 0 | 1 | 1 | 0 | 2 | Baja | F2=1: Stripe es estándar PERO tiene variantes (checkout, elements, custom). F3=1: pagos es acotado pero requiere decisiones (moneda, suscripciones, webhooks). |
 | "Agrega logging con Winston" (codebase Node existente) | 0 | 2 | 2 | 2 | 6 | Alta | F2=2: Winston es estándar abierto sin variantes significativas. F3=2: logging es determinista — configuración, transports, formato. |
 | "Migra de REST a GraphQL" (API existente) | 1 | 1 | 0 | 2 | 4 | Media | F2=1: GraphQL es estándar PERO cada migración es diferente. F3=0: infinitas interpretaciones — qué endpoints migrar, schema design, N+1. |
+| "Agrega autenticación OAuth" (codebase Python/FastAPI existente) | 0 | 1 | 1 | 2 | 4 | Media | Idea + spec parcial |
+| "Refactoriza el módulo de reportes" (codebase Go con patrones definidos) | 1 | 2 | 2 | 2 | 7 | Alta | Hasta handoff |
+
+> **Nota de agnosticismo de stack**: los ejemplos de esta tabla usan
+> stacks específicos (Express, NestJS, Winston, FastAPI, Go) solo para
+> ilustrar el razonamiento con contexto concreto. El scoring F1-F4 y las
+> reglas del gradiente de certeza son agnósticos de stack — aplican
+> igual a cualquier lenguaje, framework o ecosistema.
 
 Vista alternativa: el quadrant chart ubica cada ejemplo según cuánto
 contexto existe (eje X) y cuán determinista es el dominio (eje Y) — los
@@ -123,6 +131,12 @@ No solo al inicio. Ejemplos:
   No pasa por Idea → Spec → Design.
 - **Epic ya groomeado** → todo en el RAG → SM detecta artefactos
   aprobados → fast-forward directo a ejecución.
+
+> **Contrato de entrada para bug fast-forward**: el Modo 2 (Ejecución)
+> requiere `handoff.md` como contrato de entrada estándar. Para bug fixes
+> escalados desde Modo 3 o detectados mid-cycle, el contexto diagnóstico
+> (descripción del bug, pasos de reproducción, área afectada) actúa como
+> contrato de entrada al Modo 2 en lugar de un `handoff.md` formal.
 
 ---
 
@@ -186,8 +200,11 @@ flowchart TD
 
 ### Nota sobre artefactos
 
-Los tiers afectan la **ceremonia** (roles convocados, gates aplicados,
-patrón de dispatch), NO los **artefactos**. Independientemente del tier,
-el ciclo produce los mismos artefactos (`idea.md`, `spec.md`,
-`design.md`, `tasks.md`, `handoff.md`). Lo que cambia es cuántos ojos
-los revisan y cuántos checkpoints se aplican antes de aprobarlos.
+Los tiers afectan principalmente la **ceremonia** (roles convocados, gates
+aplicados, patrón de dispatch). En Tiers Estándar y Completo, el ciclo
+produce los mismos artefactos (`idea.md`, `spec.md`, `design.md`,
+`tasks.md`, `handoff.md`). En **Tier Ligero**, los artefactos pueden
+comprimirse en un documento único (`plan.md`) que contiene las secciones
+esenciales en formato abreviado — el alineamiento ISO se mantiene, pero
+el conteo físico se reduce. Lo que siempre cambia es cuántos ojos los
+revisan y cuántos checkpoints se aplican.

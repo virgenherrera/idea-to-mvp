@@ -101,7 +101,7 @@ flowchart LR
   como referencia, no el Modo 3 en sí.
 - No es planificación — no hay fases ni artefactos de planificación.
 - No es construcción — no hay ciclo Red-Green-Refactor.
-- No hay scrum team — el usuario opera directamente con asistencia del
+- No hay equipo — el usuario opera directamente con asistencia del
   agente, sin lentes de revisión convocados.
 
 ---
@@ -122,6 +122,11 @@ flowchart LR
 | Feature request | Escalar a Modo 1 (nueva planificación) |
 | Gap de documentación | Escalar a Modo 1 (Fase 6 — producir/actualizar `ops-runbook.md`) |
 | Proyecto deprecado | Cerrar Modo 3 — archivar |
+
+> Para escalaciones de bug desde Modo 3, el contexto diagnóstico (descripción
+> del bug, pasos de reproducción, área afectada) actúa como contrato de
+> entrada al Modo 2 en lugar de un `handoff.md` formal. Ver
+> `fast-forward.md` para el mecanismo de fast-forward mid-cycle.
 
 ---
 

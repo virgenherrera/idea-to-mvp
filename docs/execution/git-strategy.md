@@ -14,6 +14,14 @@ tags: [git, worktrees, branches, commits, merge, paralelismo, agente-compuesto, 
 > para ejecutar el ciclo Red-Green-Refactor con paralelismo real. Resuelve
 > los TBDs de "Paralelismo en ejecución" y "Commit strategy".
 
+> **Nota sobre WHAT vs HOW.** Este documento define los REQUISITOS que
+> toda estrategia de branching debe cumplir para el Modo 2 (aislamiento
+> entre lanes, trazabilidad a iteraciones, merge no destructivo, soporte
+> para ejecución paralela). La implementación de referencia usa Gitflow
+> adaptado con worktrees, pero cualquier estrategia que satisfaga estos
+> requisitos es aceptable (trunk-based con feature flags, stacked PRs,
+> etc.).
+
 ---
 
 ## Modelo de Ramas

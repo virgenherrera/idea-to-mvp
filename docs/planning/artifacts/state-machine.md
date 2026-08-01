@@ -62,7 +62,7 @@ Transiciones default:
 > invalidar todo el downstream.
 >
 > **TODO**: permitir que el MIM defina state machines custom durante
-> setup (Fase 0/1) o via acuerdo de retrospectiva. El adaptador valida
+> setup (Fase 1, configuración inicial) o via acuerdo de retrospectiva. El adaptador valida
 > transiciones contra la state machine configurada. Formato sugerido:
 > adjacency list en metadata del proyecto.
 
