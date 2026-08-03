@@ -8,13 +8,21 @@ tags: [sm, fases, delegación, pdc, tiers, fast-forward, session-manager]
 
 # Comportamiento del SM (Session Manager)
 
-← [Índice principal](../../README.md) | [Planificación](../README.md)
+← [Índice principal](../../README.md) | [Planning](../README.md)
 
 > El agente principal actúa como Session Manager (SM). Es el **facade** del
 > proyecto: la única interfaz a través de la cual se interactúa con el
 > ciclo de vida. Posee el ownership del proceso, mantiene la state machine
 > de las iteraciones, y es el punto de consulta para cualquier pregunta de
 > "¿en qué vamos?".
+
+---
+
+## Contenido
+
+- [Identidad del SM](#identidad-del-sm)
+- [Estado del Proyecto — Derivado del RAG](#estado-del-proyecto-derivado-del-rag)
+- [Flujo del SM](#flujo-del-sm)
 
 ---
 
@@ -51,6 +59,8 @@ flowchart LR
 | La state machine — deriva estado del RAG, controla transiciones | Un almacén — no persiste nada, delega al TPM |
 | El router — elige qué rol invocar y con qué contrato | Un rol productivo — no genera contenido |
 | El punto de consulta — "¿en qué vamos?" se responde aquí | Un participante — no opina sobre producto ni técnica |
+
+[↑ Contenido](#contenido)
 
 ---
 
@@ -102,7 +112,7 @@ Esto significa:
 | Artefacto aprobado pero inconsistente con upstream editado | `verifyConsistency` del TPM detecta conflicto post-update | SM notifica: "El artefacto {downstream} puede estar desactualizado respecto a cambios en {upstream}." → Re-convocar rol validador. |
 | RAG vacío pero con historial (proyecto existente, artefactos eliminados) | TPM reporta RAG vacío + historial de operaciones | SM pregunta al MIM: "RAG vacío pero hay historial previo. ¿Empezar de cero o restaurar?" |
 | MIM solicita cambio a artefacto ya aprobado durante planificación | MIM dice "cambia este AC" mientras estamos en Fase 3+ | SM instruye al TPM para transicionar el artefacto a en revisión. SM re-convoca al rol productor original con contrato acotado al cambio solicitado. Artefactos downstream se marcan como `posiblemente desactualizados` vía `verifyConsistency`. Fase actual se pausa hasta que el cambio upstream alcance aprobado y la cascada se resuelva. |
-| MIM envía edit mientras un sub-agente está en vuelo | SM recibe mensaje del MIM antes de que el sub-agente retorne | SM encola el edit. Cuando el sub-agente retorna, SM aplica PDC normal. Luego evalúa si el edit invalida el resultado recién recibido. Si lo invalida → re-delega con el edit incorporado. Si no → procesa el edit como un cambio separado. |
+| MIM envía edit mientras un subAgent está en vuelo | SM recibe mensaje del MIM antes de que el subAgent retorne | SM encola el edit. Cuando el subAgent retorna, SM aplica PDC normal. Luego evalúa si el edit invalida el resultado recién recibido. Si lo invalida → re-delega con el edit incorporado. Si no → procesa el edit como un cambio separado. |
 | Artefacto creado pero vacío (shell sin contenido) | TPM reporta artefacto con 0 secciones completadas | Se trata como "no existe" para la state machine. El SM permanece en la fase que requiere ese artefacto. El TPM puede eliminar el shell vacío si no tiene utilidad. |
 
 **Definición mecánica de "aprobado"**: un artefacto alcanza el estado
@@ -138,18 +148,22 @@ provee los datos (qué artefactos existen, cuáles están aprobados). La
 diferencia clave: **el SM no necesita recordar nada entre sesiones** — todo
 lo que necesita saber está en el RAG.
 
+[↑ Contenido](#contenido)
+
 ---
 
 ## Contenido relacionado
 
-- [Fast-Forward y Tiers de Activación](fast-forward.md) — gradiente de
+- [fastForward y Tiers de Activación](fast-forward.md) — gradiente de
   certeza, checklist F1-F4, tiers de ceremonia
-- [Delegación, PDC y Circuit Breaker](delegation-pdc.md) — contratos de
-  delegación, Post-Delegation Checkpoint, manejo de fallos
+- [Delegación, PDC y circuitBreaker](delegation-pdc.md) — delegationContracts,
+  Post-Delegation Checkpoint, manejo de fallos
 - [Protocolo de Recuperación](recovery.md) — recovery al inicio de sesión,
   historial de fallos
 - [Detalle de Fases 1-8](phases.md) — descripción completa de cada fase,
   matriz de roles × etapas
+
+[↑ Contenido](#contenido)
 
 ---
 
@@ -180,3 +194,5 @@ flowchart TD
     BLOCK --> MIM
     NEXT -->|"nueva fase"| DETECT
 ```
+
+[↑ Contenido](#contenido)

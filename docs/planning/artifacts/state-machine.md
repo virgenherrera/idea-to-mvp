@@ -8,13 +8,24 @@ tags: [state-machine, transiciones, draft, review, approved, rejected, cancelled
 
 # Máquina de Estados y Transiciones
 
-← [Índice principal](../../README.md) | [Planificación](../README.md) | [Artefactos](README.md)
+← [Índice principal](../../README.md) | [Planning](../README.md) | [Artifacts](README.md)
 
 Esta página detalla la máquina de estados que gobierna el ciclo de vida
 de un artefacto (`idea.md`, `spec.md`, `design.md`, `tasks.md`,
 `handoff.md`, `ops-runbook.md`), la operación `transition()` del
-[adaptador](tpm-adapter.md), la operación retirada `markComplete`, y la
-detección de drift semántico entre artefactos encadenados.
+[adapter](tpm-adapter.md), la operación retirada `markComplete`, y la
+detección de semanticDrift entre artefactos encadenados.
+
+---
+
+## Contenido
+
+- [Configuración de la State Machine](#configuración-de-la-state-machine)
+- [Operación transition(artifact, newState, reason?)](#operación-transitionartifact-newstate-reason)
+- [Operación ~~markComplete(artifact)~~ — Retirada](#operación-markcompleteartifact-retirada)
+- [Detección de semanticDrift](#detección-de-semanticdrift)
+
+---
 
 ## Configuración de la State Machine
 
@@ -62,9 +73,11 @@ Transiciones default:
 > invalidar todo el downstream.
 >
 > **TODO**: permitir que el MIM defina state machines custom durante
-> setup (Fase 1, configuración inicial) o via acuerdo de retrospectiva. El adaptador valida
+> setup (Fase 1, configuración inicial) o via acuerdo de retrospectiva. El adapter valida
 > transiciones contra la state machine configurada. Formato sugerido:
 > adjacency list en metadata del proyecto.
+
+[↑ Contenido](#contenido)
 
 ## Operación transition(artifact, newState, reason?)
 
@@ -86,6 +99,8 @@ Transiciones default:
 | Error: INVALID_STATE | `newState` no es un estado reconocido. |
 | Error: INVALID_TRANSITION | La transicion del estado actual a `newState` no esta permitida. |
 
+[↑ Contenido](#contenido)
+
 ## Operación ~~markComplete(artifact)~~ — Retirada
 
 > **Unificación de estado (R004-C1)**: `markComplete` se retira como
@@ -98,11 +113,13 @@ Transiciones default:
 > `transition(x, "approved", "gate passed")`. Ver la sección anterior
 > para la state machine completa.
 
-## Detección de Drift Semántico
+[↑ Contenido](#contenido)
+
+## Detección de semanticDrift
 
 La verificacion estructural (`MISSING_TRACE`, `STALE_DEPENDENCY`,
 `SCHEMA_VIOLATION`) detecta gaps en la forma de los artefactos. La
-deteccion de drift semantico verifica que el **significado** se preserve
+deteccion de semanticDrift verifica que el **significado** se preserve
 a lo largo de la cadena idea → spec → design → tasks.
 
 **Problema**: cuando agentes IA diferentes producen artefactos en
@@ -164,7 +181,7 @@ flowchart TD
 
 **Donde se ejecuta**:
 
-- En el paso **VERIFY** del PDC (despues de cada retorno de sub-agente)
+- En el paso **VERIFY** del PDC (despues de cada retorno de subAgent)
 - En la validacion de gate (antes de `transition(artifact, "approved")`)
 - El SM puede delegar este check al QA, que ya posee la personalidad
   esceptica adecuada para cuestionar trazabilidad
@@ -176,3 +193,5 @@ flowchart TD
 > (todas las secciones existen, todas las referencias apuntan a
 > artefactos reales) y fallar la semantica (una decision contradice
 > una restriccion upstream).
+
+[↑ Contenido](#contenido)

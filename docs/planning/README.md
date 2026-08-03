@@ -1,12 +1,12 @@
 ---
 id: planning/index
-title: "Modo 1 — Planificación"
+title: "Planning"
 mode: planning
 type: index
 tags: [planificación, idea, handoff, artefactos, fases]
 ---
 
-# Modo 1: Planificación
+# Planning
 
 ← [Índice principal](../README.md)
 
@@ -18,7 +18,7 @@ tags: [planificación, idea, handoff, artefactos, fases]
 
 | Documento | Qué define |
 |-----------|-----------|
-| [Modelo operativo](operational-model.md) | Modos del framework, ownership, límites, adaptador |
-| [Artefactos](artifacts/README.md) | 6 artefactos universales, TPM, state machine, adaptadores |
-| [Comportamiento SM](behavior/README.md) | SM como facade, fases 1-8, fast-forward, tiers, PDC |
+| [Modelo operativo](operational-model.md) | Modos del framework, ownership, límites, adapter |
+| [Artifacts](artifacts/README.md) | 6 artefactos universales, TPM, state machine, adapters |
+| [SM Behavior](behavior/README.md) | SM como facade, fases 1-8, fastForward, tiers, PDC |
 | [Roles](roles/README.md) | 5 roles default, contratos por fase, roles ad-hoc |

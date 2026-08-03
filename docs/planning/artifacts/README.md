@@ -8,7 +8,7 @@ tags: [artefactos, tpm, state-machine, adaptadores, rag]
 
 # Modelo de Artefactos
 
-← [Índice principal](../../README.md) | [Planificación](../README.md)
+← [Índice principal](../../README.md) | [Planning](../README.md)
 
 > El modelo de artefactos define QUÉ documentos produce un proyecto y qué
 > contiene cada uno. Es **independiente de la metodología** (Scrum, Kanban,
@@ -18,11 +18,22 @@ tags: [artefactos, tpm, state-machine, adaptadores, rag]
 > La metodología define CÓMO se organiza el trabajo (ceremonia, cadencia,
 > roles). Los artefactos son los mismos sin importar la metodología elegida.
 >
-> **Nota terminológica**: El *artifact store* es el sistema de
+> **Nota terminológica**: El *artifactStore* es el sistema de
 > almacenamiento (backend del TPM). El patrón *RAG* (Retrieval-Augmented
-> Generation) es CÓMO los agentes consultan el artifact store. No son
-> sinónimos: el artifact store es la infraestructura; RAG es el patrón
+> Generation) es CÓMO los agentes consultan el artifactStore. No son
+> sinónimos: el artifactStore es la infraestructura; RAG es el patrón
 > de acceso.
+
+---
+
+## Contenido
+
+- [Por Qué Estándares Internacionales](#por-qué-estándares-internacionales)
+- [La Columna Vertebral: ISO/IEC/IEEE 15288](#la-columna-vertebral-isoiecieee-15288)
+- [Documentos del Modelo](#documentos-del-modelo)
+- [Cadena de Artefactos — Flujo Completo](#cadena-de-artefactos-flujo-completo)
+- [Ownership — Quién Produce, Quién Consume, Quién Valida](#ownership-quién-produce-quién-consume-quién-valida)
+- [Preguntas Abiertas](#preguntas-abiertas)
 
 ---
 
@@ -31,8 +42,8 @@ tags: [artefactos, tpm, state-machine, adaptadores, rag]
 El modelo de artefactos NO es una invención del framework. Está alineado
 con estándares ISO/IEC/IEEE porque:
 
-1. **Portabilidad de adaptadores** — si los artefactos siguen un estándar,
-   cualquier sistema que implemente ese estándar puede ser adaptador:
+1. **Portabilidad de adapters** — si los artefactos siguen un estándar,
+   cualquier sistema que implemente ese estándar puede ser adapter:
    archivos locales, Jira, Asana, Basecamp, MS Project, un DBMS, un RAG
    remoto, engram, Confluence, Linear, o cualquier herramienta futura.
 
@@ -91,6 +102,8 @@ flowchart TD
 > descomposición que implementa está respaldado por ISO 21502 sec 7.6 y PMBOK
 > "Define Activities." Los demás siguen directamente sus estándares ISO.
 
+[↑ Contenido](#contenido)
+
 ---
 
 ## La Columna Vertebral: ISO/IEC/IEEE 15288
@@ -141,9 +154,11 @@ flowchart LR
 Validation, Disposal). Esos se mapean a las etapas post-ejecución (Verify,
 Accept, Retro) que se definen por separado.
 
+[↑ Contenido](#contenido)
+
 ---
 
-## Contenido
+## Documentos del Modelo
 
 Este modelo se documenta en las siguientes páginas:
 
@@ -151,16 +166,18 @@ Este modelo se documenta en las siguientes páginas:
   y contenido mínimo de cada artefacto.
 - [Metodología como Capa Intercambiable](methodology.md) — gobierno de
   metodología, lock por iteración, y protocolo de cambio.
-- [TPM e Interfaz del Adaptador](tpm-adapter.md) — el TPM como DBMS del
-  modelo, las operaciones sobre artefactos, y los adaptadores de
+- [TPM y universalInterface](tpm-adapter.md) — el TPM como DBMS del
+  modelo, las operaciones sobre artefactos, y los adapters de
   persistencia.
 - [Máquina de Estados y Transiciones](state-machine.md) — estados de un
   artefacto, la operación `transition()`, y la detección de drift
   semántico.
-- [Jerarquía de Work Items](work-items.md) — niveles L0-L4, dependencias,
+- [Jerarquía de workItems](work-items.md) — niveles L0-L4, dependencias,
   y el DAG de ejecución.
-- [Estrategia de Retrieval](retrieval.md) — Pattern A vs. Pattern B para
-  que los sub-agentes consulten el RAG.
+- [Estrategia de Retrieval](retrieval.md) — patternA vs. patternB para
+  que los subAgents consulten el RAG.
+
+[↑ Contenido](#contenido)
 
 ---
 
@@ -190,6 +207,8 @@ flowchart TD
     SPEC -.->|"trazabilidad"| DESIGN
     DESIGN -.->|"trazabilidad"| TASKS
 ```
+
+[↑ Contenido](#contenido)
 
 ---
 
@@ -270,14 +289,14 @@ flowchart TD
    de escritura (create, update, delete, transition) pasan por el TPM
    con criterio editorial (formato, completitud, consistencia). Las
    **lecturas son libres** — cualquier rol puede consultar el RAG
-   directamente vía Pattern B (topic_keys) sin intermediario. Ver
+   directamente vía patternB (topic_keys) sin intermediario. Ver
    [Estrategia de Retrieval](retrieval.md).
 
 4. **El handoff lo compila el TPM, no un rol productivo** — es una
    síntesis de artefactos previos, no contenido nuevo. El TPM aplica
    su criterio editorial para compilar un documento autocontenido.
 
-5. **ops-runbook se construye incrementalmente** — no es un artefacto de
+5. **opsRunbook se construye incrementalmente** — no es un artefacto de
    una sola fase. Se va construyendo como parte de los artifacts que
    apliquen al proyecto que se implementa: si es CLI → documentacion de
    flags y help, si es API → API docs, si es gRPC → protos, si es
@@ -286,6 +305,8 @@ flowchart TD
    arquitectura operativa. El formato final depende de lo que el
    proyecto SEA, no de una plantilla rigida.
 
+[↑ Contenido](#contenido)
+
 ---
 
 ## Relación con Otros Documentos
@@ -293,17 +314,19 @@ flowchart TD
 - [operational-model.md](../operational-model.md) — define los dos
   modos (planificación y ejecución). Este documento define los
   artefactos que el modo planificación produce.
-- [Comportamiento SM](../behavior/README.md) — define
+- [SM Behavior](../behavior/README.md) — define
   cómo el SM orquesta la producción de artefactos. El SM usa este
   modelo como referencia para saber qué artefactos deben existir en
   cada fase.
+
+[↑ Contenido](#contenido)
 
 ---
 
 ## Preguntas Abiertas
 
 1. ~~**¿Debe `ops-runbook.md` producirse en modo planificación o
-   post-ejecución?**~~ **RESUELTO**: post-ejecución. El ops-runbook
+   post-ejecución?**~~ **RESUELTO**: post-ejecución. El opsRunbook
    se produce en Fase 6 (Verificar) o Fase 7 (Aceptar), cuando ya
    existe código desplegable. DevSecOps lo escribe con input del
    design.md (infra) y los resultados de ejecución (métricas, configs).
@@ -317,3 +340,5 @@ flowchart TD
 3. **¿Debe el TPM validar contra los estándares ISO mecánicamente?** —
    es decir, ¿tener un schema formal por artefacto que se valida
    automáticamente? O ¿basta con el criterio editorial del TPM?
+
+[↑ Contenido](#contenido)

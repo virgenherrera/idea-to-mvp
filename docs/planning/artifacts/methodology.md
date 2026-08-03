@@ -8,7 +8,7 @@ tags: [gobernanza, lock, cambios, trazabilidad, metodologías, iso, ieee]
 
 # Metodología como Capa Intercambiable
 
-← [Índice principal](../../README.md) | [Planificación](../README.md) | [Artefactos](README.md)
+← [Índice principal](../../README.md) | [Planning](../README.md) | [Artifacts](README.md)
 
 La metodología define COMO se organiza el trabajo. Los artefactos definen
 QUE se produce. Son capas independientes.
@@ -23,19 +23,19 @@ QUE se produce. Son capas independientes.
 > UX) son funciones constantes con nombres methodology-specific.
 
 **Metodología como meta-artifact**: la eleccion de metodología se
-almacena en el artifact store como configuracion del proyecto. No es
+almacena en el artifactStore como configuracion del proyecto. No es
 un artefacto de producto — es un **meta-artifact** que configura el
 comportamiento del SM.
 
 - **Cuando se define**: el SM pregunta al MIM durante setup (Fase 1,
   configuración inicial): "Que metodología prefieres? Default: Scrum."
-- **Donde se almacena**: en el artifact store, seccion de metadata del
+- **Donde se almacena**: en el artifactStore, seccion de metadata del
   proyecto (no en un artefacto de producto).
 - **Cuando se revisa**: durante la retrospectiva (Fase 8), como
   candidato natural para "start doing" o "stop doing" — ej: "Start:
   usar Kanban en vez de Scrum para el proximo ciclo."
 - **Que afecta**: routing tables, gates, convocatoria, state machine
-  de work items, ceremonia. Los artefactos no cambian.
+  de workItems, ceremonia. Los artefactos no cambian.
 
 ```mermaid
 flowchart TD
@@ -58,7 +58,7 @@ flowchart TD
         A_OPS["ops-runbook.md\n(20000+ITIL)"]
     end
 
-    subgraph PERSIST["Capa de Persistencia (ADAPTADORES)"]
+    subgraph PERSIST["Capa de Persistencia (ADAPTERS)"]
         direction LR
         AD_LOCAL["Local"]
         AD_ENGRAM["Engram"]
@@ -69,6 +69,16 @@ flowchart TD
     METH -->|"define ceremonia\ny cadencia"| ARTIFACT_LAYER
     ARTIFACT_LAYER -->|"produce\ninformation items"| PERSIST
 ```
+
+---
+
+## Contenido
+
+- [Qué cambia con la metodología, qué NO cambia](#qué-cambia-con-la-metodología-qué-no-cambia)
+- [Mapeo rápido: mismos artefactos, diferente ceremonia](#mapeo-rápido-mismos-artefactos-diferente-ceremonia)
+- [Gobierno de Metodología — Lock, Cambio y Trazabilidad](#gobierno-de-metodología-lock-cambio-y-trazabilidad)
+
+---
 
 ## Qué cambia con la metodología, qué NO cambia
 
@@ -83,6 +93,8 @@ flowchart TD
 | **Cadencia de revisión** | SÍ | Scrum: cada sprint. Kanban: continua. PI Planning: cada PI |
 | **Cómo se gestionan las tareas** | SÍ | Scrum: sprint backlog. Kanban: board con WIP. Shape Up: hill chart |
 
+[↑ Contenido](#contenido)
+
 ## Mapeo rápido: mismos artefactos, diferente ceremonia
 
 | Artefacto | En Scrum | En Kanban | En Shape Up | En PI Planning |
@@ -93,6 +105,8 @@ flowchart TD
 | `tasks.md` | Sprint Backlog | Cards en el board | Scopes en el hill chart | Stories en el PI |
 | `handoff.md` | Sprint Review package | — (flujo continuo) | Hand-off post bet | System Demo package |
 | `ops-runbook.md` | Post-release runbook | Post-release runbook | Post-release runbook | Post-PI runbook |
+
+[↑ Contenido](#contenido)
 
 ---
 
@@ -376,3 +390,5 @@ Scrum sin ningún problema, porque ambos siguen el mismo schema ISO.
 > Scrumban demuestra que los items sobreviven la transición. Nuestro
 > modelo generaliza estos patrones a una metadata explícita por
 > artefacto.
+
+[↑ Contenido](#contenido)

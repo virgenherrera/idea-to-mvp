@@ -8,11 +8,27 @@ tags: [roles, contratos-por-fase, personalidad, input, output, ops-runbook]
 
 # Contratos por Fase
 
-← [Índice principal](../../README.md) | [Planificación](../README.md) | [Roles](README.md)
+← [Índice principal](../../README.md) | [Planning](../README.md) | [Roles](README.md)
 
 Cada sección es un contrato que el SM puede copiar directamente al lanzar
-un sub-agente. La **personalidad cambia por fase** — el mismo rol actúa
+un subAgent. La **personalidad cambia por fase** — el mismo rol actúa
 diferente según lo que se necesita.
+
+---
+
+## Contenido
+
+- [Fase 1 — Definir Idea](#fase-1-definir-idea)
+- [Fase 2 — Especificar](#fase-2-especificar)
+- [Fase 3 — Diseñar](#fase-3-diseñar)
+- [Fase 4 — Desglosar Tareas](#fase-4-desglosar-tareas)
+- [Fase 5 — Generar Handoff](#fase-5-generar-handoff)
+- [Fase 6 — Verificar (post-ejecución)](#fase-6-verificar-post-ejecución)
+- [Fase 7 — Aceptar](#fase-7-aceptar)
+- [Fase 8 — Retrospectiva](#fase-8-retrospectiva)
+- [Reglas de Activación Condicional](#reglas-de-activación-condicional)
+- [Cambio de Personalidad por Fase — Resumen Visual](#cambio-de-personalidad-por-fase-resumen-visual)
+- [Interacción entre Roles en una Misma Fase](#interacción-entre-roles-en-una-misma-fase)
 
 ---
 
@@ -66,6 +82,8 @@ Para ticket externo:
 > al PO para que NO las pregunte de nuevo — solo las registre como
 > respondidas y formule las que faltan.
 
+[↑ Contenido](#contenido)
+
 ---
 
 ## Fase 2 — Especificar
@@ -114,6 +132,8 @@ flowchart LR
 | **Input** | Revisar ACs que involucren interacción del usuario |
 | **Output esperado** | Observaciones de UX por AC: OK / friccioso / inconsistente + recomendación |
 | **NO hace** | NO diseña interfaces. NO crea wireframes. NO prioriza funcionalidades. |
+
+[↑ Contenido](#contenido)
 
 ---
 
@@ -165,6 +185,8 @@ flowchart LR
 | **Output esperado** | OK / problema detectado + alternativa sugerida |
 | **NO hace** | NO diseña interfaces. NO modifica la arquitectura. |
 
+[↑ Contenido](#contenido)
+
 ---
 
 ## Fase 4 — Desglosar Tareas
@@ -187,7 +209,7 @@ flowchart LR
 | **Personalidad** | Metódico, orientado a dependencias. Descompone el diseño en unidades mínimas ejecutables. Cada tarea tiene un solo responsable lógico, un AC trazable, y dependencias explícitas. Piensa en paralelización: "¿qué puede correr en paralelo sin conflicto?" Asigna lanes (auth, UI, infra, etc.) para agrupar tareas relacionadas. |
 | **Contexto del RAG** | topic_keys: `sdd/{project}/spec` + `sdd/{project}/design` |
 | **Input** | Descomponer el diseño en tareas atómicas ordenadas |
-| **Output esperado** | `tasks.md` con work items siguiendo el schema universal: id (formato L{n}-{seq}), type (L3 actividad / L4 sub-actividad), parent_id, título, descripción, depends_on con tipos (FS/SS/FF), blocked_by, acceptance_criteria (given/when/then), complexity (XS/S/M/L/XL), traces_to (AC de spec.md), lane (agrupación por feature/skill). Dependency graph completo. Lanes paralelos identificados. |
+| **Output esperado** | `tasks.md` con workItems siguiendo el schema universal: id (formato L{n}-{seq}), type (L3 actividad / L4 sub-actividad), parent_id, título, descripción, depends_on con tipos (FS/SS/FF), blocked_by, acceptance_criteria (given/when/then), complexity (XS/S/M/L/XL), traces_to (AC de spec.md), lane (agrupación por feature/skill). Dependency graph completo. Lanes paralelos identificados. |
 | **NO hace** | NO implementa. NO asigna a personas. NO ejecuta nada. NO modifica el diseño (si encuentra un gap, escala al SM). |
 | **Gate** | Sin dependencias cíclicas. Cada tarea mapeada a al menos un AC de `spec.md` (campo traces_to). Dependency graph con tipos FS/SS/FF. Lanes asignados. Orden de ejecución definido. |
 
@@ -213,6 +235,8 @@ flowchart LR
 | **Output esperado** | Veredicto por tarea: verificable / necesita detalle + sugerencia |
 | **NO hace** | NO reescribe tareas. NO agrega tareas nuevas. Solo valida verificabilidad. |
 
+[↑ Contenido](#contenido)
+
 ---
 
 ## Fase 5 — Generar Handoff
@@ -227,6 +251,8 @@ flowchart LR
 > **No hay roles productivos en esta fase.** El TPM compila el handoff
 > bajo instrucción del SM. Los roles ya hicieron su trabajo — sus
 > artefactos son los inputs del handoff.
+
+[↑ Contenido](#contenido)
 
 ---
 
@@ -275,6 +301,8 @@ flowchart LR
 | **Output esperado** | (1) Reporte de seguridad: riesgos mitigados / pendientes / nuevos. Severidad. Recomendaciones. (2) `ops-runbook.md` secciones: descripción del servicio, arquitectura de despliegue, monitoreo y alertas, procedimientos operativos (deploy, rollback, secrets), contactos y escalación. |
 | **NO hace** | NO corrige vulnerabilidades. NO implementa cambios. NO escribe secciones de troubleshooting técnico (eso es Dev Lead). Reporta al SM. |
 
+[↑ Contenido](#contenido)
+
 ---
 
 ## Fase 7 — Aceptar
@@ -313,6 +341,8 @@ originales. Output: voto + justificación en 1-3 oraciones.
 detiene la aceptación. REQUEST CHANGES requiere re-trabajo y nueva ronda.
 APPROVE unánime permite cerrar.
 
+[↑ Contenido](#contenido)
+
 ---
 
 ## Fase 8 — Retrospectiva
@@ -337,6 +367,8 @@ En retrospectiva, cada rol evalúa SU PROPIA eficacia:
 **Personalidad en Fase 8**: todos los roles son **reflexivos y honestos**.
 No defienden — evalúan. Output: 1-3 lecciones aprendidas + 1 mejora
 concreta para el siguiente ciclo.
+
+[↑ Contenido](#contenido)
 
 ---
 
@@ -398,7 +430,7 @@ flowchart TD
 | **Sin seguridad especial** | igual | igual | igual | ⚠️ solo Design (mínimo) | depende |
 | **Developer solo (tier bajo)** | Idea+Spec condensado | Design+Tasks condensado | Spec+Verify condensado | ⚠️ mínimo o ❌ | depende |
 | **Challenge con timebox** | Idea (fast) | Design+Tasks (fast) | Verify (fast) | ❌ salvo que lo pidan | ❌ salvo que lo pidan |
-| **Bug en producción (fast-forward)** | ❌ (no hay idea que definir) | Verify (diagnóstico) | Verify (reproducción) | ⚠️ si es security bug | ❌ |
+| **Bug en producción (fastForward)** | ❌ (no hay idea que definir) | Verify (diagnóstico) | Verify (reproducción) | ⚠️ si es security bug | ❌ |
 | **Feature en proyecto maduro** | Spec (ACs del feature) | Design, Tasks | Spec, Verify | depende del feature | depende del feature |
 
 ### Lo que significa "condensado"
@@ -420,12 +452,12 @@ comprimen en una sola invocación. Por ejemplo:
 
 > **El contenido NO se reduce** — los artefactos siguen el mismo schema
 > ISO. Lo que se reduce es la CEREMONIA: menos invocaciones, menos
-> roundtrips SM↔sub-agente, menos status reports intermedios.
+> roundtrips SM↔subAgent, menos status reports intermedios.
 
 ### Ejemplo de contrato condensado: PO en developer solo
 
 ```plaintext
-Contrato de delegación (condensado):
+delegationContract (condensado):
 ---------------------------------------------
 Rol:            PO (condensado Fase 1 + Fase 2)
 Personalidad:   Fase 1→2 híbrida: empieza curioso y exploratorio
@@ -449,6 +481,8 @@ Gate:           Preguntas de negocio respondidas (idea.md aprobado) +
 > **Regla**: un contrato condensado SIEMPRE marca la transición de personalidad
 > de forma explícita en su output. Sin marca, el SM no puede validar que
 > ambas fases se ejecutaron.
+
+[↑ Contenido](#contenido)
 
 ---
 
@@ -498,6 +532,8 @@ La personalidad de cada rol **no es estática** — el mismo QA es
 revisa verificabilidad de tareas, "riguroso" cuando verifica la
 implementación, y "juez" cuando vota aceptación. El SM elige la
 personalidad correcta consultando este documento.
+
+[↑ Contenido](#contenido)
 
 ---
 
@@ -573,3 +609,5 @@ el conflicto — no tiene competencia técnica ni de producto. En cambio:
 4. Si el conflicto es de seguridad (DevSecOps vs cualquier otro): DevSecOps
    tiene prioridad en decisiones de seguridad (principio de precaución).
 5. Para cualquier otro caso: el SM escala al MIM.
+
+[↑ Contenido](#contenido)

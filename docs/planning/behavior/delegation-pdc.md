@@ -6,9 +6,23 @@ type: spec
 tags: [delegación, pdc, echo, verify, mark, decide, contrato-delegación, status-report, circuit-breaker]
 ---
 
-# Delegación, PDC y Circuit Breaker
+# Delegación, PDC y circuitBreaker
 
-← [Índice principal](../../README.md) | [Planificación](../README.md) | [Comportamiento SM](README.md)
+← [Índice principal](../../README.md) | [Planning](../README.md) | [SM Behavior](README.md)
+
+---
+
+## Contenido
+
+- [Principio](#principio)
+- [Mapa de Convocatoria por Fase](#mapa-de-convocatoria-por-fase)
+- [Reglas de Activación Condicional](#reglas-de-activación-condicional)
+- [Regla cardinal: el SM NUNCA toca archivos, SIEMPRE delega](#regla-cardinal-el-sm-nunca-toca-archivos-siempre-delega)
+- [El TPM: gestor operativo del RAG](#el-tpm-gestor-operativo-del-rag)
+- [Protocolo cuando el MIM no puede responder](#protocolo-cuando-el-mim-no-puede-responder)
+- [delegationContract a subAgents](#delegationcontract-a-subagents)
+
+---
 
 ## Principio
 
@@ -27,6 +41,8 @@ El SM es el ÚNICO rol que persiste a lo largo de todas las fases. Los demás
 roles (default y ad-hoc) entran y salen según la fase los requiera.
 
 ---
+
+[↑ Contenido](#contenido)
 
 ## Mapa de Convocatoria por Fase
 
@@ -70,6 +86,8 @@ flowchart LR
 
 ---
 
+[↑ Contenido](#contenido)
+
 ## Reglas de Activación Condicional
 
 No todos los roles se activan siempre. El SM decide según el contexto:
@@ -91,32 +109,36 @@ cualquier rol ad-hoc con su justificación.
 
 ---
 
+[↑ Contenido](#contenido)
+
 ## Regla cardinal: el SM NUNCA toca archivos, SIEMPRE delega
 
 El SM (el agente principal) no lee archivos, no escribe archivos, no edita
 archivos, no ejecuta comandos, no produce artefactos. **CERO excepciones.**
-Ni siquiera el handoff — eso también lo hace un sub-agente.
+Ni siquiera el handoff — eso también lo hace un subAgent.
 
 El SM solo hace tres cosas:
 
 1. Orquestar (convocar roles, definir contratos, validar gates)
 2. Comunicarse con el MIM (preguntar, reportar, bloquear)
-3. Decidir qué sub-agente lanzar y con qué contrato
+3. Decidir qué subAgent lanzar y con qué contrato
 
 Cualquier tentación de "hacerlo rápido yo mismo" es exactamente la
 racionalización que causa drifts. Si hay que hacerlo, hay que delegarlo.
 
 > **Aclaración**: "Nunca lee archivos" significa que el SM nunca procesa
-> artefactos crudos del artifact store. El SM SÍ procesa: (1) resúmenes
-> de estado del TPM, (2) reportes estructurados de sub-agentes (status
+> artefactos crudos del artifactStore. El SM SÍ procesa: (1) resúmenes
+> de estado del TPM, (2) reportes estructurados de subAgents (status
 > reports del PDC), (3) metadata de transiciones. La distinción es:
 > artefactos crudos → nunca; información procesada/resumida → sí.
 
 ---
 
+[↑ Contenido](#contenido)
+
 ## El TPM: gestor operativo del RAG
 
-Existe un sub-agente permanente que NO es parte del equipo: el
+Existe un subAgent permanente que NO es parte del equipo: el
 **TPM (Technical Program Manager)**. Es el dueño operativo del RAG y el
 puente entre las decisiones del equipo y su materialización como artefactos.
 
@@ -137,11 +159,11 @@ El TPM NO es un embudo tonto de datos. Tiene criterio propio para:
   artefactos necesarios estén aprobados y consistentes entre sí antes de
   que el SM declare el handoff listo.
 
-Por default, el acceso de lectura sigue el **Patrón B**: el SM no
-intermedia el contenido del RAG hacia el rol convocado. El contrato de
-delegación incluye los `topic_keys` que el rol necesita, y el propio
-sub-agente los lee directamente contra el RAG. El TPM solo interviene
-para persistir (escribir), no para servir lecturas. El Patrón A —el TPM
+Por default, el acceso de lectura sigue el **patternB**: el SM no
+intermedia el contenido del RAG hacia el rol convocado. El delegationContract
+incluye los `topic_keys` que el rol necesita, y el propio
+subAgent los lee directamente contra el RAG. El TPM solo interviene
+para persistir (escribir), no para servir lecturas. El patternA —el TPM
 sirviendo un slice curado— queda reservado para casos excepcionales (ver
 tabla de operaciones más abajo).
 
@@ -152,9 +174,9 @@ sequenceDiagram
     participant ROL as Rol Convocado (PO, QA, etc.)
     participant TPM as TPM
 
-    SM->>ROL: Contrato de delegación\n(incluye topic_keys a leer)
+    SM->>ROL: delegationContract\n(incluye topic_keys a leer)
     activate ROL
-    ROL->>ROL: Lee directamente del RAG\nvía topic_key (Patrón B)
+    ROL->>ROL: Lee directamente del RAG\nvía topic_key (patternB)
     ROL-->>SM: Resultado + Status Report
     deactivate ROL
     SM->>TPM: "Persiste este resultado en idea.md"
@@ -182,12 +204,14 @@ sequenceDiagram
 | **Crear** | Primera vez que una fase produce un artefacto | `idea.md` no existe → el TPM lo crea con estructura y estándares |
 | **Actualizar** | Una fase completa información faltante o corrige algo | QA identifica un AC ambiguo → el TPM actualiza `spec.md` |
 | **Transition** | El SM valida que el gate pasó y transiciona el artefacto | Gate aprobado → `transition("idea", "approved", "gate passed")` |
-| **Leer** | Cuando un agente necesita información | Sub-agente lee directamente vía `topic_key` (Patrón B). El TPM no interviene en lecturas. |
-| **Servir contexto** | Solo para Patrón A (8+ consumidores o búsqueda fuzzy) | Default: los agentes leen directo. El TPM solo sirve slices curados en escenarios excepcionales de alto fan-out. |
+| **Leer** | Cuando un agente necesita información | subAgent lee directamente vía `topic_key` (patternB). El TPM no interviene en lecturas. |
+| **Servir contexto** | Solo para patternA (8+ consumidores o búsqueda fuzzy) | Default: los agentes leen directo. El TPM solo sirve slices curados en escenarios excepcionales de alto fan-out. |
 | **Verificar consistencia** | Antes de generar handoff Y después de cualquier Update a un artefacto upstream | El TPM revisa que artefactos downstream no se contradigan con el upstream editado. Reporta stale artifacts al SM. |
 | **Eliminar** | Excepcional. Artefacto obsoleto o duplicado. | Rara vez — el TPM documenta la razón |
 
 ---
+
+[↑ Contenido](#contenido)
 
 ## Protocolo cuando el MIM no puede responder
 
@@ -222,9 +246,11 @@ cuello de botella.
 
 ---
 
-## Contrato de Delegación a Sub-Agentes
+[↑ Contenido](#contenido)
 
-Cada vez que el SM convoca a un sub-agente, DEBE definir un contrato
+## delegationContract a subAgents
+
+Cada vez que el SM convoca a un subAgent, DEBE definir un contrato
 explícito con estos campos:
 
 ### Campos obligatorios del contrato
@@ -232,30 +258,30 @@ explícito con estos campos:
 | Campo | Descripción | Ejemplo |
 |-------|-------------|---------|
 | **Rol** | Qué rol del equipo representa | `PO`, `QA`, `Dev Lead` |
-| **Personalidad** | Cómo se comporta el sub-agente (tono, enfoque, prioridades) | "Riguroso con la testeabilidad, escéptico de ACs vagos" |
+| **Personalidad** | Cómo se comporta el subAgent (tono, enfoque, prioridades) | "Riguroso con la testeabilidad, escéptico de ACs vagos" |
 | **Contexto** | Qué información recibe del RAG (y SOLO esa) | `idea.md` para fase de spec |
 | **Input** | Qué se le pide que haga, con alcance acotado | "Validar que cada AC de spec.md sea verificable" |
 | **Output esperado** | Qué forma tiene el resultado que debe devolver | "Lista de ACs con veredicto: verificable / no verificable + razón" |
-| **Status Report** | Formato obligatorio en el output del sub-agente | Bloque Status/Progress/Blocker al final |
+| **Status Report** | Formato obligatorio en el output del subAgent | Bloque Status/Progress/Blocker al final |
 
 ### Supervisión Post-Hoc (patrón probado)
 
-Los sub-agentes son fire-and-forget: el SM los lanza y recibe el resultado
+Los subAgents son fire-and-forget: el SM los lanza y recibe el resultado
 final. NO hay canal bidireccional en tiempo real. La supervisión es
 **reactiva**: se evalúa DESPUÉS de cada retorno, no durante la ejecución.
 
 Este patrón está validado empíricamente en proyectos precursores del
 framework.
 
-> **Trust but verify**: El PDC y el circuit breaker son el equivalente de
+> **Trust but verify**: El PDC y el circuitBreaker son el equivalente de
 > "confiar pero verificar" adaptado a agentes IA. No es desconfianza — es
-> que los sub-agentes carecen de memoria persistente y contexto
+> que los subAgents carecen de memoria persistente y contexto
 > compartido, por lo que la verificación post-hoc sustituye la confianza
 > interpersonal que existe en equipos humanos.
 
 #### 1. Status Report obligatorio
 
-Todo sub-agente DEBE incluir este bloque en su output final:
+Todo subAgent DEBE incluir este bloque en su output final:
 
 ```plaintext
 Status: [SUCCESS | PARTIAL | FAILED | BLOCKED]
@@ -268,15 +294,15 @@ Sin este bloque, el SM trata el resultado como FAILED.
 
 #### 2. Post-Delegation Checkpoint (PDC)
 
-Después de CADA retorno de sub-agente, el SM ejecuta 4 pasos obligatorios:
+Después de CADA retorno de subAgent, el SM ejecuta 4 pasos obligatorios:
 
 ```mermaid
 sequenceDiagram
     participant SM as SM (Orquestador)
-    participant SUB as Sub-agente (Rol)
+    participant SUB as subAgent (Rol)
     participant TPM as TPM
 
-    SM->>SUB: Contrato de delegación
+    SM->>SUB: delegationContract
     activate SUB
     SUB->>SM: Output final + Status Report
     deactivate SUB
@@ -289,7 +315,7 @@ sequenceDiagram
     SM->>SM: 4. DECIDE — ¿avanzar, re-delegar, o escalar al MIM?
 ```
 
-El PDC NO es opcional. No se puede lanzar otro sub-agente sin haber
+El PDC NO es opcional. No se puede lanzar otro subAgent sin haber
 completado los 4 pasos del PDC anterior.
 
 **Excepción: Fase 7 (Aceptar) — lanzamiento paralelo.** En Fase 7,
@@ -309,7 +335,7 @@ APPROVE y REQUEST CHANGES (sin BLOCK), el SM escala al MIM con las
 posiciones de ambos lados. El MIM decide. En ausencia de respuesta del
 MIM, se aplica REQUEST CHANGES como default conservador.
 
-#### 3. Circuit Breaker
+#### 3. circuitBreaker
 
 Si 3 delegaciones consecutivas al mismo rol fallan (Status: FAILED):
 
@@ -320,7 +346,7 @@ Si 3 delegaciones consecutivas al mismo rol fallan (Status: FAILED):
 
 **Cap para PARTIAL sin progreso**: si 3 re-delegaciones consecutivas al
 mismo rol devuelven PARTIAL con el mismo progreso (X/Y sin cambio), el
-SM trata la tercera como FAILED y aplica el circuit breaker. Progreso
+SM trata la tercera como FAILED y aplica el circuitBreaker. Progreso
 estancado equivale a fallo.
 
 **Alcance del counter**: el contador de fallos consecutivos es de
@@ -329,7 +355,7 @@ resetea a 0. Esto es intencional: cross-session, el TPM mantiene un
 historial de delegaciones fallidas como metadata del artefacto
 afectado, y el SM puede consultarlo al inicio de sesión para ajustar
 la estrategia (ver [recovery.md](recovery.md) sección "Historial de
-Fallos"). El circuit breaker NO es context-resilient en el sentido de
+Fallos"). El circuitBreaker NO es context-resilient en el sentido de
 sobrevivir compaction — es un mecanismo de protección intra-sesión.
 
 > **Regla de historial obligatorio**: Si un artefacto acumula 3+ fallos
@@ -353,16 +379,16 @@ crash) porque:
 
 - **Los artefactos son la memoria** — el estado del proyecto se deriva del
   RAG, no del contexto del SM
-- **Las reglas viajan como texto** — compact rules se inyectan en el
-  contrato del sub-agente, no dependen de que el SM retenga contexto
-- **Skill resolution feedback** — los sub-agentes reportan si recibieron
+- **Las reglas viajan como texto** — compactRules se inyectan en el
+  delegationContract del subAgent, no dependen de que el SM retenga contexto
+- **Skill resolution feedback** — los subAgents reportan si recibieron
   las reglas correctamente (`injected` / `self-loaded` / `none`). Si
   reportan `none`, el SM sabe que perdió contexto y debe re-resolver
 
 ### Ejemplo de contrato completo
 
 ```plaintext
-Contrato de delegación:
+delegationContract:
 ─────────────────────────────────────────────
 Rol:           QA
 Personalidad:  Escéptico. Asume que los ACs están mal escritos hasta
@@ -390,7 +416,7 @@ el output + status report en conjunto:
 
 ```mermaid
 flowchart TD
-    OUTPUT["Sub-agente devuelve\noutput + Status Report"]
+    OUTPUT["subAgent devuelve\noutput + Status Report"]
     STATUS{{"Status Report\npresente?"}}
     NO_STATUS["Tratar como FAILED.\nRe-delegar con contrato\nmás explícito."]
     ECHO{{"ECHO: ¿resultado\ncoherente con contrato?"}}
@@ -414,7 +440,7 @@ flowchart TD
     DECIDE -->|Bloqueado| ESCALATE
 ```
 
-> **Drift semantico en VERIFY**: el paso VERIFY no solo valida
+> **semanticDrift en VERIFY**: el paso VERIFY no solo valida
 > completitud estructural — tambien verifica que el contenido del
 > artefacto producido sea semanticamente consistente con los artefactos
 > upstream. El TPM ejecuta `verifyConsistency` en modo semantico para
@@ -422,16 +448,18 @@ flowchart TD
 > (drift menor). Si se detecta drift critico, el SM bloquea la
 > aprobacion y re-delega. Si se detecta drift menor, el SM consulta al
 > MIM antes de proceder. Ver
-> [Detección de Drift Semántico](../artifacts/state-machine.md#detección-de-drift-semántico)
+> [Detección de semanticDrift](../artifacts/state-machine.md#detección-de-semanticdrift)
 > para la definicion completa de indicadores y niveles de severidad.
 
-### Qué pasa cuando un sub-agente falla
+### Qué pasa cuando un subAgent falla
 
 | Status Report | Acción del SM |
 |---------------|--------------|
-| FAILED | Evaluar: ¿contrato claro? Si no → mejorar contrato, re-delegar. Si sí → re-delegar con scope más acotado. Incrementar counter del circuit breaker. |
-| PARTIAL | Re-delegar SOLO la parte faltante, pasando lo completado como contexto. NO incrementa circuit breaker (el agente sí trabajó). |
+| FAILED | Evaluar: ¿contrato claro? Si no → mejorar contrato, re-delegar. Si sí → re-delegar con scope más acotado. Incrementar counter del circuitBreaker. |
+| PARTIAL | Re-delegar SOLO la parte faltante, pasando lo completado como contexto. NO incrementa circuitBreaker (el agente sí trabajó). |
 | BLOCKED + Blocker descrito | Evaluar si el blocker es resoluble por el SM (re-enrutar) o requiere MIM (escalar). |
 | BLOCKED sin Blocker | Tratar como FAILED. |
 | Sin Status Report | Tratar como FAILED. Re-delegar con instrucciones explícitas del formato requerido. |
-| SUCCESS pero output incoherente | ECHO falla. Re-delegar con contrato más acotado. Incrementar circuit breaker. |
+| SUCCESS pero output incoherente | ECHO falla. Re-delegar con contrato más acotado. Incrementar circuitBreaker. |
+
+[↑ Contenido](#contenido)

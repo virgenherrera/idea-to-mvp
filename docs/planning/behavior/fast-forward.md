@@ -1,16 +1,16 @@
 ---
 id: planning/behavior/fast-forward
-title: "Fast-Forward"
+title: "fastForward"
 mode: planning
 type: spec
 tags: [fast-forward, gradiente-certeza, f1-f4, tiers, activación]
 ---
 
-# Fast-Forward y Tiers de Activación
+# fastForward y Tiers de Activación
 
-← [Índice principal](../../README.md) | [Planificación](../README.md) | [Comportamiento SM](README.md)
+← [Índice principal](../../README.md) | [Planning](../README.md) | [SM Behavior](README.md)
 
-## Fast-Forward Contextual — Gradiente de Certeza
+## fastForward Contextual — Gradiente de Certeza
 
 El SM no avanza siempre una fase a la vez. Al recibir un input, evalúa
 **qué tan determinista es la solución dado el contexto existente** y
@@ -38,7 +38,7 @@ flowchart TD
 ### Quién decide
 
 **El SM decide autónomamente** usando un checklist de 4 factores.
-No es el MIM quien dice "ve en fast-forward" — el SM evalúa y decide.
+No es el MIM quien dice "ve en fastForward" — el SM evalúa y decide.
 
 ### Checklist de certeza (obligatorio, auditable)
 
@@ -77,7 +77,7 @@ conclusión) para que la decisión sea auditable:
 
 El SM instruye al TPM para persistir el score F1-F4 y el reasoning en
 `idea.md` sección "Decisiones tomadas" como entrada con formato:
-`[FAST-FORWARD] F1={n}, F2={n}, F3={n}, F4={n}. Total={n} → {certeza}.
+`[FASTFORWARD] F1={n}, F2={n}, F3={n}, F4={n}. Total={n} → {certeza}.
 Razón: {resumen}.` Esto garantiza auditabilidad cross-session.
 
 ### Ejemplos resueltos de frontera
@@ -88,7 +88,7 @@ Razón: {resumen}.` Esto garantiza auditabilidad cross-session.
 | "Agrega auth con JWT" (sin codebase) | 0 | 1 | 1 | 0 | 2 | Baja | Idea + preguntas |
 | "Agrega auth con JWT" (codebase Express existente) | 0 | 1 | 1 | 2 | 4 | Media | Idea + spec parcial |
 | "Crea módulo OTEL" (codebase con NestJS) | 0 | 2 | 2 | 2 | 6 | Alta | Hasta handoff |
-| "Epic X ya groomeado" (spec+design+tasks en RAG) | 2 | 2 | 2 | 2 | 8 | Alta | Fast-forward a ejecución |
+| "Epic X ya groomeado" (spec+design+tasks en RAG) | 2 | 2 | 2 | 2 | 8 | Alta | fastForward a ejecución |
 | "Implementa pagos con Stripe" (sin codebase) | 0 | 1 | 1 | 0 | 2 | Baja | F2=1: Stripe es estándar PERO tiene variantes (checkout, elements, custom). F3=1: pagos es acotado pero requiere decisiones (moneda, suscripciones, webhooks). |
 | "Agrega logging con Winston" (codebase Node existente) | 0 | 2 | 2 | 2 | 6 | Alta | F2=2: Winston es estándar abierto sin variantes significativas. F3=2: logging es determinista — configuración, transports, formato. |
 | "Migra de REST a GraphQL" (API existente) | 1 | 1 | 0 | 2 | 4 | Media | F2=1: GraphQL es estándar PERO cada migración es diferente. F3=0: infinitas interpretaciones — qué endpoints migrar, schema design, N+1. |
@@ -104,14 +104,14 @@ Razón: {resumen}.` Esto garantiza auditabilidad cross-session.
 Vista alternativa: el quadrant chart ubica cada ejemplo según cuánto
 contexto existe (eje X) y cuán determinista es el dominio (eje Y) — los
 casos en el cuadrante superior derecho son los candidatos naturales a
-fast-forward completo.
+fastForward completo.
 
 ```mermaid
 quadrantChart
     title Gradiente de Certeza
     x-axis Bajo Contexto --> Alto Contexto
     y-axis Dominio Ambiguo --> Dominio Determinista
-    quadrant-1 Fast-forward completo
+    quadrant-1 fastForward completo
     quadrant-2 Spec + diseño parcial
     quadrant-3 Idea + preguntas al MIM
     quadrant-4 Spec + diseño parcial
@@ -122,7 +122,7 @@ quadrantChart
     Epic groomeado: [0.95, 0.95]
 ```
 
-### Fast-forward también aplica MID-CYCLE
+### fastForward también aplica MID-CYCLE
 
 No solo al inicio. Ejemplos:
 
@@ -130,20 +130,20 @@ No solo al inicio. Ejemplos:
   reproduce → diagnostica → fix → promueve al ambiente apropiado.
   No pasa por Idea → Spec → Design.
 - **Epic ya groomeado** → todo en el RAG → SM detecta artefactos
-  aprobados → fast-forward directo a ejecución.
+  aprobados → fastForward directo a ejecución.
 
-> **Contrato de entrada para bug fast-forward**: el Modo 2 (Ejecución)
+> **Contrato de entrada para bug fastForward**: execution
 > requiere `handoff.md` como contrato de entrada estándar. Para bug fixes
-> escalados desde Modo 3 o detectados mid-cycle, el contexto diagnóstico
+> escalados desde operation o detectados mid-cycle, el contexto diagnóstico
 > (descripción del bug, pasos de reproducción, área afectada) actúa como
-> contrato de entrada al Modo 2 en lugar de un `handoff.md` formal.
+> contrato de entrada a execution en lugar de un `handoff.md` formal.
 
 ---
 
 ## Tiers de Activación
 
 El SM determina el **tier de ceremonia** al inicio de cada ciclo usando el
-score de fast-forward (F1-F4). El tier define cuánta ceremonia se aplica,
+score de fastForward (F1-F4). El tier define cuánta ceremonia se aplica,
 no qué artefactos se producen — los artefactos son universales.
 
 ```mermaid
@@ -154,7 +154,7 @@ flowchart TD
     CHECK -->|"6-8"| LIGERO["Tier Ligero\nCeremonia mínima"]
 
     COMPLETO --> C_OUT["Todos los roles\nTodos los gates\nDispatch normal"]
-    ESTANDAR --> E_OUT["3-4 roles por fase\nGates estándar\nFast-forward parcial"]
+    ESTANDAR --> E_OUT["3-4 roles por fase\nGates estándar\nfastForward parcial"]
     LIGERO --> L_OUT["1-2 roles esenciales\nGates comprimidos\nDispatch ultra-comprimido"]
 ```
 
@@ -163,7 +163,7 @@ flowchart TD
 | Tier | Score | Ceremonia | Roles | Dispatch | Ideal para |
 |------|-------|-----------|-------|----------|------------|
 | **Ligero** | 6-8 | Mínima. SM puede comprimir múltiples fases en una sola delegación. | 1-2 roles (los estrictamente necesarios para la fase) | Comprimido o ultra-comprimido | Bugs, epics ya groomeados, estándar abierto puro |
-| **Estándar** | 3-5 | Normal. Fases secuenciales con fast-forward parcial posible. | 3-4 roles según fase | Normal | Features nuevos, dominio acotado con decisiones pendientes |
+| **Estándar** | 3-5 | Normal. Fases secuenciales con fastForward parcial posible. | 3-4 roles según fase | Normal | Features nuevos, dominio acotado con decisiones pendientes |
 | **Completo** | 0-2 | Total. Toda fase ejecutada, todo rol convocado, todo gate enforced. | Todos los roles default + posibles ad-hoc | Normal (sin compresión) | Productos nuevos, alta ambigüedad, regulados, misión crítica |
 
 ### Qué cambia por tier

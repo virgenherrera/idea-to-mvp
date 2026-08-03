@@ -8,7 +8,7 @@ tags: [recovery, circuit-breaker, fallos, escalación, rollback]
 
 # Protocolo de Recuperación
 
-← [Índice principal](../../README.md) | [Planificación](../README.md) | [Comportamiento SM](README.md)
+← [Índice principal](../../README.md) | [Planning](../README.md) | [SM Behavior](README.md)
 
 ## Recovery protocol (inicio de sesión)
 
@@ -32,9 +32,9 @@ sequenceDiagram
 
 ## Historial de Fallos
 
-El circuit breaker protege intra-sesion, pero los fallos tambien se
+El circuitBreaker protege intra-sesion, pero los fallos tambien se
 registran cross-session en `history()` del artefacto afectado (ver
-[TPM e Interfaz del Adaptador](../artifacts/tpm-adapter.md#historyartifact)).
+[TPM y universalInterface](../artifacts/tpm-adapter.md#historyartifact)).
 Esto permite al SM aprender
 de fallos anteriores al recuperar estado.
 
@@ -56,7 +56,7 @@ Formato de registro (todos comparten campos base `action: "failure"`,
 { action: "failure", type: "pdc_rejection", step: "VERIFY",
   role: "Dev Lead", reason: "output no cubre 2 de 5 ACs", phase: 3 }
 
-# Ejemplo: circuit breaker
+# Ejemplo: circuitBreaker
 { action: "failure", type: "circuit_breaker",
   role: "QA", consecutive: 3, phase: 6 }
 ```
@@ -70,7 +70,7 @@ Formato de registro (todos comparten campos base `action: "failure"`,
 3. Si existen fallos, el SM ajusta la estrategia antes de re-delegar:
    - **Rechazo PDC recurrente** — contrato mas explicito, personalidad
      del rol ajustada, scope mas acotado.
-   - **Circuit breaker previo** — cambiar enfoque del rol o escalar
+   - **circuitBreaker previo** — cambiar enfoque del rol o escalar
      tier desde el inicio.
    - **Escalacion resuelta** — inyectar la resolucion del MIM como
      contexto explicito en el nuevo contrato.

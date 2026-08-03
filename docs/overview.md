@@ -16,6 +16,20 @@ tags: [actores, pipeline, modos, roles, artefactos, diagrama]
 
 ---
 
+## Contenido
+
+- [Actores y Roles](#actores-y-roles)
+- [Modos de Funcionamiento](#modos-de-funcionamiento)
+- [Pipeline Completo](#pipeline-completo)
+- [Artifacts](#artifacts)
+- [Máquina de Estados de Artefactos](#máquina-de-estados-de-artefactos)
+- [Modelo de Delegación](#modelo-de-delegación)
+- [fastForward](#fastforward)
+- [artifactStore y Adapters](#artifactstore-y-adapters)
+- [Qué Sigue (áreas TBD)](#qué-sigue-áreas-tbd)
+
+---
+
 ## Actores y Roles
 
 El framework opera con tres capas de actores: el humano (MIM), la
@@ -29,7 +43,7 @@ flowchart TD
 
     subgraph INFRA["Infraestructura"]
         SM["SM\n(Session Manager)\nFacade / Orquestador"]
-        TPM["TPM\n(Technical Program Manager)\nDBMS del artifact store"]
+        TPM["TPM\n(Technical Program Manager)\nDBMS del artifactStore"]
     end
 
     subgraph DEFAULT_TEAM["Equipo Default (5 roles)"]
@@ -44,7 +58,7 @@ flowchart TD
     ADHOC["Roles Ad-Hoc\n(DBA, Performance Eng,\nDomain Expert, etc.)"]
 
     MIM -->|"toda interacción"| SM
-    SM -->|"contratos de delegación"| DEFAULT_TEAM
+    SM -->|"delegationContracts"| DEFAULT_TEAM
     SM -->|"contratos ad-hoc"| ADHOC
     SM -->|"instrucciones CRUD"| TPM
     TPM -->|"estado de artefactos"| SM
@@ -55,13 +69,15 @@ flowchart TD
 Reglas clave:
 
 - El SM **nunca produce contenido** --- solo orquesta, convoca y valida gates.
-- El TPM **es el único que escribe** en el artifact store --- con criterio editorial.
-- Los roles son sub-agentes con personalidad que **cambia por fase**.
+- El TPM **es el único que escribe** en el artifactStore --- con criterio editorial.
+- Los roles son subAgents con personalidad que **cambia por fase**.
 - El SM puede **extender el equipo** con roles ad-hoc justificados.
 
 > Detalle: [roles](planning/roles/README.md) (contratos por fase) y
 > [comportamiento SM](planning/behavior/README.md)
 > (reglas del SM).
+
+[↑ Contenido](#contenido)
 
 ---
 
@@ -73,19 +89,19 @@ entre ambos modos: el handoff.
 ```mermaid
 %% Dos modos del framework y su interfaz
 flowchart LR
-    subgraph PLAN["MODO PLANIFICACIÓN"]
+    subgraph PLAN["PLANNING"]
         direction TB
         P1["Entrada: idea, ticket,\nchallenge, spec parcial"]
         P2["Equipo como\nlentes de revisión"]
-        P3["Escribe en:\nartifact store\n(NUNCA en el repo)"]
+        P3["Escribe en:\nartifactStore\n(NUNCA en el repo)"]
     end
 
     HANDOFF["handoff.md\n(contrato entre modos)"]
 
-    subgraph EXEC["MODO EJECUCIÓN"]
+    subgraph EXEC["EXECUTION"]
         direction TB
         E1["Entrada:\nhandoff + AGENTS.md"]
-        E2["Orquestador\n+ sub-agentes"]
+        E2["Orquestador\n+ subAgents"]
         E3["Escribe en:\nworking tree\n(SOLO el repo)"]
     end
 
@@ -94,22 +110,24 @@ flowchart LR
     EXEC -->|"gap detectado"| PLAN
 ```
 
-| Aspecto | Planificación | Ejecución |
+| Aspecto | Planning | Execution |
 |---------|---------------|-----------|
 | Propósito | Producir fuentes de verdad | Implementar código |
 | Participantes | Equipo (lentes) | Orquestador + minions |
-| Dónde escribe | Artifact store (fuera del repo) | Working tree del repo |
+| Dónde escribe | artifactStore (fuera del repo) | Working tree del repo |
 | Estado actual | **DEFINIDO** | **DEFINIDO** |
 
 > Detalle: [modelo operativo](planning/operational-model.md).
+
+[↑ Contenido](#contenido)
 
 ---
 
 ## Pipeline Completo
 
 El ciclo tiene 4 macro-fases, todas definidas. Las fases post-ejecución
-están definidas como parte del Modo 1; la macro-fase de operación es el
-Modo 3, opcional y reactivo.
+están definidas como parte de planning; la macro-fase de operación es
+operation, opcional y reactivo.
 
 ```mermaid
 %% Pipeline completo con macro-fases
@@ -126,7 +144,7 @@ flowchart TD
 
     subgraph MACRO_2["Handoff a Ejecución (DEFINIDO)"]
         direction LR
-        EX_C["Pre-Fase\nContratos"]
+        EX_C["prePhase\nContratos"]
         EX_R["Fase Red\nTests"]
         EX_G["Fase Green\nImplementación"]
         EX_RF["Fase Refactor\nCalidad"]
@@ -144,7 +162,7 @@ flowchart TD
 
     subgraph MACRO_3["Ejecución a Operación (DEFINIDO)"]
         direction LR
-        OPS["Modo 3\nOperación\nUsuario + agente\nasistente"]
+        OPS["operation\nUsuario + agente\nasistente"]
     end
 
     F5 -->|"handoff.md"| EX_C
@@ -168,7 +186,7 @@ timeline
         Fase 4 - Tareas : tasks.md aprobado
         Fase 5 - Handoff : handoff.md aprobado
     section Ejecución
-        Pre-fase - Contratos : interfaces definidas
+        prePhase - Contratos : interfaces definidas
         Fase Red : suite de tests completa
         Fase Green : tests pasando
         Fase Refactor : calidad aprobada
@@ -196,9 +214,11 @@ timeline
 > (fases 1-8) y [roles](planning/roles/README.md) (contratos de cada
 > rol por fase).
 
+[↑ Contenido](#contenido)
+
 ---
 
-## Artefactos
+## Artifacts
 
 El framework produce 6 artefactos universales respaldados por estándares
 ISO/IEC/IEEE. Cada fase consume el output de la anterior y produce los
@@ -240,7 +260,9 @@ flowchart LR
 > artefacto completo.
 >
 > Detalle: [artefactos](planning/artifacts/README.md) (schemas, contenido
-> mínimo, jerarquía de work items, adaptadores de persistencia).
+> mínimo, jerarquía de workItems, adapters de persistencia).
+
+[↑ Contenido](#contenido)
 
 ---
 
@@ -287,6 +309,8 @@ flowchart LR
 > y [comportamiento SM](planning/behavior/README.md)
 > (state machine del proyecto).
 
+[↑ Contenido](#contenido)
+
 ---
 
 ## Modelo de Delegación
@@ -296,15 +320,15 @@ obligatorios. Después de cada retorno, ejecuta el **PDC** (Post-Delegation
 Checkpoint).
 
 ```mermaid
-%% Ciclo de delegación SM -> sub-agente -> PDC
+%% Ciclo de delegación SM -> subAgent -> PDC
 sequenceDiagram
     participant SM as SM
-    participant SUB as Sub-agente
+    participant SUB as subAgent
     participant TPM as TPM
 
     SM ->> SUB: Contrato (rol, personalidad,<br/>contexto, input, output, restricciones)
     activate SUB
-    SUB ->> SUB: Lee del artifact store<br/>vía Pattern B (topic_keys)
+    SUB ->> SUB: Lee del artifactStore<br/>vía patternB (topic_keys)
     SUB -->> SM: Resultado + Status Report
     deactivate SUB
 
@@ -316,33 +340,35 @@ sequenceDiagram
     SM ->> SM: 4. DECIDE: ¿avanzar, re-delegar, escalar?
 ```
 
-### Pattern A vs Pattern B (retrieval)
+### patternA vs patternB (retrieval)
 
 ```mermaid
 %% Dos patrones de retrieval y cuándo usar cada uno
 flowchart TD
-    NEED["Sub-agente necesita contexto"]
+    NEED["subAgent necesita contexto"]
     NEED --> Q{{"¿Target conocido\ny determinista?"}}
 
-    Q -->|"Sí"| PB["Pattern B\nSM pasa topic_key\nSub-agente lee directo\n(6x más barato)"]
-    Q -->|"No (búsqueda\nfuzzy o fan-out 8+)"| PA["Pattern A\nSM busca, cura, inyecta\n(calidad sobre costo)"]
+    Q -->|"Sí"| PB["patternB\nSM pasa topic_key\nsubAgent lee directo\n(6x más barato)"]
+    Q -->|"No (búsqueda\nfuzzy o fan-out 8+)"| PA["patternA\nSM busca, cura, inyecta\n(calidad sobre costo)"]
 ```
 
-**Circuit breaker**: si 3 delegaciones consecutivas al mismo rol fallan, el SM detiene la cadena y escala al MIM.
+**circuitBreaker**: si 3 delegaciones consecutivas al mismo rol fallan, el SM detiene la cadena y escala al MIM.
 
 > Detalle: [comportamiento SM](planning/behavior/README.md)
-> (PDC, circuit breaker, context resilience) y
+> (PDC, circuitBreaker, context resilience) y
 > [roles](planning/roles/README.md) (contratos por fase).
+
+[↑ Contenido](#contenido)
 
 ---
 
-## Fast-Forward
+## fastForward
 
 El SM no avanza siempre una fase a la vez. Evalúa un **gradiente de
 certeza** con 4 factores (F1-F4) y avanza proporcionalmente.
 
 ```mermaid
-%% Scoring de fast-forward
+%% Scoring de fastForward
 flowchart LR
     subgraph SCORE["Checklist de certeza (F1-F4, 0-2 pts c/u)"]
         direction TB
@@ -369,27 +395,29 @@ Ejemplos:
 | "Hazme el uber de lanchas" | 0 | Baja | Idea + preguntas |
 | "Agrega auth JWT" (codebase Express) | 4 | Media | Idea + spec parcial |
 | "Crea módulo OTEL" (codebase NestJS) | 6 | Alta | Hasta handoff |
-| Epic ya groomeado (todo en RAG) | 8 | Alta | Fast-forward a ejecución |
+| Epic ya groomeado (todo en RAG) | 8 | Alta | fastForward a ejecución |
 
 El SM registra el score F1-F4 en `idea.md` para auditabilidad. El
-fast-forward también aplica **mid-cycle** (bugs en producción, epics
+fastForward también aplica **mid-cycle** (bugs en producción, epics
 ya groomeados).
 
 > Detalle: [comportamiento SM](planning/behavior/README.md)
-> (sección fast-forward contextual).
+> (sección fastForward contextual).
+
+[↑ Contenido](#contenido)
 
 ---
 
-## Artifact Store y Adaptadores
+## artifactStore y Adapters
 
-Los artefactos se persisten vía una **interfaz universal de 9
-operaciones**. El adaptador es pluggable --- el framework define la
+Los artefactos se persisten vía una **universalInterface de 9
+operaciones**. El adapter es pluggable --- el framework define la
 interfaz, no la implementación.
 
 ```mermaid
-%% Interfaz universal y adaptadores
+%% universalInterface y adapters
 flowchart TD
-    subgraph INTERFACE["Interfaz del Adaptador"]
+    subgraph INTERFACE["Interfaz del Adapter"]
         direction LR
         OPS_I["ingest | save | read\nsearch | list | delete\nverifyConsistency\nhistory | transition"]
     end
@@ -412,8 +440,10 @@ flowchart TD
 El TPM actúa como DBMS: no decide qué datos crear, pero decide cómo se
 almacenan, valida integridad, y sirve consultas con criterio editorial.
 
-> Detalle: [artefactos](planning/artifacts/README.md) (interfaz universal,
-> contrato de comportamiento, garantías ACID, adaptadores).
+> Detalle: [artefactos](planning/artifacts/README.md) (universalInterface,
+> contrato de comportamiento, garantías ACID, adapters).
+
+[↑ Contenido](#contenido)
 
 ---
 
@@ -425,12 +455,14 @@ definidas:
 
 | Área | Estado | Descripción |
 |------|--------|-------------|
-| Modo Ejecución | **DEFINIDO** | 5 fases (Contratos → Red → Green → Refactor → Accept). Contract-first, modelo de boundaries (App + E2E), revisión multi-dimensional. Ver [modelo de ejecución](execution/README.md). |
-| Modo Operación | **DEFINIDO** | Opcional. Para proyectos con superficie operativa: el usuario consume el producto con asistencia del agente. Reactivo, sin fases. Ver [modelo de operación](operation/README.md). |
-| Adaptadores avanzados | TBD | Jira, DBMS, Git repo, MS Project como adaptadores del artifact store. |
+| Execution | **DEFINIDO** | 5 fases (Contratos → Red → Green → Refactor → Accept). Contract-first, boundaryModel (App + E2E), revisión multi-dimensional. Ver [modelo de ejecución](execution/README.md). |
+| Operation | **DEFINIDO** | Opcional. Para proyectos con superficie operativa: el usuario consume el producto con asistencia del agente. Reactivo, sin fases. Ver [modelo de operación](operation/README.md). |
+| Adapters avanzados | TBD | Jira, DBMS, Git repo, MS Project como adapters del artifactStore. |
 | Routing no-Scrum | TBD | Routing tables para Kanban (WIP limits), Shape Up (bets), SAFe (PIs). Los artefactos son universales; la orquestación no. |
 | Tiers de activación | TBD | Cómo escala hacia abajo el modo planificación para proyectos simples o challenges con timebox. |
-| Transacciones del adaptador | TBD | Primitivas `begin`/`commit`/`rollback` para adaptadores sin soporte nativo. |
+| Transacciones del adapter | TBD | Primitivas `begin`/`commit`/`rollback` para adapters sin soporte nativo. |
+
+[↑ Contenido](#contenido)
 
 ---
 
@@ -438,11 +470,11 @@ definidas:
 
 | Documento | Qué define |
 |-----------|-----------|
-| [Modelo operativo](planning/operational-model.md) | Dos modos, ownership, límites, adaptador por defecto |
-| [Artefactos](planning/artifacts/README.md) | 6 artefactos, TPM, interfaz de adaptadores, state machine, jerarquía de work items |
-| [Comportamiento SM](planning/behavior/README.md) | SM como facade, state machine del proyecto, fast-forward, PDC, circuit breaker |
-| [Roles](planning/roles/README.md) | Contratos de delegación por fase, personalidades, activación condicional, roles ad-hoc |
-| [Modo Ejecución](execution/README.md) | Modo 2: Contract-first, Red-Green-Refactor macro, roles de ejecución, conexión con Modo 1 |
-| [Modo Operación](operation/README.md) | Modo 3: opcional y reactivo, sin fases, usuario + agente asistente, conexión con Modo 1 y Modo 2 |
-| [Sistema de ecos](echo-system.md) | Pipeline determinista de 5 pasos, homogeneidad de ambientes, enforcement, bumpDependencies |
-| [Sistema de artifacts](artifact-system.md) | Convención de ubicación predecible para outputs de build (compilados, reportes, documentación API) |
+| [Modelo operativo](planning/operational-model.md) | Dos modos, ownership, límites, adapter por defecto |
+| [Artifacts](planning/artifacts/README.md) | 6 artefactos, TPM, interfaz de adapters, state machine, jerarquía de workItems |
+| [SM Behavior](planning/behavior/README.md) | SM como facade, state machine del proyecto, fastForward, PDC, circuitBreaker |
+| [Roles](planning/roles/README.md) | delegationContracts por fase, personalidades, activación condicional, roles ad-hoc |
+| [Execution](execution/README.md) | Execution: Contract-first, Red-Green-Refactor macro, roles de ejecución, conexión con planning |
+| [Operation](operation/README.md) | Operation: opcional y reactivo, sin fases, usuario + agente asistente, conexión con planning y execution |
+| [echo system](echo-system.md) | Pipeline determinista de 5 pasos, homogeneidad de ambientes, enforcement, bumpDependencies |
+| [artifact system](artifact-system.md) | Convención de ubicación predecible para outputs de build (compilados, reportes, documentación API) |

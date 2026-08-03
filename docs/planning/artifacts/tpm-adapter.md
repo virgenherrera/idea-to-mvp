@@ -1,14 +1,14 @@
 ---
 id: planning/artifacts/tpm-adapter
-title: "TPM y Adaptadores"
+title: "TPM y Adapters"
 mode: planning
 type: spec
 tags: [tpm, adaptador, interfaz-universal, acid, persistencia, operaciones]
 ---
 
-# TPM e Interfaz del Adaptador
+# TPM y universalInterface
 
-← [Índice principal](../../README.md) | [Planificación](../README.md) | [Artefactos](README.md)
+← [Índice principal](../../README.md) | [Planning](../README.md) | [Artifacts](README.md)
 
 ## El TPM como DBMS del Modelo de Artefactos
 
@@ -33,7 +33,7 @@ flowchart TD
         META["Metadata\n(estado, fechas,\nrevisores, trazabilidad)"]
     end
 
-    subgraph ADAPTER["Adaptador de Persistencia"]
+    subgraph ADAPTER["Adapter de Persistencia"]
         direction LR
         LOCAL["Local\n(docs/)"]
         ENGRAM["Engram"]
@@ -105,33 +105,33 @@ spikes), el SM puede agrupar operaciones por fase:
 | Tier | Dispatches por fase | Cuando aplica |
 |------|---------------------|---------------|
 | Normal | 1 Create + N Updates + 1 Transition | Proyectos sin timebox. Cada interaccion es un dispatch. |
-| Comprimido | 1 Create-with-content + 1 Transition | Challenges con timebox. El sub-agente produce el artefacto completo en una delegacion; el TPM lo recibe y persiste en un solo dispatch. |
-| Ultra-comprimido | 1 transaction (Create + Transition) | Artefactos triviales o fast-forward con alta certeza. Una sola transaccion atomica. |
+| Comprimido | 1 Create-with-content + 1 Transition | Challenges con timebox. El subAgent produce el artefacto completo en una delegacion; el TPM lo recibe y persiste en un solo dispatch. |
+| Ultra-comprimido | 1 transaction (Create + Transition) | Artefactos triviales o fastForward con alta certeza. Una sola transaccion atomica. |
 
-**Regla para Pattern B + batch**: cuando el sub-agente lee directo del
-RAG (Pattern B) y produce un artefacto completo, el dispatch al TPM es
+**Regla para patternB + batch**: cuando el subAgent lee directo del
+RAG (patternB) y produce un artefacto completo, el dispatch al TPM es
 solo el write final. No hay dispatches intermedios de read. Esto reduce
 el overhead a ~2 dispatches por fase en el tier comprimido.
 
 **Threshold para artefactos pequenos** (M14): si el artefacto tiene
 menos de ~500 tokens, el overhead de reasoning del agente para decidir
-queries (Pattern B) puede dominar el costo. En ese caso, Pattern A
+queries (patternB) puede dominar el costo. En ese caso, patternA
 (SM inyecta directo) es mas eficiente. El SM decide automaticamente:
-artefacto < 500 tokens → Pattern A, >= 500 tokens → Pattern B. Ver
+artefacto < 500 tokens → patternA, >= 500 tokens → patternB. Ver
 [Estrategia de Retrieval](retrieval.md) para el detalle completo de
-Pattern A vs. Pattern B.
+patternA vs. patternB.
 
 ---
 
-## Adaptadores de Persistencia — La Interfaz Universal
+## Adapters de Persistencia — universalInterface
 
 Porque el modelo de artefactos sigue estándares internacionales, los
 *information items* son portables. Cualquier sistema que pueda almacenar
-y servir estos items puede ser un adaptador.
+y servir estos items puede ser un adapter.
 
 ```mermaid
 flowchart TD
-    subgraph INTERFACE["Interfaz del Adaptador (universal)"]
+    subgraph INTERFACE["universalInterface"]
         direction TB
         INGEST["ingest(source[], synthesize?)"]
         SAVE["save(artifact, content, metadata)"]
@@ -180,7 +180,7 @@ flowchart TD
     INTERFACE --> MS_A
 ```
 
-Complemento visual: el class diagram muestra la interfaz del adaptador
+Complemento visual: el class diagram muestra la universalInterface
 como un contrato de tipos — cada implementación (`LocalAdapter`,
 `EngramAdapter`, `HybridAdapter`) cumple la misma interfaz.
 
@@ -224,7 +224,7 @@ classDiagram
     HybridAdapter --> EngramAdapter
 ```
 
-### Mapeo de artefactos por adaptador
+### Mapeo de artefactos por adapter
 
 | Artefacto | Local (default) | Engram | Jira | DBMS | Git Repo |
 |-----------|----------------|--------|------|------|----------|
@@ -235,20 +235,20 @@ classDiagram
 | `handoff.md` | archivo .md | observation `sdd/{name}/handoff` | Release ticket | row en `handoffs` | `handoffs/name.md` |
 | `ops-runbook.md` | archivo .md | observation `sdd/{name}/ops` | Runbook page | row en `runbooks` | `runbooks/name.md` |
 
-### Por qué los estándares habilitan los adaptadores
+### Por qué los estándares habilitan los adapters
 
-Sin el respaldo de estándares, cada adaptador tendría que inventar su
+Sin el respaldo de estándares, cada adapter tendría que inventar su
 propia estructura. Con estándares:
 
-1. **`spec.md` sigue 29148** → un adaptador de Jira sabe que "Requisitos
+1. **`spec.md` sigue 29148** → un adapter de Jira sabe que "Requisitos
    funcionales" mapea a Stories con ACs, "No funcionales" a Labels, y
    "Trazabilidad" a Links entre issues.
 
-2. **`design.md` sigue 42010** → un adaptador de Confluence sabe que
+2. **`design.md` sigue 42010** → un adapter de Confluence sabe que
    cada *viewpoint* es una sección con diagrama, y cada ADR es una
    *decision page*.
 
-3. **`handoff.md` sigue 15289 transition** → cualquier adaptador sabe
+3. **`handoff.md` sigue 15289 transition** → cualquier adapter sabe
    que debe incluir: resumen, stack, tareas, estrategia de pruebas, y
    criterios de aceptación. Si falta uno, el artefacto está incompleto.
 
@@ -256,7 +256,7 @@ propia estructura. Con estándares:
 flowchart LR
     STANDARD["Estándar ISO/IEEE\n(define el SCHEMA)"]
     TPM_V["TPM\n(valida contra schema)"]
-    ADAPTER_V["Adaptador\n(mapea schema\nal almacén)"]
+    ADAPTER_V["Adapter\n(mapea schema\nal almacén)"]
     STORE["Almacén\n(Jira, Engram,\nlocal, DBMS...)"]
 
     STANDARD -->|"content requirements"| TPM_V
@@ -266,7 +266,7 @@ flowchart LR
     ADAPTER_V -->|"slice acotado"| TPM_V
 ```
 
-### Adaptador por defecto: archivos locales como RAG
+### Adapter por defecto: archivos locales como RAG
 
 - **Path por defecto**: `~/.idea-to-mvp/projects/{nombre}/docs/` — **fuera**
   del repositorio destino. Esto garantiza que el modo planificación nunca
@@ -278,21 +278,21 @@ flowchart LR
 - **Suficiente para**: proyectos individuales, challenges, MVPs — que es el
   caso de uso default del framework
 - **Concurrencia**: sesion activa unica asumida. Last-write-wins.
-  Adaptadores con concurrencia (DBMS, Jira, Git repo) implementan
+  Adapters con concurrencia (DBMS, Jira, Git repo) implementan
   ACID completo (ver seccion "Garantias transversales"). El contrato
-  del adaptador define CONFLICT error en `save` cuando otro writer
-  modifico desde el ultimo `read` — esto aplica a TODOS los adaptadores
+  del adapter define CONFLICT error en `save` cuando otro writer
+  modifico desde el ultimo `read` — esto aplica a TODOS los adapters
   con soporte de aislamiento, no solo "futuros."
 
-Los demás adaptadores son **TBD**. El modelo de artefactos los habilita
-por diseño, pero la implementación es futura. El adaptador local es el
+Los demás adapters son **TBD**. El modelo de artefactos los habilita
+por diseño, pero la implementación es futura. El adapter local es el
 MVP de persistencia.
 
-### Contrato de Comportamiento del Adaptador
+### Contrato de Comportamiento del Adapter
 
 > **TODO: refinar este contrato con tipos concretos del lenguaje de
 > implementacion, codigos de error exhaustivos, y tests de conformance
-> para cada adaptador. Lo que sigue es el borrador de requisitos
+> para cada adapter. Lo que sigue es el borrador de requisitos
 > comportamentales — suficiente para disenar, no para implementar.**
 
 #### ingest(source[], synthesize?)
@@ -308,12 +308,12 @@ MVP de persistencia.
 | Then | El store contiene el contenido sintetizado con citas: "Timebox: 4h [rules.md:12]", "Criterio: test coverage > 80% [rubric.md:5]". Cualquier rol puede `search("timebox")` y obtener el dato con su fuente. |
 | Given | MIM pega un screenshot de un wireframe |
 | When | `ingest([{type: "image", content: <base64>}])` |
-| Then | El store contiene una descripcion sintetizada del wireframe. Si el adaptador no soporta imagenes, retorna UNSUPPORTED_SOURCE. |
+| Then | El store contiene una descripcion sintetizada del wireframe. Si el adapter no soporta imagenes, retorna UNSUPPORTED_SOURCE. |
 | Error: EMPTY_SOURCE | El array esta vacio o todas las fuentes tienen contenido vacio. |
-| Error: UNSUPPORTED_SOURCE | El tipo de fuente no es soportado por este adaptador. |
+| Error: UNSUPPORTED_SOURCE | El tipo de fuente no es soportado por este adapter. |
 
 > **Nota**: `ingest` es la puerta de entrada del material del MIM al
-> artifact store. El SM NUNCA lee fuentes directamente — instruye al
+> artifactStore. El SM NUNCA lee fuentes directamente — instruye al
 > TPM para ingestar. El TPM sintetiza y cita. Cualquier rol accede al
 > resultado via `search()` o `read()`.
 
@@ -324,12 +324,12 @@ MVP de persistencia.
 | Precondicion | `artifact` es un slug valido (idea, spec, design, tasks, handoff, ops-runbook). `content` no es vacio. `metadata` incluye al menos `producer` y `timestamp`. |
 | Postcondicion | El artefacto existe en el store con el contenido y metadata proporcionados. Si ya existia, se reemplaza (upsert). |
 | Idempotencia | Si — llamar dos veces con los mismos argumentos produce el mismo estado. |
-| Given | Un adaptador con `idea` ya guardado |
+| Given | Un adapter con `idea` ya guardado |
 | When | `save("idea", nuevo_contenido, {producer: "PO", timestamp: T2})` |
 | Then | El contenido de `idea` es `nuevo_contenido`, metadata actualizada, version anterior accesible via `history()`. |
 | Error: INVALID_ARTIFACT | El slug no pertenece al set de artefactos validos. |
 | Error: EMPTY_CONTENT | El contenido es vacio o solo whitespace. |
-| Error: CONFLICT | (Solo adaptadores con concurrencia) Otro writer modifico el artefacto desde la ultima lectura. Retorna ambas versiones. |
+| Error: CONFLICT | (Solo adapters con concurrencia) Otro writer modifico el artefacto desde la ultima lectura. Retorna ambas versiones. |
 
 #### read(artifact, section?)
 
@@ -378,7 +378,7 @@ MVP de persistencia.
 |---------|----------|
 | Precondicion | Al menos un artefacto en el array. Todos deben existir. |
 | Postcondicion | Retorna lista de inconsistencias: `{source, target, type, description}`. Lista vacia = consistente. |
-| Tipos de inconsistencia | `MISSING_TRACE` (referencia rota), `STALE_DEPENDENCY` (upstream modificado despues del downstream), `SCHEMA_VIOLATION` (seccion requerida faltante), `SEMANTIC_DRIFT_CRITICAL` (contradiccion semantica con upstream — ver [Detección de Drift Semántico](state-machine.md#detección-de-drift-semántico)), `SEMANTIC_DRIFT_MINOR` (contenido nuevo sin trazabilidad a upstream). |
+| Tipos de inconsistencia | `MISSING_TRACE` (referencia rota), `STALE_DEPENDENCY` (upstream modificado despues del downstream), `SCHEMA_VIOLATION` (seccion requerida faltante), `SEMANTIC_DRIFT_CRITICAL` (contradiccion semantica con upstream — ver [Detección de semanticDrift](state-machine.md#detección-de-semanticdrift)), `SEMANTIC_DRIFT_MINOR` (contenido nuevo sin trazabilidad a upstream). |
 | Given | `spec` referencia `idea` requisito R1, pero R1 fue eliminado de `idea` |
 | When | `verifyConsistency(["idea", "spec"])` |
 | Then | Retorna `{source: "spec", target: "idea", type: "MISSING_TRACE", description: "R1 referenciado en spec no existe en idea"}`. |
@@ -390,7 +390,7 @@ MVP de persistencia.
 > (todas las secciones existen, todas las referencias apuntan a
 > artefactos reales) y fallar la semantica (una decision contradice
 > una restriccion upstream). Ver el detalle completo en
-> [Detección de Drift Semántico](state-machine.md#detección-de-drift-semántico).
+> [Detección de semanticDrift](state-machine.md#detección-de-semanticdrift).
 
 #### delete(artifact, reason)
 
@@ -410,7 +410,7 @@ MVP de persistencia.
 | Precondicion | `artifact` es un slug valido (puede o no existir actualmente). |
 | Postcondicion | Retorna lista ordenada (mas reciente primero) de: `{version, timestamp, producer, action, content_hash}`. Entradas con `action: "failure"` incluyen campos adicionales (`type`, `phase`, y metadata del tipo). Lista vacia si el artefacto nunca existio. |
 | Acciones | `created`, `updated`, `transitioned`, `deleted`, `read`, `failure`. |
-| Failure metadata | Tipos de fallo: `pdc_rejection` (step, role, reason), `circuit_breaker` (role, consecutive), `escalation` (role, description, resolution), `redelegation` (role, reason, contract_delta). Ver [Comportamiento SM](../behavior/README.md) sección Historial de Fallos. |
+| Failure metadata | Tipos de fallo: `pdc_rejection` (step, role, reason), `circuit_breaker` (role, consecutive), `escalation` (role, description, resolution), `redelegation` (role, reason, contract_delta). Ver [SM Behavior](../behavior/README.md) sección Historial de Fallos. |
 | Given | `idea` fue creado, actualizado 2 veces, y aprobado via transition |
 | When | `history("idea")` |
 | Then | Retorna 4 entradas: transitioned(→approved) → updated → updated → created. |
@@ -421,11 +421,11 @@ MVP de persistencia.
 Ver [Máquina de Estados y Transiciones](state-machine.md) para el
 contrato completo de la operación `transition(artifact, newState, reason?)`,
 la state machine configurable, la operación retirada `markComplete`, y
-la detección de drift semántico.
+la detección de semanticDrift.
 
 #### Garantias transversales — ACID
 
-El artifact store es la **fuente de la verdad** del proceso. Las
+El artifactStore es la **fuente de la verdad** del proceso. Las
 operaciones deben cumplir garantias ACID:
 
 | Garantia | Descripcion | Ejemplo |
@@ -448,9 +448,9 @@ transaction {
 // Si transition falla (precondicion/transicion invalida) → rollback del save + verify
 ```
 
-**Nivel de soporte por adaptador**:
+**Nivel de soporte por adapter**:
 
-| Adaptador | Atomicidad | Consistencia | Aislamiento | Durabilidad |
+| Adapter | Atomicidad | Consistencia | Aislamiento | Durabilidad |
 |-----------|-----------|--------------|-------------|-------------|
 | Local (files) | Operacion individual | Validacion pre-write | Sesion unica (sin concurrencia) | Flush a disco |
 | Engram | Operacion individual | Validacion pre-save | Backend-dependent | Persistido cross-session |
@@ -459,10 +459,10 @@ transaction {
 | Git Repo | Commit atomico | Pre-commit hooks | Branch isolation | Git objects |
 
 > **TODO**: definir transaccion como primitiva de la interfaz del
-> adaptador (`begin()`, `commit()`, `rollback()`). Para adaptadores sin
+> adapter (`begin()`, `commit()`, `rollback()`). Para adapters sin
 > soporte nativo de transacciones (local, engram), implementar como
 > write-ahead log o copy-on-write.
 >
-> **TODO**: definir tests de conformance que un adaptador debe pasar
+> **TODO**: definir tests de conformance que un adapter debe pasar
 > para ser considerado compatible. Formato sugerido: suite ejecutable
 > con los given/when/then de arriba como casos de prueba.

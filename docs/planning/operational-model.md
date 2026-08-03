@@ -8,7 +8,7 @@ tags: [modos, ownership, contexto, artifact-store, adaptadores, delegación, mul
 
 # Diseño del Modelo Operativo — idea-to-mvp
 
-← [Índice principal](../README.md) | [Planificación](README.md)
+← [Índice principal](../README.md) | [Planning](README.md)
 
 > Objetivo: definir CÓMO opera el framework antes de decidir CÓMO
 > implementarlo (skills, agentes, paquetes, etc.).
@@ -20,18 +20,36 @@ tags: [modos, ownership, contexto, artifact-store, adaptadores, delegación, mul
 
 ---
 
+## Contenido
+
+- [El Problema](#el-problema)
+- [Comportamiento Global](#comportamiento-global)
+- [Modelo de Ownership y Contexto](#modelo-de-ownership-y-contexto)
+- [Modos del Framework](#modos-del-framework)
+- [Límites](#límites)
+- [El Handoff como Contrato](#el-handoff-como-contrato)
+- [Qué Vive DÓNDE](#qué-vive-dónde)
+- [Adapters del artifactStore](#adapters-del-artifactstore)
+- [Equipo — Cuándo y Cómo](#equipo-cuándo-y-cómo)
+- [Qué Permanece en AGENTS.md (gobernanza por repo)](#qué-permanece-en-agentsmd-gobernanza-por-repo)
+- [Qué NO Va en AGENTS.md](#qué-no-va-en-agentsmd)
+- [Estrategia de Delegación Multi-Modelo](#estrategia-de-delegación-multi-modelo)
+- [Preguntas Abiertas](#preguntas-abiertas)
+
+---
+
 ## El Problema
 
 El framework actualmente mezcla tres concerns en un solo repositorio:
 
-1. **Reglas de gobernanza** — axiomas de AGENTS.md, compact rules, fases del
+1. **Reglas de gobernanza** — axiomas de AGENTS.md, compactRules, fases del
    pipeline. Estas SÍ PERTENECEN a cada repo que adopta el framework.
 2. **Tooling de planificación** — fases del ciclo (idea, spec, diseño,
    tareas, handoff), roles del equipo, persistencia de artefactos
    (engram, local, híbrido). Son OPERACIONALES y no deben contaminar los
    repos adoptantes.
 3. **Tooling de ejecución** — patrón orquestador-minion, delegación a
-   sub-agentes, inyección de personalidad/contexto, resolución de skills.
+   subAgents, inyección de personalidad/contexto, resolución de skills.
    Son de RUNTIME y no deben estar acoplados a las reglas de gobernanza.
 
 Resultado: los repos adoptantes acumulan archivos `.tmp-*`, directorios
@@ -41,6 +59,8 @@ con su codebase.
 Cada repo tiene derecho a su propio AGENTS.md. El tooling que ayuda a CREAR
 y HACER CUMPLIR ese AGENTS.md debe vivir en otro lugar.
 
+[↑ Contenido](#contenido)
+
 ---
 
 ## Comportamiento Global
@@ -48,6 +68,8 @@ y HACER CUMPLIR ese AGENTS.md debe vivir en otro lugar.
 Ver [comportamiento SM](behavior/README.md) —
 el SM actúa como router de fases, convoca roles, valida gates, y bloquea
 avances prematuros.
+
+[↑ Contenido](#contenido)
 
 ---
 
@@ -63,33 +85,35 @@ y roles disponibles. Pero NO carga todo en su contexto — lo consulta via
 RAG cuando lo necesita. El SM sabe que todo existe y DONDE esta; solo trae
 a su ventana de contexto lo que la decision actual requiere.
 
-### Sub-agentes — Ownership acotado por contrato de delegación
+### subAgents — Ownership acotado por delegationContract
 
-Los sub-agentes (roles del equipo, TPM, agentes ad-hoc) reciben
-UNICAMENTE lo que su rol y fase requieren, definido en el contrato de
-delegación. No saben que existe el resto del contexto, ni necesitan saberlo.
+Los subAgents (roles del equipo, TPM, agentes ad-hoc) reciben
+UNICAMENTE lo que su rol y fase requieren, definido en el delegationContract.
+No saben que existe el resto del contexto, ni necesitan saberlo.
 Su scope es el contrato — nada mas.
 
 ### Principio operativo
 
 Ningun actor carga lo que no necesita. El SM tiene acceso total pero lazy;
-los sub-agentes tienen acceso parcial pero suficiente. Un sub-agente que
+los subAgents tienen acceso parcial pero suficiente. Un subAgent que
 intenta cargar todo el contexto del proyecto esta violando este principio —
-el contrato de delegación ES el limite de scope.
+el delegationContract ES el limite de scope.
 
 Esto aplica tanto a humanos como a agentes: el `{repo}/docs/` es accesible
 para todos, pero cada actor consulta solo los artefactos relevantes a su
 tarea actual.
 
+[↑ Contenido](#contenido)
+
 ---
 
 ## Modos del Framework
 
-Este documento detalla el Modo 1 en profundidad. El Modo 2 se resume aquí
-y se detalla en [Modelo de Ejecución](../execution/README.md). El Modo 3
+Este documento detalla planning en profundidad. execution se resume aquí
+y se detalla en [Modelo de Ejecución](../execution/README.md). operation
 se resume aquí y se detalla en [Modelo de Operación](../operation/README.md).
 
-### Modo 1 — Planificación (idea → handoffs)
+### Planning (idea → handoffs)
 
 **Propósito**: producir fuentes de verdad y planes. Sin ejecución de código.
 
@@ -108,8 +132,8 @@ la procesa:
 | Nivel de entrada | Ejemplo | Rol asignado | Acción |
 |-----------------|---------|-------------|--------|
 | Idea vaga | "Haz el Uber de las lanchas" | PO | Formula preguntas de negocio al MIM para acotar alcance y valor |
-| Archivos de un challenge | README.md + seeds + schema de un tech challenge | PO + SM | PO extrae requisitos y constraints. SM delega a sub-agente SM-Process la extraccion de reglas del proceso (timebox, evaluacion, restricciones) |
-| Ticket externo | Link a Jira, Linear, Confluence, GitHub Issue | PO | Lee, estructura, identifica ambigüedades (vía adaptador TBD) |
+| Archivos de un challenge | README.md + seeds + schema de un tech challenge | PO + SM | PO extrae requisitos y constraints. SM delega a subAgent smProcess la extraccion de reglas del proceso (timebox, evaluacion, restricciones) |
+| Ticket externo | Link a Jira, Linear, Confluence, GitHub Issue | PO | Lee, estructura, identifica ambigüedades (vía adapter TBD) |
 | Especificación parcial | "API REST con auth JWT y CRUD de productos" | PO | Identifica gaps en los requisitos y pregunta solo lo faltante |
 
 ```mermaid
@@ -164,7 +188,7 @@ flowchart TD
 
 #### El RAG como fuente de verdad progresiva
 
-El artifact store NO es solo persistencia — es un **RAG** que los agentes
+El artifactStore NO es solo persistencia — es un **RAG** que los agentes
 consultan para obtener contexto ACOTADO sin crawlear el codebase.
 
 Principio fundamental: **cada fase consume el output de la anterior y
@@ -232,7 +256,7 @@ Para un **ticket externo**:
 Las preguntas se adaptan: si el MIM ES el stakeholder/creador, las responde
 directamente. Si no lo es, las usa como guía para obtener las respuestas.
 
-#### Adaptador por defecto: archivos locales como RAG
+#### Adapter por defecto: archivos locales como RAG
 
 - Path por defecto (ruta configurable): `~/.idea-to-mvp/projects/{nombre}/docs/`
   — **fuera** del repo destino (garantiza que el modo planificación nunca
@@ -240,11 +264,11 @@ directamente. Si no lo es, las usa como guía para obtener las respuestas.
 - Formato: archivos markdown, uno por artefacto
 - Legible por humanos, opcionalmente versionable con git
 - Los agentes hacen fetch de archivos específicos, no crawl completo
-- Adaptadores adicionales (engram, Jira, Confluence, etc.): TBD
+- Adapters adicionales (engram, Jira, Confluence, etc.): TBD
 
 **Restricción clave**: el modo planificación NUNCA toca el working tree del
 repo destino. Lee el codebase para informar decisiones, pero toda la salida
-va al artifact store — no a archivos `.tmp-*` dispersos en el repo.
+va al artifactStore — no a archivos `.tmp-*` dispersos en el repo.
 
 #### Equipo en este modo
 
@@ -259,12 +283,12 @@ encuentra un gap, el sistema regresa al ciclo de preguntas para esa fase.
 
 ---
 
-### Modo 2 — Ejecución (handoffs → código funcional)
+### Execution (handoffs → código funcional)
 
 **Propósito**: implementar lo que la planificación produjo. Se escribe código.
 
-**Entrada**: documentos de handoff del Modo 1, AGENTS.md del repo destino,
-compact rules resueltas.
+**Entrada**: documentos de handoff de planning, AGENTS.md del repo destino,
+compactRules resueltas.
 
 **Salida**: código implementado, probado, refactorizado y certificado por QA
 en el working tree del repo destino.
@@ -273,22 +297,22 @@ en el working tree del repo destino.
 repo destino. NO crea artefactos de planificación, documentos de feedback ni
 archivos de estado del proceso en el repo.
 
-Para la definición completa del Modo 2 (fases, roles, ciclo iterativo,
-modelo de delegación del orquestador, y conexión con Modo 1), ver
+Para la definición completa de execution (fases, roles, ciclo iterativo,
+modelo de delegación del orquestador, y conexión con planning), ver
 [Modelo de Ejecución](../execution/README.md).
 
 ---
 
-### Modo 3 — Operación (producto → uso)
+### Operation (producto → uso)
 
 **Propósito**: el MIM usa el producto construido; el agente asiste como
 operador. Modo opcional y reactivo — sin fases, sin equipo.
 
-**Entrada**: producto construido (salida del Modo 2), `ops-runbook.md`
+**Entrada**: producto construido (salida de execution), `ops-runbook.md`
 (si existe), documentación del proyecto.
 
 **Restricción clave**: no hay artefactos de planificación ni ceremonia.
-Si la operación revela un gap, escala de vuelta a Modo 1 o Modo 2.
+Si la operación revela un gap, escala de vuelta a planning o execution.
 
 Para la definición completa (cuándo se activa, tipos de operación, flujo),
 ver [Modelo de Operación](../operation/README.md).
@@ -301,13 +325,15 @@ Para codebases heredados o existentes que se incorporan al framework:
 
 | Situación | Punto de entrada |
 |-----------|-----------------|
-| Codebase heredado sin cambios planificados | Modo 3 (Operación) — el equipo opera y aprende el sistema |
-| Codebase heredado con cambios planificados | Fast-forward desde el tier que corresponda — la documentación existente (README, specs, CI, tests) cuenta como artefactos parciales para el scoring F1-F4 |
-| Codebase heredado con deuda técnica | Modo 1 con fast-forward — el SM evalúa qué artefactos existen y los acredita |
+| Codebase heredado sin cambios planificados | operation — el equipo opera y aprende el sistema |
+| Codebase heredado con cambios planificados | fastForward desde el tier que corresponda — la documentación existente (README, specs, CI, tests) cuenta como artefactos parciales para el scoring F1-F4 |
+| Codebase heredado con deuda técnica | planning con fastForward — el SM evalúa qué artefactos existen y los acredita |
 
 El SM no exige recrear artefactos que ya existen en forma equivalente (un
 README detallado puede cumplir la función de `idea.md`, una suite de tests
 existente informa `spec.md`).
+
+[↑ Contenido](#contenido)
 
 ---
 
@@ -320,7 +346,7 @@ flowchart TD
         P_IN["Entrada: idea, problema, feature request"]
         P_TOOLS["Herramientas: idea, spec, diseño, tareas, handoff"]
         P_WHO["Participantes: equipo como lentes de revisión"]
-        P_OUT["Escribe en: artifact store — NUNCA en el repo destino"]
+        P_OUT["Escribe en: artifactStore — NUNCA en el repo destino"]
     end
 
     PLAN -->|handoff| EXEC
@@ -328,7 +354,7 @@ flowchart TD
     subgraph EXEC["MODO EJECUCIÓN"]
         direction TB
         E_IN["Entrada: handoff + AGENTS.md del repo"]
-        E_TOOLS["Herramientas: orquestador, sub-agentes, verificar, aceptar"]
+        E_TOOLS["Herramientas: orquestador, subAgents, verificar, aceptar"]
         E_WHO["Participantes: orquestador + minions"]
         E_OUT["Escribe en: working tree del repo ÚNICAMENTE"]
     end
@@ -347,6 +373,8 @@ flowchart TD
     OP -->|"feature request"| PLAN
 ```
 
+[↑ Contenido](#contenido)
+
 ---
 
 ## El Handoff como Contrato
@@ -355,12 +383,14 @@ El documento de handoff es la interfaz entre modos. Debe ser:
 
 - **Autocontenido**: un ejecutor que nunca vio la conversación de
   planificación puede actuar sin hacer preguntas.
-- **Portable**: funciona independientemente del adaptador que lo produjo.
+- **Portable**: funciona independientemente del adapter que lo produjo.
 - **Acotado**: dice exactamente qué hacer, qué NO hacer, y cómo se ve el
   éxito.
 
-El handoff NO es un archivo en el repo destino. Vive en el artifact store
+El handoff NO es un archivo en el repo destino. Vive en el artifactStore
 y es LEÍDO por el modo ejecución.
+
+[↑ Contenido](#contenido)
 
 ---
 
@@ -369,28 +399,30 @@ y es LEÍDO por el modo ejecución.
 | Artefacto | Dónde vive | Por qué |
 |-----------|-----------|---------|
 | AGENTS.md | Repo destino (raíz) | La gobernanza es por repo. Cada proyecto posee sus reglas. |
-| Artefactos de planificación (propuestas, specs, diseños, tareas) | Artifact store (depende del adaptador) | Informan el trabajo, no son el trabajo. |
-| Documentos de handoff | Artifact store | Contrato entre planificación y ejecución. |
-| Estado del ciclo (tracking de fases, DAG) | Artifact store | Estado operacional, no estado del proyecto. |
-| Feedback de adoptantes | Artifact store (etiquetado al framework fuente) | Input para evolución del framework, no contenido del repo. |
+| Artefactos de planificación (propuestas, specs, diseños, tareas) | artifactStore (depende del adapter) | Informan el trabajo, no son el trabajo. |
+| Documentos de handoff | artifactStore | Contrato entre planificación y ejecución. |
+| Estado del ciclo (tracking de fases, DAG) | artifactStore | Estado operacional, no estado del proyecto. |
+| Feedback de adoptantes | artifactStore (etiquetado al framework fuente) | Input para evolución del framework, no contenido del repo. |
 | Código, pruebas, configs | Repo destino | El entregable real. |
 | Archivos `.tmp-*` | EN NINGÚN LUGAR del repo destino | Eliminados. Los artefactos de planificación van al store. |
 
+[↑ Contenido](#contenido)
+
 ---
 
-## Adaptadores del Artifact Store
+## Adapters del artifactStore
 
-El framework necesita una capa de persistencia pluggable. Cada adaptador
-implementa la misma interfaz universal (ver `artifacts/README.md` →
-"Adaptadores de Persistencia" para la definición completa de las 9
+El framework necesita una capa de persistencia pluggable. Cada adapter
+implementa la misma universalInterface (ver `artifacts/README.md` →
+"Adapters de Persistencia" para la definición completa de las 9
 operaciones: `ingest`, `save`, `read`, `search`, `list`,
 `verifyConsistency`, `delete`, `history`, `transition`). Todas las
 operaciones de escritura son mediadas por el TPM (ver `artifacts/README.md`
-→ "TPM como DBMS"); las lecturas pueden ser directas vía Pattern B.
+→ "TPM como DBMS"); las lecturas pueden ser directas vía patternB.
 La gestión de estado de artefactos usa `transition` exclusivamente
 (la anterior `markComplete` fue absorbida por `transition`).
 
-### Adaptador local (por defecto)
+### Adapter local (por defecto)
 
 - Almacena artefactos como archivos markdown en
   `~/.idea-to-mvp/projects/{nombre}/docs/` (ruta configurable, por defecto
@@ -399,7 +431,7 @@ La gestión de estado de artefactos usa `transition` exclusivamente
 - Ventajas: cero dependencias, legible por humanos, opcionalmente versionable
 - Desventaja: sin acceso cross-machine, sin búsqueda semántica
 
-### Adaptador engram
+### Adapter engram
 
 - Almacena artefactos como observaciones engram con topic keys estructurados.
 - Ventajas: cross-session, buscable, sobrevive compaction.
@@ -407,12 +439,14 @@ La gestión de estado de artefactos usa `transition` exclusivamente
   resultados de búsqueda (se necesita `mem_get_observation` para contenido
   completo).
 
-### Adaptador híbrido
+### Adapter híbrido
 
 - Escribe en ambos: local y engram.
 - Ventajas: lo mejor de ambos — legibilidad local + persistencia
   cross-session.
 - Desventaja: mayor costo de tokens por operación.
+
+[↑ Contenido](#contenido)
 
 ---
 
@@ -436,15 +470,17 @@ El equipo de planificación es una herramienta de PLANIFICACIÓN, no de ejecuci�
 > rol default cubre. Ver `roles/README.md` seccion "Roles Ad-Hoc".
 
 **Durante ejecucion**, el equipo esta en silencio. El orquestador y los
-sub-agentes hacen el trabajo. Si la ejecución revela un gap de planificación,
+subAgents hacen el trabajo. Si la ejecución revela un gap de planificación,
 el orquestador puede escalar DE VUELTA al modo planificación.
 
 **Post-ejecución** (Verificar, Aceptar, Retrospectiva), el equipo se
 RE-ACTIVA como panel de revisión. Estas fases son parte del modo
 planificación — operan sobre los resultados de la ejecución, no sobre
 código directamente. Ver `behavior/README.md` Fases 6-8 y
-`roles/README.md` para los contratos de delegación de cada rol en estas
+`roles/README.md` para los delegationContracts de cada rol en estas
 fases.
+
+[↑ Contenido](#contenido)
 
 ---
 
@@ -455,27 +491,31 @@ Estas son las cosas que cada repo adoptante recibe:
 - Axiomas (principios no negociables)
 - Fases del pipeline (la secuencia de trabajo)
 - Gates de fase (DOR, DOD, checkpoints MIM)
-- Compact rules (estándares de código específicos del proyecto)
+- compactRules (estándares de código específicos del proyecto)
 - Definiciones de roles (qué valida cada rol en los gates)
 - Tiers de activación (cuánta ceremonia según la madurez del proyecto)
 
 Estas son REGLAS, no HERRAMIENTAS. Dicen qué debe ser verdad, no cómo
 hacerlo verdad.
 
+[↑ Contenido](#contenido)
+
 ---
 
 ## Qué NO Va en AGENTS.md
 
 - Definiciones de fases del ciclo de planificación (idea, spec, diseño, etc.)
-- Configuración del artifact store
+- Configuración del artifactStore
 - Patrones de delegación del orquestador
-- Templates de personalidad de sub-agentes
+- Templates de personalidad de subAgents
 - Formatos de topic key de engram
 - Protocolos de resolución de skills
 - Tablas de asignación de modelos
 
 Estos son OPERACIONALES. Pertenecen a la capa de tooling, no a la capa de
 gobernanza.
+
+[↑ Contenido](#contenido)
 
 ---
 
@@ -529,6 +569,8 @@ Cada proyecto puede configurar qué modelo local usar (llama3, mistral,
 phi, etc.) y qué proveedor cloud preferir. El framework define el CRITERIO
 de selección, no el modelo específico.
 
+[↑ Contenido](#contenido)
+
 ---
 
 ## Preguntas Abiertas
@@ -556,7 +598,7 @@ de selección, no el modelo específico.
    **RESUELTO**: los tiers de activación (Ligero, Estándar, Completo)
    están definidos en `behavior/README.md` → sección
    "Tiers de Activación". El SM determina el tier al inicio del ciclo
-   usando el score F1-F4 de fast-forward. Los tiers escalan ceremonia
+   usando el score F1-F4 de fastForward. Los tiers escalan ceremonia
    (roles, gates, dispatch), no artefactos.
 
 6. ~~**¿Verificación en modo ejecución — quién la hace?**~~
@@ -573,6 +615,8 @@ de selección, no el modelo específico.
    secciones esenciales de idea + spec + design + tasks en formato
    abreviado. El alineamiento ISO se mantiene (las secciones de contenido
    existen), pero el conteo físico de artefactos se reduce. Para
-   hot-fixes vía fast-forward mid-cycle, el mínimo requerido es: (1)
+   hot-fixes vía fastForward mid-cycle, el mínimo requerido es: (1)
    descripción del problema, (2) test de reproducción, (3) fix, (4)
    verificación.
+
+[↑ Contenido](#contenido)

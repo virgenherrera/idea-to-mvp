@@ -1,19 +1,19 @@
 ---
 id: planning/artifacts/work-items
-title: "Work Items"
+title: "workItems"
 mode: planning
 type: reference
 tags: [work-items, L0-L4, dag, dependencias, lanes, initiative, feature, requirement]
 ---
 
-# Jerarquía de Work Items
+# Jerarquía de workItems
 
-← [Índice principal](../../README.md) | [Planificación](../README.md) | [Artefactos](README.md)
+← [Índice principal](../../README.md) | [Planning](../README.md) | [Artifacts](README.md)
 
-## Jerarquía de Work Items — Sprints, Epics, Stories, Tasks
+## Jerarquía de workItems — Sprints, Epics, Stories, Tasks
 
 Los 6 artefactos producen **unidades de trabajo** a diferentes niveles de
-granularidad. Esta sección define la jerarquía universal de work items, sus
+granularidad. Esta sección define la jerarquía universal de workItems, sus
 dependencias, y cómo habilitan el paralelismo en modo ejecución.
 
 ### Por qué es necesario
@@ -56,9 +56,9 @@ La jerarquía tiene 5 niveles. La metodología determina los **nombres** y las
 | L3 Activity | `tasks.md` | Dev Lead | "Implementar callback handler OAuth2" |
 | L4 Sub-activity | `tasks.md` | Dev Lead | "Parsear token JWT del provider" |
 
-### Schema universal de Work Item
+### Schema universal de workItem
 
-Cada work item, independientemente de su nivel, tiene este schema:
+Cada workItem, independientemente de su nivel, tiene este schema:
 
 ```yaml
 work_item:
@@ -71,10 +71,10 @@ work_item:
   lane: string          # Agrupación por feature/skill (auth, UI, infra). Asignado por Dev Lead.
 
   # — Dependencias y bloqueos —
-  depends_on:         # Otros work items que deben completarse ANTES
+  depends_on:         # Otros workItems que deben completarse ANTES
     - item_id: string
       type: FS|SS|FF  # Finish-to-Start, Start-to-Start, Finish-to-Finish
-  blocked_by:         # Impedimentos EXTERNOS (no son work items)
+  blocked_by:         # Impedimentos EXTERNOS (no son workItems)
     - id: string
       description: string
       owner: string   # Quién puede resolverlo
@@ -102,7 +102,7 @@ work_item:
 ```
 
 > **Campo `files`**: Opcional pero recomendado. El Dev Lead lo asigna en
-> Fase 4 para que el Orquestador de Ejecución pueda detectar solapamiento
+> Fase 4 para que el executionOrchestrator pueda detectar solapamiento
 > de archivos entre lanes y decidir si ejecutar en paralelo (worktrees) o
 > en serie. Si está ausente, el Orquestador asume solapamiento y serializa.
 
@@ -156,7 +156,7 @@ flowchart LR
 2. Las dependencias **circulares son un error** — el SM debe detectarlas al
    construir el grafo y escalar al MIM.
 3. Un **blocker** es un impedimento externo (API de tercero caída, decisión
-   pendiente del stakeholder, licencia). No es un work item — es metadata
+   pendiente del stakeholder, licencia). No es un workItem — es metadata
    que congela el item hasta resolverse.
 4. Las dependencias de tipo SS habilitan **paralelismo parcial** — B puede
    empezar cuando A empieza, no cuando A termina.
@@ -213,10 +213,10 @@ gantt
 
 **Algoritmo de paralelismo**:
 
-1. Construir el DAG (Directed Acyclic Graph) de todos los work items con
+1. Construir el DAG (Directed Acyclic Graph) de todos los workItems con
    estado `ready` o `todo`.
 2. Identificar items sin dependencias pendientes → **ejecutables ahora**.
-3. Agrupar por campo `lane` del work item (asignado por Dev Lead en
+3. Agrupar por campo `lane` del workItem (asignado por Dev Lead en
    Fase 4) → **lanes**.
 4. Calcular **ruta crítica** (la cadena más larga de dependencias FS).
 5. Items fuera de la ruta crítica tienen **holgura** — pueden retrasarse sin
@@ -227,7 +227,7 @@ gantt
 > desde 1957 (DuPont/PERT). Lo que el framework aporta es hacerlo
 > EJECUTABLE por agentes IA.
 
-### Estado de un Work Item — máquina de estados
+### Estado de un workItem — máquina de estados
 
 ```mermaid
 stateDiagram-v2
@@ -251,8 +251,8 @@ stateDiagram-v2
 |--------|-----------|-------------|
 | Todas las dependencias FS de un item están `done` | `todo` → `ready` | SM (automático) |
 | Item `ready` asignado a iteración activa | `ready` → `in_progress` | SM |
-| Sub-agente reporta trabajo completo | `in_progress` → `review` | SM (vía Status Report) |
-| Blocker reportado por sub-agente o MIM | `in_progress` → `blocked` | SM |
+| subAgent reporta trabajo completo | `in_progress` → `review` | SM (vía Status Report) |
+| Blocker reportado por subAgent o MIM | `in_progress` → `blocked` | SM |
 | Gate de QA/UX/DevSecOps aprueba | `review` → `done` | SM (vía PDC) |
 | Gate rechaza | `review` → `in_progress` | SM (con feedback) |
 | MIM cancela scope | cualquier estado → `cancelled` | MIM → SM |
@@ -285,7 +285,7 @@ L0-001: Sistema de autenticación
 
 ### Iteraciones — el contenedor temporal
 
-Las iteraciones son el **contenedor temporal** donde se asignan work items.
+Las iteraciones son el **contenedor temporal** donde se asignan workItems.
 El nombre y la duración dependen de la metodología:
 
 | Metodología | Contenedor | Duración | Capacidad |
@@ -321,7 +321,7 @@ a "vista materializada del DAG de actividades (L3-L4)":
 ```markdown
 # Tasks: {nombre del proyecto}
 
-## Work Items (L3-L4)
+## workItems (L3-L4)
 Cada item con schema universal: id, type, parent_id, depends_on,
 blocked_by, state, iteration, acceptance_criteria, complexity.
 
@@ -357,10 +357,10 @@ en `tasks.md` mediante `traces_to`.
 
 El handoff incluye:
 
-- El DAG completo de work items con sus dependencias
+- El DAG completo de workItems con sus dependencias
 - Los lanes paralelos pre-calculados
 - La ruta crítica identificada
 - Los blockers conocidos (para que el modo ejecución sepa qué evitar)
 
-Esto permite al orquestador de ejecución iniciar trabajo en paralelo desde
+Esto permite al executionOrchestrator iniciar trabajo en paralelo desde
 el primer momento, sin tener que analizar dependencias en runtime.

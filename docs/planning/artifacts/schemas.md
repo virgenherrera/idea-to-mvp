@@ -8,7 +8,17 @@ tags: [schemas, idea, spec, design, tasks, handoff, ops-runbook, iso, documentac
 
 # Schemas de los 6 Artefactos
 
-← [Índice principal](../../README.md) | [Planificación](../README.md) | [Artefactos](README.md)
+← [Índice principal](../../README.md) | [Planning](../README.md) | [Artifacts](README.md)
+
+---
+
+## Contenido
+
+- [Los 6 Artefactos Universales](#los-6-artefactos-universales)
+- [Metodología como Capa Intercambiable](#metodología-como-capa-intercambiable)
+- [Resumen de Estándares Referenciados](#resumen-de-estándares-referenciados)
+
+---
 
 ## Los 6 Artefactos Universales
 
@@ -160,15 +170,15 @@ Autenticación, autorización, secrets, OWASP top 10.
 
 ## Restricciones de infraestructura
 Hosting, CI/CD, monitoreo, limits.
-- Pipeline de eco: herramientas de cada paso (setup, build, static, dynamic, E2E).
-  Ver [sistema de ecos](../../echo-system.md).
-- Distribución de hooks: qué pasos del eco corren en pre-commit vs pre-push
+- Pipeline de echo: herramientas de cada paso (setup, build, static, dynamic, E2E).
+  Ver [echo system](../../echo-system.md).
+- Distribución de hooks: qué pasos del echo corren en pre-commit vs pre-push
 - Presupuesto de tiempo para hooks (si aplica)
 - Umbral de cobertura obligatorio (o métrica alternativa si coverage no aplica)
 - Carpeta de artifacts: nombre, ruta, entrada en .gitignore.
   Ver [sistema de artifacts](../../artifact-system.md).
 - Catálogo de tipos de artifact del proyecto
-- Mapa de generación: script → destino → paso del eco
+- Mapa de generación: script → destino → paso del echo
 - Excepciones documentadas (artifacts no redireccionables, pasos no-op)
 
 ## Trazabilidad
@@ -263,9 +273,9 @@ Grafo de dependencias resuelto.
 | **Respaldo ISO** | **ISO/IEC/IEEE 15289** (transition information item) + **ISO/IEC/IEEE 29119-3** (test documentation) |
 | **Propósito** | Contrato autocontenido entre planificación y ejecución. Quien lo lea puede actuar sin hacer preguntas. |
 | **Owner** | TPM (compila bajo instrucción del SM) |
-| **Consumido por** | Modo ejecución (orquestador + sub-agentes) |
+| **Consumido por** | Modo ejecución (orquestador + subAgents) |
 
-**Contenido mínimo** (alineado a 15289 transition + 29119-3 test plan):
+**Contenido mínimo** (alineado a 15289 transition + 29119-3 testPlan):
 
 ```markdown
 # Handoff: {nombre del proyecto}
@@ -278,8 +288,8 @@ Referencia a design.md, decisiones clave resumidas.
 
 ## Tareas a ejecutar
 - Referencia a tasks.md, orden de ejecución, dependencias
-- DAG completo de work items con dependencias (FS/SS/FF)
-- Lanes paralelos pre-calculados (campo `lane` de cada work item)
+- DAG completo de workItems con dependencias (FS/SS/FF)
+- Lanes paralelos pre-calculados (campo `lane` de cada workItem)
 - Ruta crítica identificada
 - Blockers conocidos
 
@@ -291,7 +301,7 @@ Qué debe ser verdad para que el proyecto se considere completo.
 
 ## Restricciones de ejecución
 Convenciones del repo (AGENTS.md), reglas de commits, hooks,
-compliance del eco (ver [sistema de ecos](../../echo-system.md)).
+compliance del echo (ver [echo system](../../echo-system.md)).
 
 ## Contexto que NO se incluye
 Qué se decidió NO hacer y por qué (para evitar scope creep).
@@ -317,8 +327,8 @@ Qué se decidió NO hacer y por qué (para evitar scope creep).
 > artefactos (draft → review → approved).
 
 > **Nota**: La sección de documentación operativa conecta el handoff con
-> el Modo 3 (Operación). Si el handoff declara documentación esperada,
-> la Fase Accept del Modo 2 DEBE verificar que existe antes de certificar.
+> operation. Si el handoff declara documentación esperada,
+> la Fase Accept de execution DEBE verificar que existe antes de certificar.
 > Proyectos sin superficie operativa (librerías, paquetes, entregables
 > únicos) declaran "sin documentación operativa requerida" y Accept omite
 > esta verificación.
@@ -376,7 +386,7 @@ Quién es responsable, cadena de escalación.
 ```
 
 > **Nota sobre los estados**: Estos estados son específicos del ciclo de
-> vida del ops-runbook y complementan la state machine universal de
+> vida del opsRunbook y complementan la state machine universal de
 > artefactos (draft → review → approved).
 
 > **Este artefacto cierra el ciclo completo**: de la idea hasta la
@@ -391,12 +401,16 @@ Quién es responsable, cadena de escalación.
 > referencia de API, guía de migración y changelog. El estándar de
 > respaldo para estos casos es IEEE 1063 (Software User Documentation).
 
+[↑ Contenido](#contenido)
+
 ---
 
 ## Metodología como Capa Intercambiable
 
 Para el sistema de metodología intercambiable (gobierno, lock por
 iteración, protocolo de cambio), ver [methodology.md](methodology.md).
+
+[↑ Contenido](#contenido)
 
 ---
 
@@ -413,7 +427,7 @@ iteración, protocolo de cambio), ver [methodology.md](methodology.md).
 | ISO 21502 | Project Management Guidance (sec 7.6) | Mecanismo de descomposición de `tasks.md`: actividades, dependencias, duración |
 | PMBOK 7th ed. | Define Activities (process) | Respaldo de `tasks.md`: Activity List, Activity Attributes, Milestones |
 | IEEE 828 | Configuration Management | Trazabilidad entre artefactos (transversal) |
-| ISO/IEC/IEEE 29119-3 | Test Documentation | Contenido de pruebas en `handoff.md`: test plan, strategy |
+| ISO/IEC/IEEE 29119-3 | Test Documentation | Contenido de pruebas en `handoff.md`: testPlan, strategy |
 | IEEE 1063 | Software User Documentation | Documentación de usuario (si aplica) |
 | ISO/IEC 20000-1/2 | IT Service Management | Contenido de `ops-runbook.md`: SLAs, monitoreo, procedimientos |
 | ITIL 4 | Service Transition | Checklist práctico de transición a operaciones |
@@ -428,3 +442,5 @@ iteración, protocolo de cambio), ver [methodology.md](methodology.md).
 | SAFe | Diferentes metodologías por nivel. Artefactos cruzan boundaries sin cambio de formato. |
 | PMBOK 7th ed. | Tailoring: approach seleccionable por deliverable, no solo por proyecto. |
 | ISO 15288/12207 | Proceso outcomes fijos, life-cycle model tailorable. Information items independientes del modelo. |
+
+[↑ Contenido](#contenido)

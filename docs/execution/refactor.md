@@ -8,7 +8,18 @@ tags: [refactor, calidad, arquitectura, seguridad, performance, review, reviewer
 
 # Fase Refactor — Gate de Calidad
 
-← [Índice principal](../README.md) | [Ejecución](README.md)
+← [Índice principal](../README.md) | [Execution](README.md)
+
+---
+
+## Contenido
+
+- [Principio](#principio)
+- [Dimensiones de revision](#dimensiones-de-revision)
+- [Checklist de revision](#checklist-de-revision)
+- [Reglas del refactor](#reglas-del-refactor)
+
+---
 
 ## Principio
 
@@ -16,6 +27,8 @@ El codigo verde funciona pero puede ser feo. La Fase Refactor aplica
 todas las disciplinas de calidad SIN romper tests. Si despues de un
 refactor los tests fallan, el refactor introdujo una regresion y se
 revierte.
+
+[↑ Contenido](#contenido)
 
 ---
 
@@ -46,6 +59,8 @@ flowchart TD
     GATE -->|"No"| REVERT["Revertir refactor\n(regresion detectada)"]
 ```
 
+[↑ Contenido](#contenido)
+
 ---
 
 ## Checklist de revision
@@ -71,10 +86,12 @@ flowchart TD
 | **Reviewer (Seguridad)** | Seguridad (OWASP Top 10, secrets, dependencias, CORS) |
 | **Reviewer (Performance)** | Performance (memory leaks, N+1, lazy loading, operaciones bloqueantes) |
 
-> En ejecución paralela con worktrees, el agente compuesto del lane
+> En ejecución paralela con worktrees, el compositeAgent del lane
 > ejecuta las 3 perspectivas secuencialmente. En ejecución secuencial,
 > el Orquestador puede lanzar los 3 Reviewers en paralelo sobre el mismo
 > código verde.
+
+[↑ Contenido](#contenido)
 
 ---
 
@@ -90,5 +107,7 @@ flowchart TD
    facilitar reversion
 
 > Los quality gates del refactor están alineados con el paso 3 (Static
-> Test) del [sistema de ecos](../echo-system.md) — el análisis estático
-> es la primera línea de defensa que el eco formaliza como obligatorio.
+> Test) del [echo system](../echo-system.md) — el análisis estático
+> es la primera línea de defensa que el echo formaliza como obligatorio.
+
+[↑ Contenido](#contenido)

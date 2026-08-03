@@ -18,20 +18,20 @@ tags: [navegación, índice, mapa]
 - [Vista general del framework](overview.md) — diagramas de alto nivel, entrada recomendada
 - [Glosario](glossary.md) — definiciones de términos especializados del framework
 - [Adaptaciones ágiles](agile-adaptations.md) — cómo el framework adapta los 12 principios del Manifiesto Ágil para agentes IA
-- [Sistema de ecos](echo-system.md) — pipeline determinista de 5 pasos que garantiza homogeneidad entre ambientes
-- [Sistema de artifacts](artifact-system.md) — convención de ubicación predecible para outputs de build
+- [echo system](echo-system.md) — pipeline determinista de 5 pasos que garantiza homogeneidad entre ambientes
+- [artifact system](artifact-system.md) — convención de ubicación predecible para outputs de build
 
 ---
 
-## Modo 1: Planificación (idea → handoff)
+## Planning (idea → handoff)
 
 - [Índice del modo](planning/README.md)
-- [Modelo operativo](planning/operational-model.md) — modos, ownership, adaptadores
-- [Artefactos](planning/artifacts/README.md) — 6 artefactos, TPM, state machine
-- [Comportamiento SM](planning/behavior/README.md) — fases, delegación, PDC, recovery
+- [Modelo operativo](planning/operational-model.md) — modos, ownership, adapters
+- [Artifacts](planning/artifacts/README.md) — 6 artefactos, TPM, state machine
+- [SM Behavior](planning/behavior/README.md) — fases, delegación, PDC, recovery
 - [Roles](planning/roles/README.md) — 5 roles default + ad-hoc
 
-## Modo 2: Ejecución (handoff → código)
+## Execution (handoff → código)
 
 - [Índice del modo](execution/README.md)
 - [Contratos](execution/contracts.md) — contract-first, desarrollo paralelo
@@ -41,6 +41,6 @@ tags: [navegación, índice, mapa]
 - [Fase Accept](execution/accept.md) — certificación QA
 - [Estrategia Git](execution/git-strategy.md) — Gitflow, worktrees, commits
 
-## Modo 3: Operación (opcional)
+## Operation (opcional)
 
 - [Índice del modo](operation/README.md) — el usuario consume el producto con asistencia del agente

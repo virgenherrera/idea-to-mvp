@@ -8,7 +8,18 @@ tags: [fases, gates, roles-por-fase, retrospectiva, verificación, aceptación]
 
 # Detalle de Fases 1-8
 
-← [Índice principal](../../README.md) | [Planificación](../README.md) | [Comportamiento SM](README.md)
+← [Índice principal](../../README.md) | [Planning](../README.md) | [SM Behavior](README.md)
+
+---
+
+## Contenido
+
+- [Detalle por fase](#detalle-por-fase)
+- [Bloqueo: cómo el SM detiene avances prematuros](#bloqueo-cómo-el-sm-detiene-avances-prematuros)
+- [Reglas del SM](#reglas-del-sm)
+- [Matriz Completa: Roles × Etapas](#matriz-completa-roles-etapas)
+
+---
 
 ## Detalle por fase
 
@@ -40,7 +51,7 @@ approver. Default: MIM = requester = approver (persona unica).
 **Ingesta de input del MIM**: cuando el MIM proporciona archivos,
 capturas, URLs, o cualquier material de contexto (tech challenge,
 brief de producto, wireframes), el SM instruye al TPM para **ingestar**
-el material en el artifact store. El TPM:
+el material en el artifactStore. El TPM:
 
 1. Lee el material fuente (archivos, capturas, texto)
 2. Sintetiza el contenido relevante (no copia verbatim)
@@ -49,7 +60,7 @@ el material en el artifact store. El TPM:
 
 El SM NO lee archivos — la regla cardinal no tiene excepciones. El TPM
 es el unico que toca material fuente. Cualquier rol que necesite
-contexto lo obtiene del artifact store via Pattern B (query directo).
+contexto lo obtiene del artifactStore via patternB (query directo).
 
 Si la entrada es un **tech challenge**, el TPM ingesta los archivos del
 challenge y extrae: timebox, criterios de evaluacion, restricciones de
@@ -112,7 +123,7 @@ Preguntas predefinidas:
 | **Función QA** | (Si activo) Validar que cada tarea tenga criterio de verificación |
 | **NO hacen** | NO implementan. NO asignan a personas específicas. |
 | **Artefacto de salida** | `tasks.md` |
-| **Gate** | Tareas con schema de work items (L3-L4, parent_id, depends_on con tipos FS/SS/FF, traces_to). Sin dependencias cíclicas. Cada tarea mapeada a al menos un AC. Dependency graph completo con lanes asignados. Completitud estructural (TPM) + semántica (QA valida verificabilidad por tarea). |
+| **Gate** | Tareas con schema de workItems (L3-L4, parent_id, depends_on con tipos FS/SS/FF, traces_to). Sin dependencias cíclicas. Cada tarea mapeada a al menos un AC. Dependency graph completo con lanes asignados. Completitud estructural (TPM) + semántica (QA valida verificabilidad por tarea). |
 
 Preguntas predefinidas:
 
@@ -147,19 +158,19 @@ El TPM compila y aplica estándares de escritura.
 
 Después de que el TPM produce `handoff.md`, el SM NO lo valida
 leyéndolo directamente (regla cardinal). En vez de eso, lanza un
-sub-agente fresco que recibe **SOLO** `handoff.md` (sin acceso a ningún
+subAgent fresco que recibe **SOLO** `handoff.md` (sin acceso a ningún
 otro artefacto ni contexto de conversación) con este contrato:
 
 - **Input**: solo `handoff.md`
 - **Tarea**: "Genera un plan de ejecución a partir de este documento."
-- **Criterio**: si el sub-agente puede generar el plan sin hacer
+- **Criterio**: si el subAgent puede generar el plan sin hacer
   preguntas → handoff es autocontenido. Si necesita preguntar → falla.
 
 Si el smoke test falla, el SM instruye al TPM sobre los gaps
-detectados. Se itera hasta que el sub-agente fresco pueda planear
+detectados. Se itera hasta que el subAgent fresco pueda planear
 sin preguntas.
 
-**Contrato del sub-agente de smoke test**:
+**Contrato del subAgent de smoke test**:
 
 | Campo | Valor |
 |-------|-------|
@@ -183,13 +194,13 @@ explícita: "¿Procedemos a ejecución?" El MIM puede aprobar, pedir
 ajustes, o detener. Esta transición NO es automática — el MIM siempre
 tiene la última palabra antes de que se escriba código.
 
-**Rollback de fast-forward**: si el MIM rechaza el resultado de un
-fast-forward ("asumiste demasiado"), el SM: (1) solicita al MIM que
+**Rollback de fastForward**: si el MIM rechaza el resultado de un
+fastForward ("asumiste demasiado"), el SM: (1) solicita al MIM que
 identifique los artefactos con asunciones incorrectas, (2) instruye al
 TPM para marcar esos artefactos como `en revisión`, (3) re-evalúa el
 score F1-F4 con la nueva información, (4) retoma el ciclo desde la
 fase del primer artefacto afectado, ahora con las preguntas que el
-fast-forward saltó. El MIM tiene la última palabra.
+fastForward saltó. El MIM tiene la última palabra.
 
 ### Fase 6 — Verificar (QA + DevSecOps)
 
@@ -222,10 +233,10 @@ arquitectura, QA evalúa calidad, DevSecOps evalúa seguridad, UX evalúa
 experiencia. Si el panel no aprueba, se especifica qué falta y se
 regresa a la fase correspondiente para resolverlo.
 
-> **Relación con Accept del Modo 2**: La Fase 7 de planificación y la Fase
-> Accept de ejecución son gates DISTINTOS. Accept (Modo 2) certifica que el
+> **Relación con Accept de execution**: La Fase 7 de planificación y la Fase
+> Accept de ejecución son gates DISTINTOS. Accept (execution) certifica que el
 > código cumple el handoff — opera dentro de cada iteración de ejecución.
-> Fase 7 (Modo 1) acepta el entregable completo desde la perspectiva del
+> Fase 7 (planning) acepta el entregable completo desde la perspectiva del
 > equipo — opera al cierre del ciclo de planificación. Ver
 > [Fase Accept](../../execution/accept.md).
 
@@ -237,7 +248,7 @@ regresa a la fase correspondiente para resolverlo.
 | **Facilitador** | SM |
 | **Función** | Evaluar el proceso, no el producto. Cerrar el ciclo con acuerdos concretos. |
 | **NO hace** | NO re-abre defectos de producto (eso es Fase 6). NO redefine scope (eso es Fase 1). |
-| **Artefacto de salida** | Metadata del proyecto → sección "Retrospectiva" (persistida vía TPM en el artifact store como metadata operacional, NO dentro de ninguno de los 6 artefactos de producto) |
+| **Artefacto de salida** | Metadata del proyecto → sección "Retrospectiva" (persistida vía TPM en el artifactStore como metadata operacional, NO dentro de ninguno de los 6 artefactos de producto) |
 | **Gate** | Al menos 1 acuerdo concreto registrado. MIM confirma cierre del ciclo. |
 
 **Estructura de la sesion** (facilitada por el SM):
@@ -337,6 +348,8 @@ este proyecto) o una enmienda permanente.
 "Cerramos este ciclo?" El MIM confirma. El SM instruye al TPM para
 marcar el ciclo como cerrado.
 
+[↑ Contenido](#contenido)
+
 ---
 
 ## Bloqueo: cómo el SM detiene avances prematuros
@@ -379,6 +392,8 @@ Ejemplo concreto:
 >
 > Respondamos estas y avanzamos.
 
+[↑ Contenido](#contenido)
+
 ---
 
 ## Reglas del SM
@@ -395,6 +410,8 @@ Reglas generales de operación:
 8. **El SM persiste en todas las fases** — es el hilo conductor
 9. **El SM SÍ extiende el equipo** — si el proyecto necesita expertise fuera de los 5 roles default, el SM define roles ad-hoc con contrato completo
    (ver [Roles Ad-Hoc](../roles/ad-hoc.md)). Justificación obligatoria. Registro en `idea.md`.
+
+[↑ Contenido](#contenido)
 
 ---
 
@@ -496,7 +513,7 @@ flowchart LR
 
 | Etapa | Tareas permitidas |
 |-------|-------------------|
-| 1. Definir Idea | Convocar PO. Si es challenge: delegar extracción de reglas de proceso a sub-agente SM-Process (timebox, evaluación, restricciones). Validar gate. |
+| 1. Definir Idea | Convocar PO. Si es challenge: delegar extracción de reglas de proceso a subAgent smProcess (timebox, evaluación, restricciones). Validar gate. |
 | 2. Especificar | Convocar PO + QA. Facilitar resolución de ambigüedades. Validar gate. |
 | 3. Diseñar | Convocar Dev Lead + DevSecOps (+ UX si aplica). Facilitar decisiones. Validar gate. |
 | 4. Desglosar Tareas | Convocar Dev Lead. Validar que no haya dependencias cíclicas. Validar estimaciones. Validar gate. |
@@ -552,3 +569,5 @@ pie title Roles activos por fase (proyecto estándar)
     "Fase 7 - Aceptar" : 5
     "Fase 8 - Retro" : 5
 ```
+
+[↑ Contenido](#contenido)

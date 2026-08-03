@@ -1,14 +1,25 @@
 ---
 id: execution/contracts
-title: "Pre-Fase — Contratos"
+title: "prePhase — Contratos"
 mode: execution
 type: process
 tags: [contratos, api, schema, interfaces, contract-first, desarrollo-paralelo]
 ---
 
-# Pre-Fase: Definición de Contratos
+# prePhase: Definición de Contratos
 
-← [Índice principal](../README.md) | [Ejecución](README.md)
+← [Índice principal](../README.md) | [Execution](README.md)
+
+---
+
+## Contenido
+
+- [Por que Contract-First](#por-que-contract-first)
+- [Tipos de contrato](#tipos-de-contrato)
+- [Flujo de definicion de contratos](#flujo-de-definicion-de-contratos)
+- [Criterios de validacion del contrato](#criterios-de-validacion-del-contrato)
+
+---
 
 ## Por que Contract-First
 
@@ -21,7 +32,7 @@ paralelo agil**:
 flowchart TD
     CONTRACT["Contrato definido\n(API, DB schema, interfaces)"]
 
-    CONTRACT --> QA["Test Engineer\nescribe tests contra\nel contrato"]
+    CONTRACT --> QA["testEngineer\nescribe tests contra\nel contrato"]
     CONTRACT --> FE["Frontend\nconstruye contra\nel API contract"]
     CONTRACT --> BE["Backend\nimplementa detras\ndel contrato"]
     CONTRACT --> INFRA["Infra\nprepara migraciones\ny schemas"]
@@ -34,13 +45,15 @@ flowchart TD
 
 > **Nota**: Los roles "Frontend", "Backend" e "Infra" del diagrama son
 > ilustrativos --- representan dominios de implementación, no roles
-> formales del Modo 2. En el modelo de ejecución, estos dominios los
+> formales de execution. En el modelo de ejecución, estos dominios los
 > cubren instancias del Implementor asignadas a lanes distintos.
 
 **Principio: Contract over Methodology.** El contrato importa mas que el
 proceso. Como implementes detras del contrato es tu problema --- pero
 DEBES cumplirlo. El contrato es el acuerdo verificable; la metodologia
 es la ceremonia alrededor.
+
+[↑ Contenido](#contenido)
 
 ---
 
@@ -59,13 +72,15 @@ es la ceremonia alrededor.
 > cumpla los requisitos del contrato (tipada, verificable por máquina,
 > schema-completo) es válida.
 
+[↑ Contenido](#contenido)
+
 ---
 
 ## Flujo de definicion de contratos
 
 ```mermaid
 sequenceDiagram
-    participant OE as Orquestador de Ejecucion
+    participant OE as executionOrchestrator
     participant CA as Contract Architect
     participant MIM as MIM (Humano)
 
@@ -87,6 +102,8 @@ sequenceDiagram
     OE->>OE: Contratos aprobados → Fase Red
 ```
 
+[↑ Contenido](#contenido)
+
 ---
 
 ## Criterios de validacion del contrato
@@ -98,3 +115,5 @@ Un contrato esta listo cuando:
 3. Los contratos son consistentes entre si (sin contradicciones)
 4. Las dependencias entre contratos estan explicitas
 5. El MIM aprobo los contratos que requieren decisiones de negocio
+
+[↑ Contenido](#contenido)

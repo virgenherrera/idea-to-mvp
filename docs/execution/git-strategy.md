@@ -8,14 +8,14 @@ tags: [git, worktrees, branches, commits, merge, paralelismo, agente-compuesto, 
 
 # Estrategia Git y Paralelismo
 
-← [Índice principal](../README.md) | [Ejecución](README.md)
+← [Índice principal](../README.md) | [Execution](README.md)
 
-> Define cómo el Orquestador de Ejecución usa ramas, worktrees y commits
+> Define cómo el executionOrchestrator usa ramas, worktrees y commits
 > para ejecutar el ciclo Red-Green-Refactor con paralelismo real. Resuelve
 > los TBDs de "Paralelismo en ejecución" y "Commit strategy".
 
 > **Nota sobre WHAT vs HOW.** Este documento define los REQUISITOS que
-> toda estrategia de branching debe cumplir para el Modo 2 (aislamiento
+> toda estrategia de branching debe cumplir para execution (aislamiento
 > entre lanes, trazabilidad a iteraciones, merge no destructivo, soporte
 > para ejecución paralela). La implementación de referencia usa Gitflow
 > adaptado con worktrees, pero cualquier estrategia que satisfaga estos
@@ -24,9 +24,21 @@ tags: [git, worktrees, branches, commits, merge, paralelismo, agente-compuesto, 
 
 ---
 
+## Contenido
+
+- [Modelo de Ramas](#modelo-de-ramas)
+- [Worktrees para Paralelismo](#worktrees-para-paralelismo)
+- [Estrategia de Commits](#estrategia-de-commits)
+- [Flujo Completo de una Iteración](#flujo-completo-de-una-iteración)
+- [Manejo de Conflictos Post-Merge](#manejo-de-conflictos-post-merge)
+- [Manejo de Fallos Mid-Lane](#manejo-de-fallos-mid-lane)
+- [Diagrama de Decisión del Orquestador](#diagrama-de-decisión-del-orquestador)
+
+---
+
 ## Modelo de Ramas
 
-El Modo 2 adapta Gitflow al contexto de ejecución por fases. Cada
+execution adapta Gitflow al contexto de ejecución por fases. Cada
 iteración del ciclo (un batch de tasks del DAG) opera sobre un branch
 dedicado. Los lanes paralelos se ejecutan en worktrees aislados.
 
@@ -83,18 +95,20 @@ Ejemplos:
   exec/iter-2/lane-payments
 ```
 
+[↑ Contenido](#contenido)
+
 ---
 
 ## Worktrees para Paralelismo
 
 Cuando el DAG de `tasks.md` tiene lanes independientes (sin dependencias
-FS entre sí), el Orquestador lanza sub-agentes en **worktrees aislados**.
+FS entre sí), el Orquestador lanza subAgents en **worktrees aislados**.
 Cada agente opera su propio directorio de trabajo sin conflictos de
 archivos.
 
 ```mermaid
 flowchart TD
-    subgraph OE["Orquestador de Ejecución"]
+    subgraph OE["executionOrchestrator"]
         DAG["Lee DAG de tasks.md"]
         DETECT["Detecta 3 lanes\nindependientes"]
     end
@@ -112,7 +126,7 @@ flowchart TD
     DETECT -->|"git worktree add"| WT_B
     DETECT -->|"git worktree add"| WT_C
 
-    subgraph AGENTS["Sub-agentes (paralelo)"]
+    subgraph AGENTS["subAgents (paralelo)"]
         direction LR
         AG_A["Agente A\nRed → Green → Refactor\n(auth)"]
         AG_B["Agente B\nRed → Green → Refactor\n(UI)"]
@@ -133,25 +147,25 @@ flowchart TD
 ### Modelo de roles dentro de un worktree
 
 > **Reconciliación roles ↔ worktrees**: En ejecución secuencial (1 lane),
-> el Orquestador lanza roles separados por fase — Test Engineer (Red),
-> Implementor (Green), Reviewers (Refactor) — como sub-agentes distintos
+> el Orquestador lanza roles separados por fase — testEngineer (Red),
+> Implementor (Green), Reviewers (Refactor) — como subAgents distintos
 > con personalidades diferenciadas.
 >
-> En ejecución paralela con worktrees, cada lane se asigna a un **agente
-> compuesto** que asume las 3 personalidades secuencialmente dentro del
-> mismo worktree. La razón: lanzar 3 sub-agentes por lane dentro del
-> mismo worktree crearía conflictos de acceso al filesystem. El agente
-> compuesto cambia de personalidad entre fases:
+> En ejecución paralela con worktrees, cada lane se asigna a un
+> **compositeAgent** que asume las 3 personalidades secuencialmente dentro
+> del mismo worktree. La razón: lanzar 3 subAgents por lane dentro del
+> mismo worktree crearía conflictos de acceso al filesystem. El
+> compositeAgent cambia de personalidad entre fases:
 >
-> 1. **Personalidad Test Engineer** → escribe la suite de tests (Red)
+> 1. **Personalidad testEngineer** → escribe la suite de tests (Red)
 > 2. **Personalidad Implementor** → escribe código que pase los tests (Green)
 > 3. **Personalidad Reviewer** → revisa calidad y aplica refactors (Refactor).
 >    Dentro de esta personalidad, el agente ejecuta 3 perspectivas de
 >    forma secuencial: Arquitectura, Seguridad y Performance — replicando
->    en un solo agente compuesto lo que en ejecución secuencial harían los
+>    en un solo compositeAgent lo que en ejecución secuencial harían los
 >    3 Reviewers independientes.
 >
-> El Orquestador valida cada transición de personalidad con un mini-PDC
+> El Orquestador valida cada transición de personalidad con un miniPDC
 > entre fases.
 
 ### Ciclo de vida de un worktree
@@ -160,17 +174,17 @@ flowchart TD
 sequenceDiagram
     participant OE as Orquestador
     participant GIT as Git
-    participant AG as Agente Compuesto
+    participant AG as compositeAgent
     participant CI as Tests
 
     OE->>GIT: git worktree add /tmp/wt-lane-auth exec/iter-1/lane-auth
     OE->>AG: Contrato: ejecutar Red-Green-Refactor para lane auth
     activate AG
 
-    AG->>AG: Personalidad Test Engineer<br/>Red: escribe tests (commits)
-    Note over AG: Mini-PDC: transición Red → Green
+    AG->>AG: Personalidad testEngineer<br/>Red: escribe tests (commits)
+    Note over AG: miniPDC: transición Red → Green
     AG->>AG: Personalidad Implementor<br/>Green: implementa (commits)
-    Note over AG: Mini-PDC: transición Green → Refactor
+    Note over AG: miniPDC: transición Green → Refactor
     AG->>AG: Personalidad Reviewer<br/>Refactor: revisa calidad (commits)
     AG->>CI: Ejecuta tests del lane
     CI-->>AG: ✅ PASS
@@ -217,9 +231,11 @@ flowchart TD
     ANALYZE -->|"Sí, total"| SEQUENTIAL["Secuencial\n(un lane a la vez)"]
 ```
 
-El análisis se basa en los archivos listados en cada work item de
-`tasks.md` (campo `files` del schema de work item). Si el campo no
+El análisis se basa en los archivos listados en cada workItem de
+`tasks.md` (campo `files` del schema de workItem). Si el campo no
 existe, el Orquestador asume solapamiento y serializa.
+
+[↑ Contenido](#contenido)
 
 ---
 
@@ -255,6 +271,8 @@ AC-01 (spec.md)
 | Merge iter-N → develop | `--no-ff` (merge commit) | Preserva historia de iteración |
 | Merge develop → main | Squash opcional | El MIM decide: historia limpia vs completa |
 
+[↑ Contenido](#contenido)
+
 ---
 
 ## Flujo Completo de una Iteración
@@ -263,7 +281,7 @@ AC-01 (spec.md)
 flowchart TD
     START["Orquestador lee handoff.md\n+ DAG de tasks.md"]
 
-    subgraph PREFASE["Pre-Fase: Contratos (branch exec/iter-N)"]
+    subgraph PREFASE["prePhase: Contratos (branch exec/iter-N)"]
         C1["Contract Architect define\ncontratos en branch iter-N"]
         C2["MIM aprueba contratos\n(si decisión de negocio)"]
     end
@@ -333,6 +351,8 @@ flowchart TD
     NEXT -->|"No"| RELEASE["Merge develop → main"]
 ```
 
+[↑ Contenido](#contenido)
+
 ---
 
 ## Manejo de Conflictos Post-Merge
@@ -347,15 +367,17 @@ pero con dependencias lógicas), los tests de integración los detectan:
 | Lane A y B modificaron el mismo archivo | Merge conflict de git | Orquestador resuelve, re-run tests |
 | Tests pasan aislados pero fallan integrados | Interferencia de estado (DB, cache) | Orquestador aísla el problema, crea fix en branch iter-N |
 
+[↑ Contenido](#contenido)
+
 ---
 
 ## Manejo de Fallos Mid-Lane
 
-Cuando un sub-agente falla durante la ejecución dentro de un worktree:
+Cuando un subAgent falla durante la ejecución dentro de un worktree:
 
 ```mermaid
 flowchart TD
-    FAIL["Sub-agente reporta\nFAILED o BLOCKED"]
+    FAIL["subAgent reporta\nFAILED o BLOCKED"]
     ASSESS{{"¿Tipo de fallo?"}}
 
     FAIL --> ASSESS
@@ -389,6 +411,8 @@ El Orquestador es responsable de limpiar worktrees al cierre de la iteración:
 2. Lanes estacionados → worktree permanece hasta que el bloqueo se resuelva
 3. Lanes abandonados → `git worktree remove --force` + branch eliminado
 
+[↑ Contenido](#contenido)
+
 ---
 
 ## Diagrama de Decisión del Orquestador
@@ -416,3 +440,5 @@ flowchart TD
     PASS -->|"No"| FIX["Resolver conflictos\nre-run"]
     FIX --> PASS
 ```
+
+[↑ Contenido](#contenido)

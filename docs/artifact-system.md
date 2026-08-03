@@ -13,8 +13,20 @@ tags: [artifacts, build, coverage, reportes, outputs, gitignore]
 > El sistema de artifacts es una convención que declara DÓNDE aparecen
 > los outputs generados por el proyecto (builds, reportes de cobertura,
 > documentación API, etc.) y QUÉ scripts los producen. Es el complemento
-> del [sistema de ecos](echo-system.md): el eco define los pasos, el
+> del [echo system](echo-system.md): el echo define los pasos, el
 > sistema de artifacts define dónde aterrizan los resultados.
+
+---
+
+## Contenido
+
+- [Distinción Semántica](#distinción-semántica)
+- [La Convención](#la-convención)
+- [Catálogo de Tipos](#catálogo-de-tipos)
+- [Mapa de Generación](#mapa-de-generación)
+- [Conexión con el Framework](#conexión-con-el-framework)
+- [Obligatorio en Principio, Flexible en Implementación](#obligatorio-en-principio-flexible-en-implementación)
+- [Dónde Se Configura](#dónde-se-configura)
 
 ---
 
@@ -25,13 +37,15 @@ confundirse:
 
 | Tipo | Qué es | Dónde vive | Quién lo gestiona |
 |------|--------|------------|-------------------|
-| **Artifact de planificación** | Documentos del Modo 1 (idea.md, spec.md, design.md, tasks.md, handoff.md, ops-runbook.md) | [Artifact store](planning/artifacts/README.md) (fuera del repo) | [TPM](overview.md) |
-| **Artifact de build** | Outputs generados por el eco (compilados, reportes, documentación API) | Carpeta gitignoreada dentro del repo | Sistema de artifacts (este documento) |
+| **Artifact de planificación** | Documentos de planning (idea.md, spec.md, design.md, tasks.md, handoff.md, ops-runbook.md) | [artifactStore](planning/artifacts/README.md) (fuera del repo) | [TPM](overview.md) |
+| **buildArtifact** | Outputs generados por el echo (compilados, reportes, documentación API) | Carpeta gitignoreada dentro del repo | Sistema de artifacts (este documento) |
 
 Este documento define el segundo tipo. Cuando el resto de la
 documentación dice "artifact" sin calificador, se refiere al primer
 tipo (planificación). Cuando se refiere a outputs de build, se usa
-"artifact de build" o se referencia este documento.
+"buildArtifact" o se referencia este documento.
+
+[↑ Contenido](#contenido)
 
 ---
 
@@ -48,7 +62,7 @@ El sistema de artifacts establece tres elementos:
 
 ```mermaid
 flowchart TD
-    subgraph ECHO["Sistema de Ecos (5 pasos)"]
+    subgraph ECHO["echo system (5 pasos)"]
         direction LR
         S["Setup"] --> B["Build"] --> ST["Static"] --> DT["Dynamic"] --> E["E2E"]
     end
@@ -83,6 +97,8 @@ framework solo exige que:
 - Todo output generado apunte a ella (o a un subdirectorio dentro de
   ella).
 
+[↑ Contenido](#contenido)
+
 ---
 
 ## Catálogo de Tipos
@@ -91,14 +107,16 @@ Los siguientes tipos de artifacts son comunes en la mayoría de
 proyectos. El catálogo concreto de cada proyecto se define en
 `design.md`.
 
-| Tipo | Descripción | Producido por (paso del eco) | Consumido por |
+| Tipo | Descripción | Producido por (paso del echo) | Consumido por |
 |------|-------------|------------------------------|---------------|
-| **Apps buildeadas** | Código compilado, transpilado, bundleado, listo para deploy o distribución | Paso 2 (Build) | Pipeline de deployment, Modo 3 |
+| **Apps buildeadas** | Código compilado, transpilado, bundleado, listo para deploy o distribución | Paso 2 (Build) | Pipeline de deployment, operation |
 | **Reportes de cobertura** | Cobertura de tests por archivo y agregada. Formatos: HTML para lectura, JSON/LCOV para procesamiento | Paso 4 (Dynamic Test) | [Fase Accept](execution/accept.md) (QA verifica umbral), SOC 2 (evidencia de controles) |
 | **Reportes de tests** | Resultados de ejecución de tests. Formato estructurado para parsing automatizado | Paso 4 (Dynamic Test) + Paso 5 (E2E) | [Fase Accept](execution/accept.md) (QA verifica que todos pasan) |
-| **Documentación API** | Especificaciones de API generadas desde contratos o código. OpenAPI, AsyncAPI, GraphQL schema | Paso 2 (Build) | Consumidores de la API, [Pre-Fase Contratos](execution/contracts.md) |
+| **Documentación API** | Especificaciones de API generadas desde contratos o código. OpenAPI, AsyncAPI, GraphQL schema | Paso 2 (Build) | Consumidores de la API, [prePhase Contratos](execution/contracts.md) |
 | **Bundle analysis** | Análisis de tamaño de bundles, tree shaking, dependencias incluidas | Paso 2 (Build) | [Fase Refactor](execution/refactor.md) (revisión de performance) |
 | **Otros outputs** | Cualquier output generado que el proyecto necesite rastrear (PDFs, assets procesados, etc.) | Variable | Variable |
+
+[↑ Contenido](#contenido)
 
 ---
 
@@ -109,10 +127,10 @@ El mapa de generación es una tabla que el proyecto declara en
 
 - El script o comando que lo genera.
 - La ruta de destino dentro de la carpeta de artifacts.
-- El paso del eco donde se produce.
+- El paso del echo donde se produce.
 
 ```markdown
-| Artifact | Script | Destino | Paso del eco |
+| Artifact | Script | Destino | Paso del echo |
 |----------|--------|---------|--------------|
 | App backend | {comando de build} | {carpeta}/backend | 2. Build |
 | App frontend | {comando de build} | {carpeta}/frontend | 2. Build |
@@ -124,6 +142,8 @@ El mapa de generación es una tabla que el proyecto declara en
 El mapa no es prescriptivo en su contenido (cada proyecto tiene
 diferentes artifacts) — es prescriptivo en su existencia: todo proyecto
 que adopte el sistema de artifacts DEBE tener este mapa documentado.
+
+[↑ Contenido](#contenido)
 
 ---
 
@@ -140,13 +160,13 @@ definir dónde viven ni en qué formato se producen:
 | "Test reports" como evidencia | [accept.md](execution/accept.md) | Ubicación y formato de los reportes de tests |
 | "Reporte de cobertura" como evidencia SOC 2 | [red.md](execution/red.md) | Dónde se genera y persiste el reporte |
 | Herramienta de coverage "debe reportar por archivo y agregada" | [red.md](execution/red.md) | Dónde aterriza ese reporte |
-| "Código droppable" identificado via coverage report | [accept.md](execution/accept.md) | El reporte vive en ubicación conocida |
+| "droppableCode" identificado via coverage report | [accept.md](execution/accept.md) | El reporte vive en ubicación conocida |
 
-### Ciclo de vida de un artifact de build
+### Ciclo de vida de un buildArtifact
 
 ```mermaid
 sequenceDiagram
-    participant ECO as Eco (paso N)
+    participant ECO as echo (paso N)
     participant FS as Carpeta de Artifacts
     participant QA as Fase Accept
     participant CI as Pipeline CI/CD
@@ -157,13 +177,15 @@ sequenceDiagram
     QA->>FS: Lee reportes de cobertura y tests
     QA->>QA: Verifica umbrales y resultados
 
-    CI->>FS: Lee artifacts de build
-    CI->>CI: Despliega si eco es verde
+    CI->>FS: Lee buildArtifacts
+    CI->>CI: Despliega si echo es verde
 ```
 
-Los artifacts de build son **efímeros y regenerables**. No se versionan
-en git — se regeneran en cada ejecución del eco. La fuente de verdad es
-el código fuente + el eco, no los artifacts generados.
+Los buildArtifacts son **efímeros y regenerables**. No se versionan
+en git — se regeneran en cada ejecución del echo. La fuente de verdad es
+el código fuente + el echo, no los artifacts generados.
+
+[↑ Contenido](#contenido)
 
 ---
 
@@ -215,7 +237,7 @@ se mantiene: el proyecto SABE dónde está cada artifact y qué lo genera.
 
 Para proyectos con múltiples targets de compilación (cross-platform,
 multi-arch, library + CDN bundle), cada target se documenta como una
-fila separada en el mapa de generación. El paso del eco es el mismo;
+fila separada en el mapa de generación. El paso del echo es el mismo;
 el script y destino varían por target.
 
 ### Cómo manejar las limitaciones
@@ -233,6 +255,8 @@ Cuando el sistema de artifacts no puede aplicarse limpiamente:
 La excepción no elimina el sistema — lo adapta. Lo que no puede variar
 es que el proyecto SEPA dónde están sus artifacts y qué los genera.
 
+[↑ Contenido](#contenido)
+
 ---
 
 ## Dónde Se Configura
@@ -243,7 +267,9 @@ es que el proyecto SEPA dónde están sus artifacts y qué los genera.
 | Catálogo de tipos del proyecto | `design.md` — Restricciones de infraestructura | Fase 3 (Diseñar) |
 | Mapa de generación (script → destino) | `design.md` — Restricciones de infraestructura | Fase 3 (Diseñar) |
 | Excepciones documentadas | `design.md` — Restricciones de infraestructura | Fase 3 (Diseñar) |
-| Entrada en `.gitignore` | Working tree del repo | Modo 2 (Pre-Fase o Green) |
+| Entrada en `.gitignore` | Working tree del repo | execution (prePhase o Green) |
+
+[↑ Contenido](#contenido)
 
 ---
 
@@ -251,10 +277,10 @@ es que el proyecto SEPA dónde están sus artifacts y qué los genera.
 
 | Documento | Relación con este |
 |-----------|-------------------|
-| [Sistema de ecos](echo-system.md) | El eco produce los artifacts; este sistema define dónde aterrizan |
+| [echo system](echo-system.md) | El echo produce los artifacts; este sistema define dónde aterrizan |
 | [Fase Red](execution/red.md) | Define requisitos de cobertura y reportes que se convierten en artifacts |
 | [Fase Accept](execution/accept.md) | QA consume los reportes de cobertura y tests como inputs de certificación |
 | [Fase Refactor](execution/refactor.md) | Revisión de performance consume bundle analysis; revisión de seguridad consume audit reports |
 | [Contratos](execution/contracts.md) | Contract-first puede generar documentación API como artifact |
 | [Schemas](planning/artifacts/schemas.md) | `design.md` es donde se configura el sistema de artifacts |
-| [Artefactos de planificación](planning/artifacts/README.md) | Distinción semántica: artifacts de planificación ≠ artifacts de build |
+| [Artefactos de planificación](planning/artifacts/README.md) | Distinción semántica: artifacts de planificación ≠ buildArtifacts |

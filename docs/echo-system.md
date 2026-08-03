@@ -1,16 +1,16 @@
 ---
 id: echo-system
-title: "Sistema de Ecos"
+title: "Echo System"
 mode: framework
 type: reference
-tags: [ecos, pipeline, homogeneidad, CI/CD, hooks, ambientes, bumpDependencies]
+tags: [echo, pipeline, homogeneidad, CI/CD, hooks, ambientes, bumpDependencies]
 ---
 
-# Sistema de Ecos
+# Echo System
 
 ← [Índice](README.md)
 
-> Un eco es una secuencia determinista de 5 pasos que se ejecuta en
+> Un echo es una secuencia determinista de 5 pasos que se ejecuta en
 > todo ambiente — dev, QA, CI, CD. La garantía es estructural: los
 > mismos pasos corren en el mismo orden en cada ambiente. Lo que varía
 > es el **scope** (dev prioriza feedback rápido, CI prioriza
@@ -18,10 +18,23 @@ tags: [ecos, pipeline, homogeneidad, CI/CD, hooks, ambientes, bumpDependencies]
 
 ---
 
+## Contenido
+
+- [Por Qué Existe](#por-qué-existe)
+- [Los 5 Pasos](#los-5-pasos)
+- [Homogeneidad de Ambientes](#homogeneidad-de-ambientes)
+- [Enforcement](#enforcement)
+- [Conexión con el Framework](#conexión-con-el-framework)
+- [Automatización Habilitada: bumpDependencies](#automatización-habilitada-bumpdependencies)
+- [Adaptabilidad](#adaptabilidad)
+- [Gaps que Este Sistema Resuelve](#gaps-que-este-sistema-resuelve)
+
+---
+
 ## Por Qué Existe
 
-El framework define qué construir (Modo 1), cómo construirlo (Modo 2) y
-cómo operarlo (Modo 3). Pero ninguno de esos modos define **cómo
+El framework define qué construir (planning), cómo construirlo (execution) y
+cómo operarlo (operation). Pero ninguno de esos modos define **cómo
 verificar que el entorno de trabajo es confiable** en cada ambiente donde
 el código se ejecuta.
 
@@ -34,15 +47,17 @@ Sin un pipeline determinista compartido entre ambientes:
 - Un build puede funcionar localmente con una versión flotante de una
   dependencia, y romperse cuando CI instala una versión diferente.
 
-El eco elimina estas discrepancias. No es un "nice to have" de DevOps
+El echo elimina estas discrepancias. No es un "nice to have" de DevOps
 — es infraestructura fundacional que habilita la confiabilidad de todo
 lo que el framework promete.
+
+[↑ Contenido](#contenido)
 
 ---
 
 ## Los 5 Pasos
 
-El eco siempre tiene 5 pasos, siempre en este orden. Cada paso tiene un
+El echo siempre tiene 5 pasos, siempre en este orden. Cada paso tiene un
 propósito, una entrada, una salida y un criterio de fallo binario: pasa
 o no pasa.
 
@@ -86,7 +101,7 @@ documentado).
 |----------|-------|
 | Propósito | Transformar el código fuente en artifacts ejecutables o distribuibles |
 | Entrada | Código fuente + dependencias instaladas |
-| Salida | Artifacts de build (compilados, transpilados, bundleados) |
+| Salida | buildArtifacts (compilados, transpilados, bundleados) |
 | Fallo | Error de compilación, error de tipos, error de bundling |
 | Condicional | Proyectos puramente interpretados sin paso de build pueden marcar este paso como no-op documentado |
 
@@ -114,15 +129,15 @@ infraestructura").
 | Atributo | Valor |
 |----------|-------|
 | Propósito | Ejecutar la suite de tests del proyecto y verificar cobertura |
-| Entrada | Artifacts de build (o código fuente) + suite de tests |
+| Entrada | buildArtifacts (o código fuente) + suite de tests |
 | Salida | Reporte de tests + reporte de cobertura |
 | Fallo | Test que falla, cobertura por debajo del umbral del proyecto |
 
 Este paso ejecuta los tests definidos en la
-[Fase Red](execution/red.md) — App tests como tier primario,
+[Fase Red](execution/red.md) — appTests como tier primario,
 integración como derivado. El umbral de cobertura es obligatorio para
 stacks con herramientas de coverage maduras y nunca puede bajarse (ver
-[Fase Red](execution/red.md), sección "Código Droppable"). Para
+[Fase Red](execution/red.md), sección "droppableCode"). Para
 stacks donde coverage no es medible o semánticamente relevante (IaC,
 data pipelines), `design.md` DEBE declarar la métrica de verificación
 alternativa (ej: tasa de compliance de políticas, mutation testing
@@ -143,11 +158,13 @@ E2E se ejecuta en deploys, tags y merges a ramas principales (ver
 [tabla de pipeline placement](execution/red.md) para la distribución
 detallada de qué corre cuándo).
 
+[↑ Contenido](#contenido)
+
 ---
 
 ## Homogeneidad de Ambientes
 
-La propiedad fundamental del eco es que los mismos 5 pasos se ejecutan
+La propiedad fundamental del echo es que los mismos 5 pasos se ejecutan
 en todo ambiente, en el mismo orden. Lo que varía entre ambientes es el
 **scope** de cada paso y el **trigger** que lo invoca — no los pasos ni
 su secuencia. Dev prioriza feedback rápido (scope selectivo), CI
@@ -171,8 +188,8 @@ flowchart TD
         CD1["Setup"] --> CD2["Build"] --> CD3["Static"] --> CD4["Dynamic\n(completo)"] --> CD5["E2E\n(smoke +\ncompleto)"]
     end
 
-    DEV -.->|"mismo eco\ndiferente scope"| CI
-    CI -.->|"mismo eco\ndiferente scope"| CD
+    DEV -.->|"mismo echo\ndiferente scope"| CI
+    CI -.->|"mismo echo\ndiferente scope"| CD
 ```
 
 ### Diferencias por ambiente
@@ -187,11 +204,13 @@ flowchart TD
 La tabla de distribución detallada está en la
 [Fase Red](execution/red.md) (sección "Pipeline placement").
 
+[↑ Contenido](#contenido)
+
 ---
 
 ## Enforcement
 
-El eco no es una recomendación — es obligatorio. El mecanismo de
+El echo no es una recomendación — es obligatorio. El mecanismo de
 enforcement depende del ambiente:
 
 ```mermaid
@@ -201,7 +220,7 @@ flowchart TD
 
         HOOKS["Dev: Git hooks\n(pre-commit, pre-push)"]
         PIPELINE["CI: Pipeline stages\n(configuración del CI system)"]
-        GATES["CD: Deployment gates\n(eco completo como condición)"]
+        GATES["CD: Deployment gates\n(echo completo como condición)"]
     end
 
     HOOKS -->|"mismos pasos"| PIPELINE
@@ -228,17 +247,17 @@ Esta distribución es un default — la distribución exacta la decide el
 proyecto y se documenta en `design.md`. Algunos proyectos pueden incluir
 tests de App (paso 4, módulo tocado) en pre-commit para feedback más
 rápido (ver [tabla de pipeline placement](execution/red.md)). El
-principio invariante: **nunca pushear código que no pase el eco** (al
+principio invariante: **nunca pushear código que no pase el echo** (al
 menos hasta el paso 4).
 
 ### Presupuesto de tiempo
 
-Cuando el eco completo (pasos 1-4) excede un tiempo tolerable para el
+Cuando el echo completo (pasos 1-4) excede un tiempo tolerable para el
 workflow del desarrollador (ej: monorepos grandes, builds compilados),
 el proyecto define un **presupuesto de tiempo** para el pre-push en
 `design.md`. Los pasos que no caben en el presupuesto se difieren a CI,
 documentando explícitamente el trade-off: el developer puede pushear
-código que CI podría rechazar. El eco sigue corriendo completo en CI —
+código que CI podría rechazar. El echo sigue corriendo completo en CI —
 el presupuesto solo afecta la distribución local en hooks.
 
 ### En CI
@@ -252,35 +271,37 @@ build falló, ni E2E si los tests de App no pasan.
 
 ### En CD
 
-El deployment gate exige eco verde completo como precondición. Post-
+El deployment gate exige echo verde completo como precondición. Post-
 deploy, un subset de E2E (smoke) verifica que el despliegue fue exitoso.
+
+[↑ Contenido](#contenido)
 
 ---
 
 ## Conexión con el Framework
 
-El eco es transversal — se define, implementa, verifica y explota a lo
+El echo es transversal — se define, implementa, verifica y explota a lo
 largo de los tres modos.
 
 ```mermaid
 flowchart TD
-    subgraph MODE1["Modo 1 — Planificación"]
+    subgraph MODE1["Planning"]
         direction TB
         M1_DESIGN["design.md define:\n- Herramientas de cada paso\n- Distribución de hooks\n- Umbral de cobertura"]
-        M1_HANDOFF["handoff.md declara:\n- Compliance del eco como\n  restricción de ejecución\n- Hooks requeridos"]
+        M1_HANDOFF["handoff.md declara:\n- Compliance del echo como\n  restricción de ejecución\n- Hooks requeridos"]
     end
 
-    subgraph MODE2["Modo 2 — Ejecución"]
+    subgraph MODE2["Execution"]
         direction TB
-        M2_RED["Fase Red: suite de tests\n(paso 4 y 5 del eco)"]
+        M2_RED["Fase Red: suite de tests\n(paso 4 y 5 del echo)"]
         M2_GREEN["Fase Green: implementación\nno debe romper pasos 1-4"]
         M2_REFACTOR["Fase Refactor: quality gates\nalineados con paso 3"]
-        M2_ACCEPT["Fase Accept: QA verifica\nque el eco completo pasa"]
+        M2_ACCEPT["Fase Accept: QA verifica\nque el echo completo pasa"]
     end
 
-    subgraph MODE3["Modo 3 — Operación"]
+    subgraph MODE3["Operation"]
         direction TB
-        M3_BUMP["bumpDependencies:\nautomatización habilitada\npor eco determinista"]
+        M3_BUMP["bumpDependencies:\nautomatización habilitada\npor echo determinista"]
     end
 
     MODE1 --> MODE2 --> MODE3
@@ -293,22 +314,24 @@ flowchart TD
 | Herramientas de cada paso | `design.md` — Restricciones de infraestructura | Fase 3 (Diseñar) |
 | Distribución de hooks | `design.md` — Restricciones de infraestructura | Fase 3 (Diseñar) |
 | Umbral de cobertura | `design.md` — Restricciones de infraestructura | Fase 3 (Diseñar) |
-| Compliance del eco | `handoff.md` — Restricciones de ejecución | Fase 5 (Handoff) |
-| Implementación de hooks | Working tree del repo | Modo 2 (Pre-Fase o Green) |
-| Verificación del eco | Fase Accept | Modo 2 (Accept) |
-| Explotación (bumpDeps) | Operación | Modo 3 |
+| Compliance del echo | `handoff.md` — Restricciones de ejecución | Fase 5 (Handoff) |
+| Implementación de hooks | Working tree del repo | execution (prePhase o Green) |
+| Verificación del echo | Fase Accept | execution (Accept) |
+| Explotación (bumpDeps) | Operación | operation |
+
+[↑ Contenido](#contenido)
 
 ---
 
 ## Automatización Habilitada: bumpDependencies
 
-Cuando el eco es determinista y confiable, habilita una automatización
+Cuando el echo es determinista y confiable, habilita una automatización
 fundamental: la actualización automatizada de dependencias.
 
 ```mermaid
 flowchart LR
     BUMP["Bump\ndependencias"]
-    ECO["Ejecutar\neco completo\n(5 pasos)"]
+    ECO["Ejecutar\necho completo\n(5 pasos)"]
     CHECK{{"¿Todo\nverde?"}}
     COMMIT["Commit\nautomático"]
     REPORT["Reporte de\nfallo"]
@@ -321,7 +344,7 @@ flowchart LR
 El patrón es simple:
 
 1. Actualizar una o más dependencias en los manifiestos del proyecto
-2. Ejecutar el eco completo (los 5 pasos)
+2. Ejecutar el echo completo (los 5 pasos)
 3. Si todo pasa → commit automático
 4. Si algo falla → reporte para intervención manual
 
@@ -335,15 +358,15 @@ Este patrón aborda la tensión inherente del framework:
   CVEs conocidos.
 
 Sin un mecanismo de actualización, las versiones pinneadas se vuelven
-obsoletas y vulnerables. El eco determinista es lo que hace viable la
+obsoletas y vulnerables. El echo determinista es lo que hace viable la
 actualización automatizada — sin él, bumping es una apuesta.
 
 ### Consideraciones del patrón
 
 | Aspecto | Guía |
 |---------|------|
-| Patch / minor | Automatizables — el eco verde confirma compatibilidad |
-| Major (breaking) | Requieren migración manual — tratarlos como trabajo planificado (Modo 1), no como bump automatizado |
+| Patch / minor | Automatizables — el echo verde confirma compatibilidad |
+| Major (breaking) | Requieren migración manual — tratarlos como trabajo planificado (planning), no como bump automatizado |
 | Peer dependencies | Deben bumpearse atómicamente como grupo (ej: react + react-dom + @types/react) |
 | Proyectos polyglot | Cada package manager tiene su propio manifiesto; los bumps pueden necesitar coordinación entre managers |
 | Frecuencia y agrupación | Decisión de proyecto documentada en `design.md` |
@@ -352,11 +375,13 @@ La mecánica concreta (herramienta de bump, estrategia de agrupación,
 frecuencia) se porta a la plataforma del proyecto. El patrón es
 universal; las decisiones de implementación no.
 
+[↑ Contenido](#contenido)
+
 ---
 
 ## Adaptabilidad
 
-El eco es prescriptivo en su estructura (5 pasos, en orden) pero
+El echo es prescriptivo en su estructura (5 pasos, en orden) pero
 adaptable en su contenido:
 
 | Aspecto | Fijo | Adaptable |
@@ -371,30 +396,30 @@ adaptable en su contenido:
 
 ### Unidad de ejecución
 
-El eco opera a nivel de **unidad independientemente buildeable y
+El echo opera a nivel de **unidad independientemente buildeable y
 testeable**. En un proyecto simple, esa unidad es el proyecto completo.
 En un monorepo con múltiples packages, cada package tiene su propia
-instancia del eco. En un proyecto polyglot (ej: backend Go + frontend
-TypeScript), cada stack tiene su propio eco con sus propias herramientas.
+instancia del echo. En un proyecto polyglot (ej: backend Go + frontend
+TypeScript), cada stack tiene su propio echo con sus propias herramientas.
 
-| Estructura | Unidad del eco | Orquestación |
+| Estructura | Unidad del echo | Orquestación |
 |------------|----------------|--------------|
-| Proyecto simple | El proyecto completo | Directa (1 eco) |
-| Monorepo (workspaces) | Cada package independiente | El orchestrator del monorepo ejecuta ecos selectivamente por packages afectados |
-| Polyglot | Cada stack | Cada stack define sus herramientas; el eco de proyecto los orquesta |
+| Proyecto simple | El proyecto completo | Directa (1 echo) |
+| Monorepo (workspaces) | Cada package independiente | El orchestrator del monorepo ejecuta echoes selectivamente por packages afectados |
+| Polyglot | Cada stack | Cada stack define sus herramientas; el echo de proyecto los orquesta |
 
-En dev (hooks), el eco corre solo para las unidades afectadas por el
+En dev (hooks), el echo corre solo para las unidades afectadas por el
 cambio. En CI, corre para todas las unidades afectadas más sus
-dependientes. En CD, corren todos los ecos.
+dependientes. En CD, corren todos los echoes.
 
 ### Stacks no convencionales
 
 El modelo de 5 pasos está diseñado para proyectos de software con ciclo
 build-test. Para stacks donde los pasos no mapean directamente (IaC,
 data pipelines, generadores de sitios estáticos), el proyecto define en
-`design.md` cómo cada paso del eco se traduce a su contexto:
+`design.md` cómo cada paso del echo se traduce a su contexto:
 
-| Paso del eco | IaC (ejemplo) | Data pipeline (ejemplo) |
+| Paso del echo | IaC (ejemplo) | Data pipeline (ejemplo) |
 |--------------|---------------|-------------------------|
 | Setup | Instalar providers/plugins | Instalar dependencias de pipeline |
 | Build | `plan` / `preview` (validación, no artifact distribuible) | Compilar DAGs / transformaciones |
@@ -414,22 +439,26 @@ vez de un artifact distribuible), se documenta como excepción en
 estándar del framework (ver
 [excepciones documentadas](agile-adaptations.md)).
 
-El paso se marca como no-op en el eco, no se elimina. Los 5 pasos
+El paso se marca como no-op en el echo, no se elimina. Los 5 pasos
 siempre existen conceptualmente — un paso que no aplica ejecuta un
 no-op exitoso, no desaparece.
+
+[↑ Contenido](#contenido)
 
 ---
 
 ## Gaps que Este Sistema Resuelve
 
-| Gap identificado | Dónde existía | Cómo lo aborda el eco |
+| Gap identificado | Dónde existía | Cómo lo aborda el echo |
 |------------------|---------------|----------------------|
-| CI/CD integration TBD | [execution/README.md](execution/README.md) | El eco ES la definición del pipeline que CI ejecuta |
+| CI/CD integration TBD | [execution/README.md](execution/README.md) | El echo ES la definición del pipeline que CI ejecuta |
 | Sin mención de análisis estático | 29 docs, 0 referencias a linting/formatting | Paso 3 (Static Test) lo formaliza como obligatorio |
-| Hooks mencionados pero no especificados | [schemas.md](planning/artifacts/schemas.md) | Enforcement local del eco via pre-commit/pre-push |
-| Sin concepto de homogeneidad de ambientes | Framework completo | Propiedad fundamental del eco: mismos pasos, todo ambiente |
-| Tensión versiones pinned ↔ deps modernas | [red.md](execution/red.md) | bumpDependencies como patrón habilitado por eco determinista |
-| CI como participante sin definición | [green.md](execution/green.md), [git-strategy.md](execution/git-strategy.md) | CI ejecuta el eco — ahora está definido |
+| Hooks mencionados pero no especificados | [schemas.md](planning/artifacts/schemas.md) | Enforcement local del echo via pre-commit/pre-push |
+| Sin concepto de homogeneidad de ambientes | Framework completo | Propiedad fundamental del echo: mismos pasos, todo ambiente |
+| Tensión versiones pinned ↔ deps modernas | [red.md](execution/red.md) | bumpDependencies como patrón habilitado por echo determinista |
+| CI como participante sin definición | [green.md](execution/green.md), [git-strategy.md](execution/git-strategy.md) | CI ejecuta el echo — ahora está definido |
+
+[↑ Contenido](#contenido)
 
 ---
 
@@ -437,10 +466,10 @@ no-op exitoso, no desaparece.
 
 | Documento | Relación con este |
 |-----------|-------------------|
-| [Sistema de artifacts](artifact-system.md) | Paso 2 (Build) produce artifacts; pasos 4 y 5 producen reportes de tests y cobertura. El sistema de artifacts define DÓNDE aterrizan |
+| [artifact system](artifact-system.md) | Paso 2 (Build) produce artifacts; pasos 4 y 5 producen reportes de tests y cobertura. El artifact system define DÓNDE aterrizan |
 | [Fase Red](execution/red.md) | Define la suite de tests (paso 4 y 5) y la tabla de pipeline placement |
-| [Fase Green](execution/green.md) | La implementación no debe romper los pasos 1-4 del eco |
+| [Fase Green](execution/green.md) | La implementación no debe romper los pasos 1-4 del echo |
 | [Fase Refactor](execution/refactor.md) | Quality gates alineados con paso 3; verificación de CVEs |
-| [Fase Accept](execution/accept.md) | QA verifica que el eco completo pasa como parte de la certificación |
+| [Fase Accept](execution/accept.md) | QA verifica que el echo completo pasa como parte de la certificación |
 | [Schemas](planning/artifacts/schemas.md) | `design.md` define las herramientas; `handoff.md` declara compliance |
 | [Estrategia Git](execution/git-strategy.md) | Hooks y CI como participantes del lifecycle de worktrees |

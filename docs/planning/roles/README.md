@@ -8,16 +8,24 @@ tags: [roles, po, dev-lead, qa, devsecops, ux, equipo]
 
 # Perfiles de Roles
 
-← [Índice principal](../../README.md) | [Planificación](../README.md)
+← [Índice principal](../../README.md) | [Planning](../README.md)
 
 > Este documento define CÓMO opera cada rol en cada fase. Es el manual de
-> delegación del SM: cuando convoca a un sub-agente, consulta este documento
-> para construir el contrato de delegación con la personalidad, contexto,
+> delegación del SM: cuando convoca a un subAgent, consulta este documento
+> para construir el delegationContract con la personalidad, contexto,
 > output esperado, y restricciones correctas.
 >
-> Los roles SON sub-agentes. No son personas. Son personalidades y
+> Los roles SON subAgents. No son personas. Son personalidades y
 > competencias que el SM instancia para una tarea acotada. Un mismo "agente"
 > puede ser PO en una fase y QA en otra — lo que importa es el contrato.
+
+---
+
+## Contenido
+
+- [Arquitectura de Delegación](#arquitectura-de-delegación)
+- [El Equipo Default — 5 Roles Productivos](#el-equipo-default-5-roles-productivos)
+- [Contenido de esta sección](#contenido-de-esta-sección)
 
 ---
 
@@ -29,9 +37,9 @@ flowchart TD
 
     SM -->|"consulta"| PROFILES["roles/\n(este documento)"]
     SM -->|"consulta"| ARTIFACTS["artifacts/README.md\n(qué producir)"]
-    SM -->|"construye"| CONTRACT["Contrato de\nDelegación"]
+    SM -->|"construye"| CONTRACT["delegationContract"]
 
-    CONTRACT -->|"lanza"| AGENT["Sub-agente\ninstanciado"]
+    CONTRACT -->|"lanza"| AGENT["subAgent\ninstanciado"]
 
     subgraph CONTRACT_FIELDS["Campos del contrato"]
         direction TB
@@ -58,7 +66,7 @@ El SM **nunca inventa** un contrato sin estructura. Lo construye combinando:
 ### Verificabilidad de las personalidades
 
 Las personalidades NO son decorativas — orientan el tono, foco y
-prioridades del sub-agente. Pero "esceptico" o "paranoico" no son
+prioridades del subAgent. Pero "esceptico" o "paranoico" no son
 verificables por si solos. Para que el SM pueda evaluar si la
 personalidad se aplico, cada contrato incluye **output constraints**
 derivados de la personalidad:
@@ -79,6 +87,8 @@ El SM verifica estos constraints en el paso ECHO del PDC. Si el output
 no los cumple → re-delegacion con contrato mas explicito, no fallo del
 agente.
 
+[↑ Contenido](#contenido)
+
 ---
 
 ## El Equipo Default — 5 Roles Productivos
@@ -96,7 +106,7 @@ agente.
 > **Nota**: SM y TPM NO son roles productivos — son infraestructura.
 > SM orquesta; TPM persiste. No aparecen en este documento porque su
 > comportamiento se define en
-> [Comportamiento SM](../behavior/README.md).
+> [SM Behavior](../behavior/README.md).
 
 ### Los 5 roles son el equipo DEFAULT, no un techo
 
@@ -119,7 +129,7 @@ mindmap
       TPM
         Persistencia
         ACID
-        Adaptadores
+        Adapters
     Equipo Default
       PO
         Valor de negocio
@@ -142,6 +152,8 @@ mindmap
       Domain Expert
 ```
 
+[↑ Contenido](#contenido)
+
 ---
 
 ## Contenido de esta sección
@@ -151,8 +163,10 @@ Este documento se divide en tres páginas:
 | Página | Contenido |
 |--------|-----------|
 | **README.md** (este documento) | Arquitectura de delegación, verificabilidad de personalidades, identidad del equipo default |
-| [Contratos por Fase](profiles-by-phase.md) | Contratos de delegación detallados por rol y fase (Fase 1-8), tabla de activación condicional, condensación para developer solo, diagramas de interacción entre roles |
+| [Contratos por Fase](profiles-by-phase.md) | delegationContracts detallados por rol y fase (Fase 1-8), tabla de activación condicional, condensación para developer solo, diagramas de interacción entre roles |
 | [Roles Ad-Hoc](ad-hoc.md) | Cuándo y cómo crear roles fuera del equipo default, contrato ad-hoc, ejemplo completo (Data Architect) |
+
+[↑ Contenido](#contenido)
 
 ---
 
@@ -168,19 +182,21 @@ flowchart TD
 
     BEHAVIOR -->|"reglas de\norquestación"| SM_RUNTIME
     ARTIFACTS -->|"schema de\nartefactos"| SM_RUNTIME
-    ROLES -->|"contratos de\ndelegación"| SM_RUNTIME
+    ROLES -->|"delegationContracts"| SM_RUNTIME
 
-    SM_RUNTIME -->|"lanza sub-agente\ncon contrato completo"| AGENT["Sub-agente"]
+    SM_RUNTIME -->|"lanza subAgent\ncon contrato completo"| AGENT["subAgent"]
 ```
 
-- **[Comportamiento SM](../behavior/README.md)** — define las reglas del SM:
-  state machine, fast-forward, supervisión post-hoc, bloqueo. El SM consulta
+- **[SM Behavior](../behavior/README.md)** — define las reglas del SM:
+  state machine, fastForward, supervisión post-hoc, bloqueo. El SM consulta
   ESE documento para saber CÓMO orquestar.
-- **[Artefactos](../artifacts/README.md)** — define los 6 artefactos
-  universales, su schema ISO, y la interfaz de adaptadores. El SM
+- **[Artifacts](../artifacts/README.md)** — define los 6 artefactos
+  universales, su schema ISO, y la interfaz de adapters. El SM
   consulta ESE documento para saber QUÉ producir.
 - **Este documento** — define los 5 roles default, el mecanismo de roles
-  ad-hoc, la personalidad por fase, los contratos de delegación, y las
+  ad-hoc, la personalidad por fase, los delegationContracts, y las
   reglas de activación condicional. El SM consulta ESTE documento para
   saber A QUIÉN convocar y CON QUÉ contrato — tanto para el equipo
   default como para extensiones ad-hoc.
+
+[↑ Contenido](#contenido)

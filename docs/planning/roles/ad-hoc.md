@@ -8,12 +8,22 @@ tags: [roles-ad-hoc, dba, performance-engineer, domain-expert, extensibilidad]
 
 # Roles Ad-Hoc
 
-← [Índice principal](../../README.md) | [Planificación](../README.md) | [Roles](README.md)
+← [Índice principal](../../README.md) | [Planning](../README.md) | [Roles](README.md)
 
 El SM tiene autoridad para definir y convocar roles que no existen en la
 tabla default. El principio: si el proyecto necesita un experto que
 ninguno de los 5 roles cubre adecuadamente, el SM lo crea en lugar de
 forzar a un rol existente fuera de su competencia.
+
+---
+
+## Contenido
+
+- [Cuándo crear un rol ad-hoc](#cuándo-crear-un-rol-ad-hoc)
+- [Contrato de un rol ad-hoc](#contrato-de-un-rol-ad-hoc)
+- [Ejemplo: rol ad-hoc `Data Architect`](#ejemplo-rol-ad-hoc-data-architect)
+- [Restricciones de roles ad-hoc](#restricciones-de-roles-ad-hoc)
+- [Ejemplos de roles ad-hoc frecuentes](#ejemplos-de-roles-ad-hoc-frecuentes)
 
 ---
 
@@ -45,6 +55,8 @@ flowchart TD
     JUSTIFY --> CONTRACT["Construir contrato\n(mismo formato que default)"]
 ```
 
+[↑ Contenido](#contenido)
+
 ---
 
 ## Contrato de un rol ad-hoc
@@ -69,12 +81,14 @@ El SM lo construye en el momento, definiendo cada campo:
 | **Fases activas** | Sí | En qué fases participa este rol |
 | **Voto en Fase 7** | No | Si tiene poder de voto en aceptación (default: NO — advisory only) |
 
+[↑ Contenido](#contenido)
+
 ---
 
 ## Ejemplo: rol ad-hoc `Data Architect`
 
 ```plaintext
-Contrato de delegación (ad-hoc):
+delegationContract (ad-hoc):
 ─────────────────────────────────────────────
 Rol:            Data Architect (ad-hoc)
 Justificación:  El proyecto maneja 12 entidades con relaciones complejas
@@ -101,12 +115,14 @@ Voto Fase 7:    SÍ — puede BLOCK por inconsistencia de datos
 ─────────────────────────────────────────────
 ```
 
+[↑ Contenido](#contenido)
+
 ---
 
 ## Restricciones de roles ad-hoc
 
 1. **Mismo contrato, misma supervisión**: el rol ad-hoc se somete al PDC
-   (Post-Delegation Checkpoint) y al circuit breaker igual que cualquier
+   (Post-Delegation Checkpoint) y al circuitBreaker igual que cualquier
    rol default. Sin excepciones.
 2. **Justificación obligatoria**: el SM DEBE documentar por qué el equipo
    default no cubre la necesidad. Sin justificación → no se crea el rol.
@@ -127,6 +143,8 @@ Voto Fase 7:    SÍ — puede BLOCK por inconsistencia de datos
    Si se necesita en el siguiente ciclo, el SM lo re-evalúa — puede
    promoverlo a "recurrente" en `idea.md` o descartarlo.
 
+[↑ Contenido](#contenido)
+
 ---
 
 ## Ejemplos de roles ad-hoc frecuentes
@@ -145,3 +163,5 @@ Voto Fase 7:    SÍ — puede BLOCK por inconsistencia de datos
 > el proyecto requiera, siempre que cumpla las restricciones de arriba.
 > La creatividad está en definir el contrato correcto, no en limitarse a
 > una lista.
+
+[↑ Contenido](#contenido)
