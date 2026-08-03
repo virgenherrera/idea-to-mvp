@@ -297,7 +297,7 @@ Areas dentro del Modo 2 que requieren definicion adicional:
 | Contratos de delegacion detallados | TBD | Plantillas completas para cada rol del Modo 2 (como `roles/` en Modo 1) |
 | ~~Paralelismo en ejecucion~~ | DEFINIDO | Ver [git-strategy.md](git-strategy.md) — worktrees por lane, detección de conflictos, merge controlado |
 | ~~Commit strategy~~ | DEFINIDO | Ver [git-strategy.md](git-strategy.md) — convención por fase, trazabilidad AC→test→commit, squash policy |
-| CI/CD integration | TBD | Como la suite Red se integra con pipelines de CI |
+| ~~CI/CD integration~~ | DEFINIDO | Ver [sistema de ecos](../echo-system.md) — pipeline determinista de 5 pasos, enforcement vía hooks y CI, homogeneidad de ambientes |
 | Metricas de ejecucion | TBD | Coverage thresholds, tiempos de ciclo, tasa de re-delegacion |
 | Modo 3 (Operacion) | DEFINIDO | Opcional y reactivo. El MIM opera el producto con asistencia del agente. Ver [modelo de operación](../operation/README.md) |
 
@@ -328,3 +328,5 @@ Este documento se divide en siete páginas:
 | [Artefactos](../planning/artifacts/README.md) | Define `handoff.md` (input de este modo) y los 6 artefactos |
 | [Comportamiento SM](../planning/behavior/README.md) | Patron de delegacion y PDC que el Orquestador adapta |
 | [Roles](../planning/roles/README.md) | Roles de planificacion que informan los roles de ejecucion |
+| [Sistema de ecos](../echo-system.md) | Pipeline determinista de 5 pasos que CI ejecuta; enforcement vía hooks |
+| [Sistema de artifacts](../artifact-system.md) | Dónde aterrizan los outputs del eco (builds, reportes, cobertura) |

@@ -57,7 +57,7 @@ flowchart TD
 | **KISS** | Complejidad innecesaria. Sobre-ingenieria. Patrones aplicados sin justificacion. | Cada abstraccion debe resolver un problema real |
 | **Arquitectura** | Alineacion con `design.md`. Ports & adapters. Capas respetadas. Dependencias en la direccion correcta. | Desviaciones documentadas con justificacion |
 | **Seguridad** | OWASP Top 10. Secrets hardcodeados. SQL injection. XSS. CORS. Dependencias con CVEs. | Vulnerabilidades criticas bloquean aprobacion |
-| **Performance** | Memory leaks. N+1 queries. Operaciones bloqueantes. Lazy loading donde aplica. | Problemas documentados con severidad |
+| **Performance** | Memory leaks. N+1 queries. Operaciones bloqueantes. Lazy loading donde aplica. Bundle analysis (tamaño, tree shaking) cuando aplica (ver [sistema de artifacts](../artifact-system.md)). | Problemas documentados con severidad |
 | **DDD / Patrones** | Domain-Driven Design (si la complejidad lo amerita). Patrones aplicados donde resuelven un problema real, no por decoracion. | Solo donde la complejidad del dominio lo justifica |
 | **DI** | Dependencias inyectadas, no hardcodeadas. Testeable. Reemplazable. | Dependencias directas a implementaciones concretas son violaciones |
 
@@ -88,3 +88,7 @@ flowchart TD
    arquitectura definida, no lo aleja
 4. **Commit por refactor** --- cada refactor es un commit separado para
    facilitar reversion
+
+> Los quality gates del refactor están alineados con el paso 3 (Static
+> Test) del [sistema de ecos](../echo-system.md) — el análisis estático
+> es la primera línea de defensa que el eco formaliza como obligatorio.

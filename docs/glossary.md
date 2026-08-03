@@ -25,10 +25,12 @@ tags: [definiciones, términos, vocabulario]
 | **ADR (Architecture Decision Record)** | Registro de una decisión arquitectónica con contexto, alternativas evaluadas y justificación. Parte de `design.md`. |
 | **Agente compuesto** | Sub-agente que asume múltiples personalidades secuencialmente dentro de un worktree (Test Engineer → Implementor → Reviewer). Se usa en ejecución paralela para evitar conflictos de filesystem. |
 | **App Test / Service Test** | Test que ejerce el stack real de la aplicación sin mocks. Boundary = la app. Tier primario del framework. Detecta código droppable vía coverage alto obligatorio. |
+| **Artifact de build** | Output generado por el eco: compilados, reportes de cobertura, documentación API, etc. Vive en carpeta gitignoreada dentro del repo (o en registro remoto para artifacts cloud). No confundir con artifacts de planificación (idea.md, spec.md, etc.) que viven en el artifact store. Ver [sistema de artifacts](artifact-system.md). |
 | **Artifact store** | Capa de persistencia donde viven los artefactos de planificación. Fuera del repo destino. Accesible vía interfaz universal de 9 operaciones. |
 | **Asistente operativo** | Rol del agente en Modo 3. Ejecuta lo que el usuario pide dentro del contexto del proyecto construido. No planifica ni construye — opera. |
 | **Boundary (modelo de)** | Criterio que determina el tipo de test según dónde se ubica la frontera del mock: File (unit, prohibido), Module (integración, derivado), App (servicio/componente, desarrollo explícito), Solution (E2E, desarrollo explícito). Eje organizador de la Fase Red. |
 | **Builder Pattern (testing)** | Patrón para construir datos de test mediante factories reutilizables. Centraliza la creación de datos y permite variar solo lo relevante al caso. Evita datos hardcodeados en el cuerpo del test. |
+| **bumpDependencies** | Automatización habilitada por el eco determinista. Patrón: bump dependencias → ejecutar eco completo → si verde → commit automático. Aborda la tensión entre versiones pinneadas y dependencias modernas. La mecánica concreta se porta a la plataforma del proyecto. Ver [sistema de ecos](echo-system.md). |
 | **Circuit breaker** | Mecanismo de protección: si 3 delegaciones consecutivas al mismo rol fallan, el SM detiene la cadena y escala al MIM. |
 | **Código droppable** | Código con 0% de cobertura en App tests. Si ningún test lo toca a través de interacciones reales de producto, no tiene justificación de existir. Candidato a eliminación. |
 | **Compact rules** | Reglas de código y convenciones del proyecto, extraídas del skill registry, que el orquestador inyecta pre-digeridas en cada sub-agente. |
@@ -39,6 +41,7 @@ tags: [definiciones, términos, vocabulario]
 | **DAG (Directed Acyclic Graph)** | Grafo de dependencias entre tareas en `tasks.md`. Define el orden de ejecución y los lanes paralelos. |
 | **Drift semántico** | Desalineación entre un artefacto downstream y su upstream después de que el upstream fue modificado. Detectado por `verifyConsistency`. |
 | **E2E (End-to-End)** | Test que ejerce la solución completa desplegada, multi-servicio, con cero mocks. Boundary = la solución. Segundo tier explícito del framework. Se ejecuta en deploys, tags y merges a main/develop. |
+| **Eco** | Secuencia determinista de 5 pasos (Setup → Build → Static Test → Dynamic Test → E2E Test) que se ejecuta en todo ambiente (dev, QA, CI, CD) con el mismo orden pero scope variable. Garantiza homogeneidad estructural de ambientes. El eco es obligatorio (TINA). Ver [sistema de ecos](echo-system.md). |
 | **Fast-forward** | Mecanismo que permite al SM avanzar múltiples fases cuando el gradiente de certeza (F1-F4) es alto. Aplica al inicio y mid-cycle. |
 | **Gate** | En planificación: punto de validación donde un artefacto debe alcanzar `approved` para desbloquear la siguiente fase. En ejecución: checkpoint operacional (tests pasan, cobertura cumple umbral, QA certifica). |
 | **Handoff** | Artefacto (`handoff.md`) que actúa como contrato autocontenido entre Modo 1 (planificación) y Modo 2 (ejecución). Portable y acotado. |

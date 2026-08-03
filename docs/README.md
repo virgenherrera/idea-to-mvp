@@ -18,6 +18,8 @@ tags: [navegación, índice, mapa]
 - [Vista general del framework](overview.md) — diagramas de alto nivel, entrada recomendada
 - [Glosario](glossary.md) — definiciones de términos especializados del framework
 - [Adaptaciones ágiles](agile-adaptations.md) — cómo el framework adapta los 12 principios del Manifiesto Ágil para agentes IA
+- [Sistema de ecos](echo-system.md) — pipeline determinista de 5 pasos que garantiza homogeneidad entre ambientes
+- [Sistema de artifacts](artifact-system.md) — convención de ubicación predecible para outputs de build
 
 ---
 

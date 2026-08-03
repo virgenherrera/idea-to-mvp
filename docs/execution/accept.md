@@ -39,6 +39,7 @@ pasan" es condición necesaria pero NO suficiente. QA certifica que:
 | Código droppable | Coverage report | Código con 0% cobertura identificado y reportado |
 | Arquitectura | `design.md` (via handoff) | Refactor alineó la implementación con las decisiones arquitectónicas |
 | Seguridad | Reportes de Reviewers | Vulnerabilidades críticas resueltas antes de certificar |
+| Eco completo | [Sistema de ecos](../echo-system.md) | Los 5 pasos del eco pasan (setup, build, static, dynamic, E2E). Precondición para certificar |
 | Documentación operativa | `handoff.md` sección "Documentación operativa esperada" | Si el handoff la requiere: documentación existe, es usable, cubre lo declarado. Si el handoff dice "no requerida": omitir verificación. |
 
 ---
@@ -104,3 +105,14 @@ sequenceDiagram
 | RECHAZADO — gap de tests | Re-delegar a Red |
 | RECHAZADO — gap de contrato | Re-delegar a Pre-Fase |
 | RECHAZADO — gap de planificación | Escalar a Modo 1 |
+
+---
+
+## Índice de Documentos Relacionados
+
+| Documento | Relación con este |
+|-----------|-------------------|
+| [Sistema de ecos](../echo-system.md) | QA verifica que el eco completo pasa como precondición de certificación |
+| [Sistema de artifacts](../artifact-system.md) | Define dónde viven los reportes de cobertura y tests que QA consume |
+| [Fase Red](red.md) | Define la suite de tests y el umbral de cobertura que QA verifica |
+| [Fase Refactor](refactor.md) | QA verifica que los reportes de Reviewers no tienen vulnerabilidades críticas pendientes |

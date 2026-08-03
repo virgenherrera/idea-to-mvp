@@ -438,6 +438,10 @@ flowchart TD
 
 ### Ubicación en el pipeline
 
+> La ubicación de estos tests en el pipeline se enmarca dentro del
+> [sistema de ecos](../echo-system.md), que define los 5 pasos completos
+> del pipeline y su distribución por ambiente.
+
 | Qué corre | Cuándo | Propósito |
 |-----------|--------|-----------|
 | Tests de App (solo módulo tocado) | Pre-commit / pre-push | Feedback rápido sobre lo que cambió |

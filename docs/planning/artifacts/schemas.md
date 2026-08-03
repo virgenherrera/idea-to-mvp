@@ -160,6 +160,16 @@ Autenticación, autorización, secrets, OWASP top 10.
 
 ## Restricciones de infraestructura
 Hosting, CI/CD, monitoreo, limits.
+- Pipeline de eco: herramientas de cada paso (setup, build, static, dynamic, E2E).
+  Ver [sistema de ecos](../../echo-system.md).
+- Distribución de hooks: qué pasos del eco corren en pre-commit vs pre-push
+- Presupuesto de tiempo para hooks (si aplica)
+- Umbral de cobertura obligatorio (o métrica alternativa si coverage no aplica)
+- Carpeta de artifacts: nombre, ruta, entrada en .gitignore.
+  Ver [sistema de artifacts](../../artifact-system.md).
+- Catálogo de tipos de artifact del proyecto
+- Mapa de generación: script → destino → paso del eco
+- Excepciones documentadas (artifacts no redireccionables, pasos no-op)
 
 ## Trazabilidad
 Cada decisión traza a spec.md (qué requisito resuelve).
@@ -280,7 +290,8 @@ Qué tipo de pruebas, cobertura esperada, herramientas.
 Qué debe ser verdad para que el proyecto se considere completo.
 
 ## Restricciones de ejecución
-Convenciones del repo (AGENTS.md), reglas de commits, hooks.
+Convenciones del repo (AGENTS.md), reglas de commits, hooks,
+compliance del eco (ver [sistema de ecos](../../echo-system.md)).
 
 ## Contexto que NO se incluye
 Qué se decidió NO hacer y por qué (para evitar scope creep).

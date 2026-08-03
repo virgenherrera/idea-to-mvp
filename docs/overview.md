@@ -444,3 +444,5 @@ definidas:
 | [Roles](planning/roles/README.md) | Contratos de delegación por fase, personalidades, activación condicional, roles ad-hoc |
 | [Modo Ejecución](execution/README.md) | Modo 2: Contract-first, Red-Green-Refactor macro, roles de ejecución, conexión con Modo 1 |
 | [Modo Operación](operation/README.md) | Modo 3: opcional y reactivo, sin fases, usuario + agente asistente, conexión con Modo 1 y Modo 2 |
+| [Sistema de ecos](echo-system.md) | Pipeline determinista de 5 pasos, homogeneidad de ambientes, enforcement, bumpDependencies |
+| [Sistema de artifacts](artifact-system.md) | Convención de ubicación predecible para outputs de build (compilados, reportes, documentación API) |
