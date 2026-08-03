@@ -56,6 +56,7 @@ tags: [definiciones, términos, vocabulario]
 | **patternA** | Estrategia de retrieval donde el SM busca, cura y re-inyecta contexto en el prompt del subAgent. Útil para búsquedas fuzzy o fan-out alto (8+). |
 | **patternB** | Estrategia de retrieval donde el SM pasa solo topic_keys y el subAgent consulta el artifactStore directamente. 6x más barato que patternA. |
 | **PDC** (Post-Delegation Checkpoint) | Protocolo de 4 pasos que el SM ejecuta después de cada retorno de subAgent: ECHO (coherencia), VERIFY (cobertura), MARK (persistir), DECIDE (siguiente acción). |
+| **pivot** | Cambio de requisitos que altera scope, dirección o ACs de un trabajo en curso. El framework lo trata como operación legítima (no error). Tres categorías: localizado (AC modificado), estructural (stack/approach cambia), fundamental (dirección del producto cambia). El SM evalúa impacto y regenera selectivamente los artefactos afectados. |
 | **planning** | Modo 1 del framework. Transforma la idea en un handoff validado mediante fases de planificación, gates de aprobación y el artifactStore. |
 | **POM** (Page Object Model) | Patrón para tests con interfaz (UI, CLI). Abstrae interacciones mecánicas en objetos reutilizables. El test describe intención, el POM ejecuta mecánica. |
 | **prePhase** | Primera etapa de execution. Define contratos formales antes de escribir tests o código. Habilita desarrollo paralelo. |
@@ -67,6 +68,7 @@ tags: [definiciones, términos, vocabulario]
 | **semanticDrift** | Desalineación entre un artefacto downstream y su upstream después de que el upstream fue modificado. Detectado por `verifyConsistency`. |
 | **SM** (Session Manager / Orquestador) | El agente principal que actúa como facade del proyecto. Orquesta fases, convoca roles, valida gates y controla transiciones. No produce contenido. No es un Scrum Master en el sentido del Scrum Guide. |
 | **smProcess** | subAgent especializado que el SM instancia para extraer reglas de proceso de archivos del proyecto (e.g., reglas de un challenge). Instanciado bajo demanda, no es un rol permanente. |
+| **spike** | Exploración time-boxed que produce código desechable (droppableCode por definición) para responder preguntas técnicas que bloquean la planificación. Autorizado por el MIM, ejecutado en branch desechable (`spike/{nombre}`). Output: hallazgos que alimentan `idea.md` o `spec.md`. Echo reducido (solo Setup + Build). |
 | **structuralCompliance** | Tests que verifican la ESTRUCTURA de cada capa arquitectónica, no su comportamiento. Tres dimensiones condicionales (se activan solo si el proyecto las tiene): persistencia (schema, hashing, cifrado), frontend (A11y, i18n, responsive), infraestructura (versiones exactas, env vars validadas, fail-fast). Tageados como `structural`, ejecutados en CI. |
 | **subAgent** | Agente instanciado por el SM con un delegationContract acotado. Recibe personalidad, contexto y restricciones específicas para su tarea. Los roles del equipo son subAgents. |
 | **testContract** | Manifiesto enumerable por sujeto bajo prueba. Cada entrada vincula un caso de test con un nombre inmutable y trazable a un AC. Previene código de test spaghetti. |

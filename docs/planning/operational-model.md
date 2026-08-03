@@ -26,6 +26,8 @@ tags: [modos, ownership, contexto, artifact-store, adaptadores, delegación, mul
 - [Comportamiento Global](#comportamiento-global)
 - [Modelo de Ownership y Contexto](#modelo-de-ownership-y-contexto)
 - [Modos del Framework](#modos-del-framework)
+- [Spike — Exploración Time-Boxed](#spike--exploración-time-boxed)
+- [Pivot — Cambios de Requisitos como Operación Normal](#pivot--cambios-de-requisitos-como-operación-normal)
 - [Límites](#límites)
 - [El Handoff como Contrato](#el-handoff-como-contrato)
 - [Qué Vive DÓNDE](#qué-vive-dónde)
@@ -319,15 +321,154 @@ ver [Modelo de Operación](../operation/README.md).
 
 ---
 
+### Spike — Exploración Time-Boxed
+
+Un spike es una exploración time-boxed que produce código desechable para
+informar decisiones de planificación. Es el mecanismo que usa el framework
+cuando la incertidumbre es demasiado alta para planificar directamente.
+
+**Cuándo aplica**: el SM detecta que no puede avanzar en planificación
+porque hay preguntas que solo se responden escribiendo código (viabilidad
+técnica, rendimiento de una API, compatibilidad de librerías).
+
+**Reglas del spike**:
+
+| Aspecto | Regla |
+|---------|-------|
+| **Autorización** | Solo el MIM autoriza un spike. El SM lo propone, no lo inicia |
+| **Timebox** | Máximo definido al autorizar (ej: "2 horas", "1 sesión"). El SM reporta al MIM al vencer |
+| **Branch** | Branch desechable (`spike/{nombre}`). Se elimina después de extraer conclusiones |
+| **Output** | NO es código productivo. El output es conocimiento que alimenta `idea.md` o `spec.md` |
+| **Artefactos** | No genera los 5 artefactos universales. Produce un resumen de hallazgos que el SM ingesta al artifactStore |
+| **Echo** | Reducido: solo Setup + Build. No se requieren tests, linting, ni cobertura |
+
+```mermaid
+flowchart LR
+    INCERTIDUMBRE["SM detecta\nincertidumbre técnica"] --> PROPONE["SM propone\nspike al MIM"]
+    PROPONE --> AUTORIZA["MIM autoriza\n+ define timebox"]
+    AUTORIZA --> EJECUTA["Spike en branch\ndesechable"]
+    EJECUTA --> HALLAZGOS["Resumen de\nhallazgos"]
+    HALLAZGOS --> INGESTA["SM ingesta a\nidea.md / spec.md"]
+    HALLAZGOS --> ELIMINA["Branch eliminado"]
+```
+
+**Spike vs. prototipo**: un spike no es un prototipo. El prototipo busca
+validar UX o flujo; el spike busca responder una pregunta técnica concreta.
+El código del spike NUNCA se promueve a producción — se reescribe con el
+conocimiento adquirido.
+
+[↑ Contenido](#contenido)
+
+---
+
+### Pivot — Cambios de Requisitos como Operación Normal
+
+Un pivot es un cambio de requisitos que altera el scope, la dirección o
+los criterios de aceptación de un trabajo en curso. El framework trata los
+pivots como operaciones legítimas, no como errores ni excepciones.
+
+**Principio**: los requisitos cambian porque el contexto cambia (feedback
+del mercado, descubrimiento técnico, decisión del stakeholder). El
+framework debe absorber ese cambio sin requerir que se reinicie todo el
+ciclo desde cero.
+
+**Flujo del pivot**:
+
+```mermaid
+flowchart TD
+    CAMBIO["MIM comunica\ncambio de requisitos"] --> SM_EVAL["SM evalúa\nimpacto"]
+    SM_EVAL --> SCOPE{{"¿Alcance del\ncambio?"}}
+    SCOPE -->|"AC modificado\n(localizado)"| REGEN_LOCAL["Regenerar solo\nartefactos afectados"]
+    SCOPE -->|"Scope redefinido\n(estructural)"| REGEN_CASCADE["Regenerar en\ncascada desde\nel punto de cambio"]
+    SCOPE -->|"Dirección cambia\n(fundamental)"| NUEVO_CICLO["Nuevo ciclo\ndesde idea.md"]
+    REGEN_LOCAL --> CONTINUE["Continuar con\nartefactos actualizados"]
+    REGEN_CASCADE --> CONTINUE
+    NUEVO_CICLO --> CONTINUE
+```
+
+**Categorías de pivot**:
+
+| Categoría | Ejemplo | Impacto en artefactos |
+|-----------|---------|----------------------|
+| **Localizado** | "El AC-3 ahora requiere paginación" | Solo `spec.md` y `tasks.md` se actualizan. `idea.md` y `design.md` intactos |
+| **Estructural** | "Ya no es REST, va a ser GraphQL" | `design.md` se regenera. `tasks.md` y `handoff.md` se regeneran en cascada. `idea.md` y `spec.md` pueden mantenerse |
+| **Fundamental** | "El producto no es para consumidores, es B2B" | Ciclo nuevo desde `idea.md`. Artefactos anteriores se archivan como referencia |
+
+**Reglas del pivot**:
+
+1. El SM NO descarta artefactos — los marca como superseded con referencia
+   al motivo del pivot.
+2. La regeneración es selectiva: el SM evalúa qué artefactos downstream
+   son invalidados por el cambio y regenera solo esos.
+3. El score fastForward se recalcula post-pivot. Un pivot puede escalar o
+   de-escalar el tier.
+4. Si el pivot ocurre durante execution, el SM detiene la ejecución y
+   regresa a planning para regenerar los artefactos afectados antes de
+   continuar.
+
+[↑ Contenido](#contenido)
+
+---
+
 ### Punto de entrada: Takeover de codebase
 
-Para codebases heredados o existentes que se incorporan al framework:
+Para codebases heredados o existentes que se incorporan al framework, el
+SM ejecuta una fase de **descubrimiento (arqueología)** antes de evaluar
+el scoring fastForward:
 
-| Situación | Punto de entrada |
-|-----------|-----------------|
-| Codebase heredado sin cambios planificados | operation — el equipo opera y aprende el sistema |
-| Codebase heredado con cambios planificados | fastForward desde el tier que corresponda — la documentación existente (README, specs, CI, tests) cuenta como artefactos parciales para el scoring F1-F4 |
-| Codebase heredado con deuda técnica | planning con fastForward — el SM evalúa qué artefactos existen y los acredita |
+#### Fase de descubrimiento
+
+El SM audita el estado real del codebase antes de asignar puntos:
+
+| Dimensión | Qué busca | Dónde lo encuentra |
+|-----------|-----------|-------------------|
+| **Documentación** | README, ADRs, specs, wikis | Raíz, `/docs`, `/adr`, wiki del repo |
+| **Tests** | Suite existente, cobertura, tipos de test | `/tests`, `/spec`, `/__tests__`, CI config |
+| **CI/CD** | Pipeline, gates, checks automatizados | `.github/workflows`, `.gitlab-ci.yml`, `Jenkinsfile` |
+| **Arquitectura** | Patrones, estructura, stack | Estructura de directorios, `package.json`, imports |
+| **Deuda técnica** | TODOs, hacks, workarounds documentados | Comentarios en código, issues abiertos, backlog |
+
+#### Scoring override para brownfield
+
+El scoring F1-F4 estándar mide certeza sobre trabajo FUTURO. En takeover,
+la situación es distinta: hay alta certeza sobre lo que EXISTE pero baja
+certeza sobre lo que se quiere CAMBIAR. El SM aplica un override:
+
+| Factor | Scoring estándar (greenfield) | Override takeover |
+|--------|-------------------------------|-------------------|
+| **F1. Artefactos** | ¿Existen artefactos en el RAG? | ¿Existen equivalentes funcionales? (README ≈ idea.md, tests ≈ spec.md parcial) |
+| **F2. Estandarización** | ¿El dominio es estándar? | ¿El codebase sigue estándares reconocibles? |
+| **F3. Ambigüedad** | ¿Cuántas interpretaciones posibles? | ¿Se entiende qué hace el sistema? (no qué se quiere cambiar) |
+| **F4. Referencia** | ¿Hay codebase con patrones? | Siempre 2 — el codebase ES la referencia |
+
+**Consecuencia**: F4=2 siempre en takeover. Esto eleva el score base y
+evita que un codebase bien documentado con tests caiga en Tier Completo
+(el paradox del fastForward).
+
+#### Bootstrap incremental del echo
+
+En takeover, el echo no se activa de golpe. Se bootstrappea por capas:
+
+| Semana | Echo paso | Qué se activa | Umbral |
+|--------|-----------|---------------|--------|
+| 1 | Setup | Dependencias resuelven, proyecto compila | Build pasa |
+| 2 | Static analysis | Linter configurado, 0 errores nuevos | Baseline establecido |
+| 3 | Build + Static | Los dos anteriores más formatting | CI verde |
+| 4+ | Dynamic | Tests existentes pasan, cobertura baseline medida | No regression |
+| Mes 2+ | Full echo | Los 5 pasos, E2E si aplica | Thresholds del proyecto |
+
+Cada capa se activa solo cuando la anterior es estable. El SM NO exige
+echo completo desde el día 1 en un takeover.
+
+#### Tabla de puntos de entrada (expandida)
+
+| Situación | Descubrimiento | Punto de entrada | Tier probable |
+|-----------|---------------|-----------------|---------------|
+| Codebase heredado, sin cambios planificados | Arqueología ligera | operation — operar y aprender | N/A (no hay planning) |
+| Codebase heredado, cambios planificados, bien documentado | Arqueología completa | fastForward — docs existentes cuentan como artefactos parciales | Ligero o Estándar |
+| Codebase heredado, cambios planificados, sin documentación | Arqueología completa | planning — generar artefactos faltantes | Estándar o Completo |
+| Codebase heredado con deuda técnica crítica | Arqueología + spike(s) | planning con spike(s) para evaluar viabilidad, luego fastForward | Depende del spike |
+| Codebase abandonado (sin mantenedores activos) | Arqueología profunda | planning desde idea.md — tratar como producto nuevo con contexto heredado | Completo |
 
 El SM no exige recrear artefactos que ya existen en forma equivalente (un
 README detallado puede cumplir la función de `idea.md`, una suite de tests

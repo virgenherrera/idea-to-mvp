@@ -208,3 +208,52 @@ comprimirse en un documento único (`plan.md`) que contiene las secciones
 esenciales en formato abreviado — el alineamiento ISO se mantiene, pero
 el conteo físico se reduce. Lo que siempre cambia es cuántos ojos los
 revisan y cuántos checkpoints se aplican.
+
+### Formato de plan.md (Tier Ligero)
+
+Cuando el SM opera en Tier Ligero, los 5 artefactos universales
+(idea.md, spec.md, design.md, tasks.md, handoff.md) se comprimen en un
+solo documento `plan.md`. Cada sección mapea 1:1 a su artefacto
+completo y se expande a artefactos separados si el tier escala.
+
+```markdown
+# plan.md — {nombre del cambio}
+
+## Idea
+Qué problema resolvemos y para quién. 1-2 párrafos.
+Score fastForward: F1={n}, F2={n}, F3={n}, F4={n}. Total={n}.
+
+## Spec
+ACs en formato given/when/then. Solo los críticos para el scope.
+
+- AC-1: Given ... When ... Then ...
+- AC-2: Given ... When ... Then ...
+
+## Design
+Decisiones técnicas: stack, patterns, constraints.
+ADRs inline (decisión + alternativa rechazada + por qué).
+Sin diagramas salvo que el dominio los exija.
+
+## Tasks
+Lista ordenada de tareas. Sin DAG, sin lanes.
+Orden de ejecución implícito por posición.
+
+- [ ] Tarea 1
+- [ ] Tarea 2
+- [ ] Tarea 3
+
+## Handoff
+Scope: {descripción del alcance}.
+Echo compliance: {qué pasos del echo aplican}.
+Restricciones: {constraints operativas}.
+```
+
+**Reglas del plan.md**:
+
+| Regla | Detalle |
+|-------|---------|
+| **Mínimo viable** | Idea + Spec + Tasks son obligatorios. Design y Handoff pueden omitirse si el score es 7-8 (alta certeza, contexto determinista) |
+| **ACs** | Mínimo 1 AC en formato given/when/then. Sin ACs no hay definición de "terminado" |
+| **Expansión** | Si el tier escala mid-cycle, el SM expande plan.md en artefactos separados. La información ya escrita se redistribuye, no se reescribe |
+| **Echo** | plan.md NO exime del echo. El echo corre con el scope que aplique al tier |
+| **Persistencia** | plan.md vive en el artifactStore igual que cualquier artefacto. Transiciona por la misma state machine (draft → review → approved) |

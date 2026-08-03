@@ -10,9 +10,16 @@ tags: [actores, pipeline, modos, roles, artefactos, diagrama]
 
 ← [Índice](README.md)
 
-> Mapa de navegación para entender el sistema completo antes de leer los
-> documentos detallados. Los diagramas son la comunicación principal; el
-> texto es tejido conectivo.
+> **Identidad**: idea-to-mvp es un harness para desarrollo de software
+> asistido por IA. Caso primario: 1 humano (MIM) + N agentes IA, desde
+> una idea hasta un producto funcional. El framework previene drift y
+> alucinaciones de los agentes mediante artefactos validados, gates de
+> aprobación, y un pipeline determinista (echo). Equipos con
+> desarrolladores humanos pueden adoptar las fases y artefactos — el
+> modelo de delegación (SM, delegationContracts, PDC) se adapta.
+>
+> Este documento es el mapa de navegación. Los diagramas son la
+> comunicación principal; el texto es tejido conectivo.
 
 ---
 
