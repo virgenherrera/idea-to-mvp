@@ -1,0 +1,26 @@
+{
+  "name": "sigil",
+  "version": "0.1.0",
+  "description": "AI agent development methodology — structured ownership for any agent",
+  "bin": {
+    "sigil": "./bin/cli.js"
+  },
+  "files": [
+    "bin/",
+    "templates/"
+  ],
+  "keywords": [
+    "ai",
+    "agent",
+    "methodology",
+    "agents-md",
+    "scrum",
+    "development",
+    "governance",
+    "compliance"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  }
+}

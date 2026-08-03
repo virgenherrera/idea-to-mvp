@@ -17,7 +17,7 @@ target/
 dist/
 build/
 out/
-artifacts/
+/artifacts/
 *.exe
 *.dll
 *.so
