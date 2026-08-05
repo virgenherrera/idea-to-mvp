@@ -310,8 +310,30 @@ modelo de delegación del orquestador, y conexión con planning), ver
 **Propósito**: el MIM usa el producto construido; el agente asiste como
 operador. Modo opcional y reactivo — sin fases, sin equipo.
 
-**Entrada**: producto construido (salida de execution), `ops-runbook.md`
-(si existe), documentación del proyecto.
+**Patrón facade/plugin**: Operation NO es una fase obligatoria del
+ciclo. Es un **facade** — cada proyecto decide si la activa según si
+tiene una superficie post-entrega que operar. Un script de una sola
+corrida o una prueba de concepto no necesita Operation; un servicio
+desplegado o una CLI distribuida sí. La decisión de activarla se toma
+en `idea.md` (sección "roles activos") y no bloquea el cierre del ciclo
+de planning si el proyecto no la requiere.
+
+**Adapter por tipo de proyecto**: el artefacto que produce esta fase
+varía según qué tipo de superficie expone el proyecto:
+
+| Tipo de proyecto | Adapter de Operation | Qué documenta |
+|-------------------|----------------------|----------------|
+| Servicio (API, backend desplegado) | `ops-runbook.md` | Deploy/rollback, monitoreo, alertas, troubleshooting (ver `artifacts/schemas.md` → `ops-runbook.md`) |
+| CLI | Guía de uso (`usage-guide.md`) | Flags, comandos, exit codes, ejemplos de invocación |
+| Librería / paquete | Referencia de API (`api-reference.md`) | Superficie pública, guía de migración, changelog |
+
+Cada adapter reutiliza la misma infraestructura (TPM, artifactStore,
+gate de Accept) — lo que cambia es el contenido y el estándar de
+respaldo (ITIL 4 / Google SRE PRR para runbook, IEEE 1063 para
+documentación de usuario en CLI y librerías).
+
+**Entrada**: producto construido (salida de execution), el artefacto
+del adapter correspondiente (si existe), documentación del proyecto.
 
 **Restricción clave**: no hay artefactos de planificación ni ceremonia.
 Si la operación revela un gap, escala de vuelta a planning o execution.

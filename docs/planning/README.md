@@ -12,6 +12,13 @@ tags: [planificación, idea, handoff, artefactos, fases]
 
 > Desde la idea hasta el handoff. Define QUÉ construir antes de construirlo.
 
+Planning produce un `handoff.md` que se valida de forma mecánica con
+`virgil handoff lint` — un gate determinista, no una revisión subjetiva.
+El handoff resultante habilita **ejecución paralela por lanes**: no es
+un pipeline serial que un solo ejecutor recorre de punta a punta, sino
+un contrato con tareas agrupadas en lanes independientes que múltiples
+ejecutores pueden reclamar y avanzar en simultáneo.
+
 ---
 
 ## Documentos

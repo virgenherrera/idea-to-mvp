@@ -16,6 +16,9 @@ tags: [contratos, api, schema, interfaces, contract-first, desarrollo-paralelo]
 
 - [Por que Contract-First](#por-que-contract-first)
 - [Tipos de contrato](#tipos-de-contrato)
+- [Contrato de binding layer](#contrato-de-binding-layer)
+- [Contrato de métricas](#contrato-de-métricas)
+- [Contrato de estado de ejecución](#contrato-de-estado-de-ejecución)
 - [Flujo de definicion de contratos](#flujo-de-definicion-de-contratos)
 - [Criterios de validacion del contrato](#criterios-de-validacion-del-contrato)
 
@@ -67,10 +70,70 @@ es la ceremonia alrededor.
 | Event Schema | JSON Schema / AsyncAPI | Sistemas event-driven | `UserCreatedEvent { id, email, timestamp }` |
 | Component Interface | Props/inputs tipados | Frontend con componentes | `LoginFormProps { onSubmit, initialValues }` |
 | Connector / Adapter Interface | Ports & adapters | Integraciones con terceros | `interface PaymentGateway { charge(amount): Receipt }` |
+| Binding Layer | Manifiesto requirement ↔ test ↔ código | Todo proyecto que use Virgil v2 | `AC-01 ↔ AuthTestCase.loginSuccess ↔ src/auth/login.service.ts` |
 
 > Los formatos son ilustrativos. Cualquier especificación formal que
 > cumpla los requisitos del contrato (tipada, verificable por máquina,
 > schema-completo) es válida.
+
+[↑ Contenido](#contenido)
+
+---
+
+## Contrato de binding layer
+
+El binding layer es el contrato que conecta un AC de `spec.md` con su
+test y con el código que lo satisface. A diferencia de los contratos de
+la tabla anterior (definidos una vez en la prePhase), el binding layer
+evoluciona durante la ejecución — no es estático:
+
+| Estado | Fase donde se alcanza | Qué garantiza |
+|--------|-------------------------|----------------|
+| `declared` | Red | El test existe y referencia un AC (ver [red.md](red.md#trazabilidad-ac-testplan-testcontract-implementación-coverage)) |
+| `inferred` | Green | Un hook post-commit detectó que el código ejercita el test declarado (ver [green.md](green.md#inferencia-de-bindings)) |
+| `verified` | Refactor | Mutation testing confirmó la fuerza real del test (ver [refactor.md](refactor.md#verificación-basada-en-métricas)) |
+
+[↑ Contenido](#contenido)
+
+---
+
+## Contrato de métricas
+
+Cada tier define un contrato de thresholds que el código debe cumplir
+antes de que Accept lo certifique (ver
+[refactor.md](refactor.md#verificación-basada-en-métricas)):
+
+| Tier | Mutation score mínimo | CRAP máximo |
+|------|------------------------|-------------|
+| strict | ≥ 80% | ≤ 30 |
+| standard | ≥ 60% | ≤ 45 |
+| relaxed | ≥ 40% | ≤ 60 |
+
+El tier activo es parte del contrato del handoff — no se negocia a
+mitad de ejecución sin re-aprobación del MIM.
+
+[↑ Contenido](#contenido)
+
+---
+
+## Contrato de estado de ejecución
+
+La ejecución paralela por lanes (ver
+[modelo de execution](README.md#ejecución-paralela-y-resumption-determinista))
+requiere un contrato de estado explícito, no solo contratos de
+producto:
+
+| Campo | Qué registra |
+|-------|----------------|
+| **claiming** | Estado de cada tarea: `pending`, `claimed` o `done`. Evita que dos lanes tomen la misma tarea. |
+| **timestamps** | Cuándo se reclamó y cuándo se completó cada tarea. |
+| **commit SHAs** | El commit que cerró cada tarea, para trazabilidad y resumption. |
+
+Este estado es lo que habilita la resumption determinista después de un
+crash o una compactación de contexto: el Orquestador reconstruye qué
+tareas están en curso, cuáles terminaron y cuáles siguen pendientes
+leyendo el estado persistido, sin re-preguntar al MIM ni re-derivar
+trabajo ya hecho.
 
 [↑ Contenido](#contenido)
 

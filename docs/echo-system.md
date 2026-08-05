@@ -26,6 +26,7 @@ tags: [echo, pipeline, homogeneidad, CI/CD, hooks, ambientes, bumpDependencies]
 - [Enforcement](#enforcement)
 - [Conexión con el Framework](#conexión-con-el-framework)
 - [Automatización Habilitada: bumpDependencies](#automatización-habilitada-bumpdependencies)
+- [Orquestación de Métricas (Virgil)](#orquestación-de-métricas-virgil)
 - [Adaptabilidad](#adaptabilidad)
 - [Gaps que Este Sistema Resuelve](#gaps-que-este-sistema-resuelve)
 
@@ -250,6 +251,16 @@ rápido (ver [tabla de pipeline placement](execution/red.md)). El
 principio invariante: **nunca pushear código que no pase el echo** (al
 menos hasta el paso 4).
 
+Los hooks del echo son **pre-\*** (pre-commit, pre-push): corren antes
+de que el cambio se registre, bloqueando código que no pasa el paso
+correspondiente. Virgil añade hooks **post-\*** (post-commit,
+post-merge) para tareas de gobernanza que no bloquean el flujo local —
+actualización del binding layer, cálculo de métricas de fortaleza. Los
+dos conjuntos de hooks coexisten sin colisión porque operan en momentos
+distintos del ciclo git: el echo controla el gate de calidad
+determinista pre-cambio; Virgil controla la observabilidad y las
+métricas post-cambio.
+
 ### Presupuesto de tiempo
 
 Cuando el echo completo (pasos 1-4) excede un tiempo tolerable para el
@@ -268,6 +279,14 @@ en merges a ramas principales, la suite E2E completa (ver
 [tabla de pipeline placement](execution/red.md)). Si algún paso falla,
 el pipeline se detiene — no hay punto en correr tests dinámicos si el
 build falló, ni E2E si los tests de App no pasan.
+
+Además del pipeline de 5 pasos, `virgil health` y `virgil coverage
+--min` pueden añadirse como gates de CI independientes, alineados con
+Echo pero sin reemplazarlo: `virgil health` verifica el estado agregado
+de trazabilidad y fortaleza del proyecto; `virgil coverage --min`
+impone un umbral mínimo de cobertura ponderada por mutation testing.
+Ambos corren en paralelo al echo — el echo verifica que el código
+funciona, Virgil verifica que el código es rastreable y robusto.
 
 ### En CD
 
@@ -374,6 +393,36 @@ actualización automatizada — sin él, bumping es una apuesta.
 La mecánica concreta (herramienta de bump, estrategia de agrupación,
 frecuencia) se porta a la plataforma del proyecto. El patrón es
 universal; las decisiones de implementación no.
+
+[↑ Contenido](#contenido)
+
+---
+
+## Orquestación de Métricas (Virgil)
+
+Dogma v2 (principios 2 y 3) exige verificar no solo que el código pasa
+el echo, sino que tiene la fortaleza estructural adecuada y que el MIM
+puede gestionar el proyecto desde un nivel superior sin revisar código
+manualmente. Virgil resuelve esto orquestando herramientas externas de
+métricas — no las implementa.
+
+| Métrica | Herramienta (ejemplo por stack) | Qué mide |
+|---------|----------------------------------|----------|
+| Mutation testing | Stryker (JS/TS), PIT (JVM), mutmut/cosmic-ray (Python) | Si los tests detectan mutaciones deliberadas del código — fortaleza real, no solo cobertura de líneas |
+| CRAP score | crap4j y herramientas equivalentes | Complejidad ponderada por falta de cobertura — identifica código riesgoso y no testeado |
+| Complejidad ciclomática | ESLint complexity, radon, gocyclo | Ramificación de cada función/módulo |
+| Tamaño de módulo | Herramientas de linting/análisis estático | Módulos que exceden el tamaño manejable |
+
+Virgil ejecuta estas herramientas (típicamente como hook post-\*, fuera
+del camino crítico del echo), agrega los resultados, y los expone vía
+`virgil health` (dashboard de 4 categorías: trazabilidad, fortaleza de
+pruebas, estructura de código, salud de documentación) y `virgil
+coverage --min` (gate de CI). El echo y Virgil son complementarios: el
+echo certifica que el código funciona; Virgil certifica que el código
+es sostenible.
+
+> Detalle: [Gobernanza Metodológica](planning/artifacts/methodology.md)
+> (sección "Verificación de métricas: trazabilidad y fortaleza").
 
 [↑ Contenido](#contenido)
 

@@ -19,6 +19,7 @@ tags: [operación, usuario, asistente-operativo, producto, opcional, reactivo]
 
 - [Principio](#principio)
 - [Cuándo se activa](#cuándo-se-activa)
+- [Patrón Adaptador](#patrón-adaptador)
 - [Actores](#actores)
 - [Input](#input)
 - [Tipos de operación](#tipos-de-operación)
@@ -48,6 +49,13 @@ operation es **opcional**. No todo proyecto tiene superficie operativa —
 una librería se publica, no se opera; un entregable one-shot se entrega,
 no se opera.
 
+> **operation como facade, no como fase obligatoria**: la metodología
+> cubre el ciclo completo idea → operación, pero operation funciona
+> como una fachada (facade) o plugin que se activa sobre el producto ya
+> construido — no como un eslabón obligatorio del pipeline. Cada
+> proyecto decide, según su naturaleza, **si** activa esa fachada y
+> **con qué adaptador** (ver [Patrón Adaptador](#patrón-adaptador)).
+
 [↑ Contenido](#contenido)
 
 ---
@@ -61,6 +69,29 @@ no se opera.
 | Proyecto con integraciones externas | Sí | Jira, Confluence, sistemas de terceros |
 | Librería o paquete | No | Se publica, no se opera |
 | Entregable one-shot | No | Se entrega, no se opera |
+
+[↑ Contenido](#contenido)
+
+---
+
+## Patrón Adaptador
+
+operation no impone un único formato de documentación operativa. Se
+comporta como una fachada con adaptadores intercambiables: el tipo de
+proyecto determina qué adaptador aplica y qué documento produce
+planning en su fase de documentación operativa:
+
+| Tipo de proyecto | Adaptador | Documento operativo |
+|-------------------|-----------|-----------------------|
+| Servicio o API | ops-runbook | `ops-runbook.md` |
+| CLI o herramienta con comandos | usage-guide | `usage-guide.md` |
+| Librería o paquete | api-reference | `api-reference.md` |
+
+> El adaptador no es obligatorio ni único. Un proyecto puede no activar
+> ninguno (ver [Cuándo se activa](#cuándo-se-activa)), y un proyecto con
+> superficies mixtas (CLI que también expone una librería, por ejemplo)
+> puede combinar más de un adaptador. La elección la informa `design.md`
+> y la produce planning — operation solo consume el resultado.
 
 [↑ Contenido](#contenido)
 

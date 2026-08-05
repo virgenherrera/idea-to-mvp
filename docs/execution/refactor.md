@@ -17,6 +17,7 @@ tags: [refactor, calidad, arquitectura, seguridad, performance, review, reviewer
 - [Principio](#principio)
 - [Dimensiones de revision](#dimensiones-de-revision)
 - [Checklist de revision](#checklist-de-revision)
+- [Verificación Basada en Métricas](#verificación-basada-en-métricas)
 - [Reglas del refactor](#reglas-del-refactor)
 
 ---
@@ -95,6 +96,67 @@ flowchart TD
 
 ---
 
+## Verificación Basada en Métricas
+
+> **Dogma v2**: "No reviso código escrito por agentes. Mido cobertura de
+> tests, estructura de dependencias, complejidad ciclomática, tamaño de
+> módulos, mutation testing." — Uncle Bob (julio 2026)
+
+Virgil v2 reemplaza la revisión manual de código por verificación
+basada en métricas. El binding layer (declarado en
+[Fase Red](red.md#trazabilidad-ac-testplan-testcontract-implementación-coverage),
+inferido en [Fase Green](green.md#inferencia-de-bindings)) rastrea
+requirement → código → test; las herramientas de esta sección verifican
+la FUERZA real de esos tests, no solo su existencia.
+
+### virgil metrics
+
+Durante o después del refactor, `virgil metrics` ejecuta el chequeo de:
+
+- **Mutation score** — porcentaje de mutantes detectados por la suite
+  de tests. Un mutation score bajo significa tests que pasan pero no
+  detectan cambios reales en el comportamiento del código.
+- **CRAP score** — Change Risk Anti-Patterns (ver fórmula abajo).
+- **Complejidad ciclomática** — por función/método.
+
+Virgil **orquesta** herramientas externas especializadas por lenguaje —
+no las construye ni las reimplementa:
+
+| Lenguaje | Mutation testing | Complejidad / CRAP |
+|----------|-------------------|---------------------|
+| Go | mutate4go | gocyclo, crap4go |
+| JavaScript / TypeScript | Stryker | — |
+| Java | pitest | — |
+
+### CRAP score
+
+```text
+CRAP = comp^2 * (1 - cov/100)^3 + comp
+```
+
+Donde `comp` es la complejidad ciclomática de la función y `cov` es su
+porcentaje de cobertura de tests. Un método complejo y sin cobertura
+produce un CRAP score alto; el mismo método, bien cubierto, lo mantiene
+bajo. El CRAP score castiga la combinación de complejidad y ausencia de
+tests, no la complejidad por sí sola.
+
+### Thresholds por tier
+
+| Tier | Mutation score mínimo | CRAP máximo |
+|------|------------------------|-------------|
+| strict | ≥ 80% | ≤ 30 |
+| standard | ≥ 60% | ≤ 45 |
+| relaxed | ≥ 40% | ≤ 60 |
+
+> El tier activo es parte del contrato del handoff (ver
+> [contracts.md](contracts.md#contrato-de-métricas)). `virgil health`
+> reporta contra ese tier en Accept — el binding pasa de `inferred` a
+> `verified` solo cuando las métricas alcanzan su threshold.
+
+[↑ Contenido](#contenido)
+
+---
+
 ## Reglas del refactor
 
 1. **Tests DEBEN seguir pasando** despues de cada refactor --- si fallan,
@@ -105,6 +167,10 @@ flowchart TD
    arquitectura definida, no lo aleja
 4. **Commit por refactor** --- cada refactor es un commit separado para
    facilitar reversion
+5. **Métricas dentro del threshold del tier** --- mutation score y CRAP
+   cumplen el mínimo definido para el tier activo antes de considerar
+   el refactor aprobado (ver
+   [Verificación Basada en Métricas](#verificación-basada-en-métricas))
 
 > Los quality gates del refactor están alineados con el paso 3 (Static
 > Test) del [echo system](../echo-system.md) — el análisis estático

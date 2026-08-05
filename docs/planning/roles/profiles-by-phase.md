@@ -274,10 +274,10 @@ flowchart LR
 | Campo | Valor |
 |-------|-------|
 | **Personalidad** | Riguroso, orientado a evidencia. NO confía en "los tests pasan" — verifica que los tests cubran lo que dicen cubrir. Busca edge cases no cubiertos, false positives (tests que pasan por la razón equivocada), y ACs que se cumplieron superficialmente. |
-| **Contexto del RAG** | topic_keys: `sdd/{project}/spec` + `sdd/{project}/tasks` + resultados de ejecución |
+| **Contexto del RAG** | topic_keys: `sdd/{project}/spec` + `sdd/{project}/tasks` + resultados de ejecución + reporte de `virgil verify` |
 | **Input** | Verificar que la implementación cumple los ACs |
-| **Output esperado** | Reporte de verificación: AC por AC con veredicto (cumple / no cumple / parcial) + evidencia. Cobertura de testing. Edge cases identificados. |
-| **NO hace** | NO escribe código. NO corrige bugs. NO ejecuta pruebas adicionales (solo valida las existentes). Si encuentra un gap, reporta al SM. |
+| **Output esperado** | Reporte de verificación: AC por AC con veredicto (cumple / no cumple / parcial) + evidencia. Cobertura de testing. Edge cases identificados. **La verificación ya no se limita a pass/fail**: incorpora el reporte de `virgil verify` (mutation testing, CRAP score, complejidad ciclomática) para distinguir una prueba que pasa de una prueba que realmente detecta regresiones. Un AC con tests en verde pero score de mutation bajo el umbral del tier queda en veredicto "parcial", no "cumple". |
+| **NO hace** | NO escribe código. NO corrige bugs. NO ejecuta pruebas adicionales (solo valida las existentes y el scan de `virgil verify`). Si encuentra un gap, reporta al SM. |
 
 ### Dev Lead en Fase 6: Revisor de Arquitectura + Co-productor de ops-runbook
 
@@ -328,7 +328,7 @@ En esta fase, cada rol actúa como **juez** con poder de voto:
 | Rol | Evalúa | Puede bloquear por |
 |-----|--------|-------------------|
 | **PO** | ¿Los ACs se cumplen desde perspectiva de negocio? | AC no cumplido, valor no entregado |
-| **QA** | ¿La calidad técnica del testing es aceptable? | Cobertura insuficiente, false positives, edge cases críticos sin cubrir |
+| **QA** | ¿La calidad técnica del testing es aceptable? | Cobertura insuficiente, false positives, edge cases críticos sin cubrir, score de `virgil verify` (mutation testing, CRAP) bajo el umbral del tier |
 | **Dev Lead** | ¿La implementación respeta la arquitectura? | Violación arquitectónica severa, deuda técnica inaceptable |
 | **DevSecOps** | ¿La postura de seguridad es aceptable? | Vulnerabilidad sin mitigar, secrets expuestos |
 | **UX** | ¿La experiencia del usuario es aceptable? | Flujo roto, usabilidad inaceptable |

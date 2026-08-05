@@ -23,6 +23,7 @@ tags: [ejecución, fases, roles, delegación, ciclo-iterativo]
 - [Conexion con planning](#conexion-con-planning)
 - [Roles de execution](#roles-de-execution)
 - [Modelo de Delegacion del Orquestador](#modelo-de-delegacion-del-orquestador)
+- [Ejecución Paralela y Resumption Determinista](#ejecución-paralela-y-resumption-determinista)
 - [Que Sigue](#que-sigue)
 - [Contenido de esta sección](#contenido-de-esta-sección)
 
@@ -44,6 +45,13 @@ columna vertebral macro de toda la ejecucion.
 > paralelizar el trabajo del testEngineer y el Contract Architect. Para
 > tareas de alta complejidad algorítmica, el Implementor puede usar TDD
 > micro dentro de la Fase Green como herramienta complementaria.
+>
+> **Entrada validada mecánicamente**: execution no arranca sobre un
+> `handoff.md` a libre interpretación. Arranca sobre un handoff que pasó
+> `virgil handoff lint` — la validación mecánica que verifica que el
+> contrato está bien formado (ACs completos, contratos referenciables,
+> DAG de tareas consistente) antes de delegar cualquier trabajo a la
+> prePhase. Un handoff que no pasa el lint no habilita la ejecución.
 
 ```mermaid
 flowchart LR
@@ -305,6 +313,31 @@ sequenceDiagram
 | Roles que convoca | Equipo (lentes) | Ejecutores (code writers) |
 | Validacion | Gates de artefactos | Tests pasan + coverage |
 | Escalacion | Al MIM | Al MIM o de vuelta a planning |
+
+[↑ Contenido](#contenido)
+
+---
+
+## Ejecución Paralela y Resumption Determinista
+
+Un handoff con múltiples lanes independientes no se ejecuta lane por
+lane de forma secuencial — se ejecuta en paralelo, con semántica de
+claiming para evitar que dos lanes tomen la misma tarea:
+
+| Estado | Significado |
+|--------|-------------|
+| `pending` | La tarea existe en el DAG pero ningún lane la reclamó |
+| `claimed` | Un lane reclamó la tarea y la está trabajando |
+| `done` | La tarea terminó, con su commit SHA registrado |
+
+Este estado de ejecución (claiming + timestamps + commit SHAs, ver
+[contracts.md](contracts.md#contrato-de-estado-de-ejecución)) se
+persiste fuera del contexto de cualquier agente individual. Esto
+habilita **resumption determinista**: si un lane falla, el proceso se
+interrumpe o el contexto se compacta, el Orquestador reconstruye qué
+tareas están en curso, cuáles terminaron y cuáles siguen pendientes
+leyendo el estado persistido — sin re-preguntar al MIM ni re-derivar
+trabajo ya hecho.
 
 [↑ Contenido](#contenido)
 

@@ -17,6 +17,7 @@ tags: [fases, gates, roles-por-fase, retrospectiva, verificación, aceptación]
 - [Detalle por fase](#detalle-por-fase)
 - [Bloqueo: cómo el SM detiene avances prematuros](#bloqueo-cómo-el-sm-detiene-avances-prematuros)
 - [Reglas del SM](#reglas-del-sm)
+- [Fase Operación — opcional (facade)](#fase-operación--opcional-facade)
 - [Matriz Completa: Roles × Etapas](#matriz-completa-roles-etapas)
 
 ---
@@ -187,6 +188,18 @@ sin preguntas.
 > criterio operativo debe ser: el agente fresco LISTA explícitamente
 > cada asunción que hizo. 0 asunciones críticas sobre
 > arquitectura/stack/scope = PASS. 1+ asunciones críticas = FAIL.
+
+**Gate mecánico — `virgil handoff lint`**: antes del gate de confirmación
+del MIM, el SM instruye la ejecución de `virgil handoff lint` sobre
+`handoff.md`. Este gate es determinista — no depende de juicio subjetivo
+de un subAgent: valida estructura del schema (ACs con ID, tareas con
+`depends_on`, referencias a `spec.md`/`design.md`, estado de
+`execution_state`), consistencia de referencias, y ausencia de
+dependencias cíclicas. Si `virgil handoff lint` falla, el SM NO presenta
+el handoff al MIM — regresa al TPM con los errores reportados por la
+herramienta. El smoke test adversarial (subAgent fresco) y `virgil
+handoff lint` son gates complementarios: el lint verifica forma y
+consistencia mecánica, el smoke test verifica autocontención semántica.
 
 **Gate de confirmación MIM**: antes de transicionar a Modo Ejecución,
 el SM presenta al MIM un resumen del handoff y pide confirmación
@@ -410,6 +423,38 @@ Reglas generales de operación:
 8. **El SM persiste en todas las fases** — es el hilo conductor
 9. **El SM SÍ extiende el equipo** — si el proyecto necesita expertise fuera de los 5 roles default, el SM define roles ad-hoc con contrato completo
    (ver [Roles Ad-Hoc](../roles/ad-hoc.md)). Justificación obligatoria. Registro en `idea.md`.
+10. **Las transiciones de fase tienen gate determinista** — el paso de
+    una fase a la siguiente NO depende solo de la aprobación del MIM.
+    Cada transición corre un gate mecánico (schema, dependencias,
+    trazabilidad) ejecutado por herramienta, y solo después se presenta
+    al MIM para confirmación. La aprobación del MIM certifica intención
+    de negocio; el gate determinista certifica integridad estructural.
+    Ambos son necesarios — ninguno sustituye al otro.
+
+[↑ Contenido](#contenido)
+
+---
+
+## Fase Operación — opcional (facade)
+
+La Fase de Operación (post-Retrospectiva) NO es obligatoria para todos
+los proyectos. Es un **facade**: cada proyecto decide si la activa según
+si tiene una superficie que operar (servicio vivo, CLI distribuido,
+librería publicada) o si el ciclo termina en la entrega del código.
+
+- **Se activa** cuando el handoff declaró documentación operativa
+  esperada (ver `handoff.md` → "Documentación operativa esperada") y el
+  proyecto tiene una superficie post-entrega que un usuario u operador
+  necesita usar o mantener.
+- **Se omite** cuando el entregable es un artefacto único (librería
+  interna sin publicación, script de una sola corrida, prueba de
+  concepto) — el ciclo cierra en Fase 8.
+- El SM NO impone la fase; la decisión queda registrada en `idea.md`
+  junto con el resto de "roles activos para este proyecto".
+
+Ver [Modelo Operativo](../operational-model.md) → sección "Operation"
+para el detalle completo del patrón facade y los adapters por tipo de
+proyecto (servicio, CLI, librería).
 
 [↑ Contenido](#contenido)
 

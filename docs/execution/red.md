@@ -429,6 +429,15 @@ Si un AC no puede completar la cadena — no hay caso de testPlan que lo
 cubra, o el testContract no tiene entrada, o la implementación no
 referencia el contrato — hay un gap que se escala a la prePhase.
 
+> **Binding declarado**: cada eslabón AC → testPlan → testContract →
+> testImplementation es la declaración inicial del binding layer
+> (requirement ↔ test ↔ código) que Virgil rastrea (ver
+> [contracts.md](contracts.md#contrato-de-binding-layer)). En Red el
+> binding queda en estado `declared` — todavía no se verificó que el
+> test tenga fuerza real. Esa verificación llega más tarde, en Fase
+> Refactor, mediante mutation testing (ver
+> [refactor.md](refactor.md#verificación-basada-en-métricas)).
+
 [↑ Contenido](#contenido)
 
 ---
@@ -690,5 +699,8 @@ para APIs obsoletas, sin patrones de compatibilidad retroactiva.
   proyecto.
 - Si un test no puede escribirse, hay un gap en el contrato o el AC
   (escalar a prePhase).
+- Cada binding AC → test → código queda declarado (`declared`) en el
+  binding layer; su fuerza real se verifica más adelante en Refactor
+  mediante mutation testing.
 
 [↑ Contenido](#contenido)

@@ -21,6 +21,7 @@ tags: [artifacts, build, coverage, reportes, outputs, gitignore]
 ## Contenido
 
 - [Distinción Semántica](#distinción-semántica)
+- [El Artifact handoff.md](#el-artifact-handoffmd)
 - [La Convención](#la-convención)
 - [Catálogo de Tipos](#catálogo-de-tipos)
 - [Mapa de Generación](#mapa-de-generación)
@@ -44,6 +45,45 @@ Este documento define el segundo tipo. Cuando el resto de la
 documentación dice "artifact" sin calificador, se refiere al primer
 tipo (planificación). Cuando se refiere a outputs de build, se usa
 "buildArtifact" o se referencia este documento.
+
+[↑ Contenido](#contenido)
+
+---
+
+## El Artifact handoff.md
+
+`handoff.md` es un artifact de planificación (ver
+[Distinción Semántica](#distinción-semántica)), pero Dogma v2 le añade
+dos propiedades que lo distinguen del resto de los artifacts de
+planning.
+
+### Validación Mecánica: `virgil handoff lint`
+
+La transición de planning a execution ya no depende solo de la
+aprobación humana del SM. `virgil handoff lint` valida mecánicamente
+que `handoff.md` es autocontenido, referencia artefactos existentes y
+cumple el schema mínimo, antes de habilitar el arranque de execution.
+Un `handoff.md` que no pasa el lint no habilita la Fase Contratos — sin
+excepción manual. Es un gate determinístico (Dogma v2, principio 6), no
+un juicio de aprobación.
+
+### Execution State: Claiming por Tarea
+
+Cuando `handoff.md` habilita ejecución paralela (un handoff, múltiples
+subAgents/lanes), cada tarea del DAG lleva un estado de ejecución
+independiente del estado de aprobación del artefacto:
+
+| Estado | Significado |
+|--------|-------------|
+| `pending` | Tarea disponible para ser tomada por un subAgent |
+| `claimed` | Un subAgent la tomó; otros no deben tomarla |
+| `done` | Completada y verificada |
+
+Este execution state es lo que permite que varios subAgents trabajen en
+paralelo sobre el mismo `handoff.md` sin colisionar: cada uno hace
+claim de su tarea antes de empezar, y la marca `done` al terminar (Dogma
+v2, principio 5). Ver [glosario](glossary.md) — `claiming`,
+`executionState`.
 
 [↑ Contenido](#contenido)
 

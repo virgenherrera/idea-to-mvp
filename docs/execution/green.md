@@ -43,6 +43,7 @@ sequenceDiagram
 
 - [Reglas de Green](#reglas-de-green)
 - [Estrategia de commits](#estrategia-de-commits)
+- [Inferencia de bindings](#inferencia-de-bindings)
 - [Cuando corregir tests vs corregir codigo](#cuando-corregir-tests-vs-corregir-codigo)
 
 ---
@@ -102,6 +103,35 @@ feat: implement token refresh (passes auth-token-refresh test)
 
 Cada commit referencia que test(s) pasa. Esto crea trazabilidad entre
 implementacion y especificacion ejecutable.
+
+[↑ Contenido](#contenido)
+
+---
+
+## Inferencia de bindings
+
+El binding layer declarado en Red (ver
+[red.md](red.md#trazabilidad-ac-testplan-testcontract-implementación-coverage))
+no se actualiza a mano durante Green. Un hook post-commit analiza cada
+commit verde y actualiza el binding correspondiente cuando detecta que
+el código del commit efectivamente ejercita el test referenciado.
+
+El binding transita por tres niveles de confianza:
+
+```mermaid
+flowchart LR
+    D["declared\n(Fase Red:\nAC → test → código,\nsin verificar)"]
+    I["inferred\n(Fase Green:\nhook post-commit detecta\nque el código ejercita el test)"]
+    V["verified\n(Fase Refactor:\nmutation testing confirma\nla fuerza real del test)"]
+
+    D --> I --> V
+```
+
+| Estado | Cuándo se alcanza | Qué garantiza |
+|--------|--------------------|----------------|
+| `declared` | Fase Red | El test existe y referencia un AC. No implica que el código lo cumpla. |
+| `inferred` | Fase Green (hook post-commit) | El código del commit ejercita el test declarado. No implica que el test sea fuerte. |
+| `verified` | Fase Refactor (`virgil metrics`) | Mutation testing confirmó que el test detecta mutantes reales — la señal es confiable. |
 
 [↑ Contenido](#contenido)
 

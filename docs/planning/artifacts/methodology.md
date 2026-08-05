@@ -76,7 +76,45 @@ flowchart TD
 
 - [Qué cambia con la metodología, qué NO cambia](#qué-cambia-con-la-metodología-qué-no-cambia)
 - [Mapeo rápido: mismos artefactos, diferente ceremonia](#mapeo-rápido-mismos-artefactos-diferente-ceremonia)
+- [Verificación de métricas: trazabilidad y fortaleza](#verificación-de-métricas-trazabilidad-y-fortaleza)
 - [Gobierno de Metodología — Lock, Cambio y Trazabilidad](#gobierno-de-metodología-lock-cambio-y-trazabilidad)
+
+---
+
+## Verificación de métricas: trazabilidad y fortaleza
+
+La metodología define CÓMO se organiza el trabajo; la verificación de
+métricas es una capa transversal que corre por encima de cualquier
+metodología elegida. Tiene dos responsabilidades separadas:
+
+- **La capa de binding (TPM)** rastrea **trazabilidad**: qué AC de
+  `spec.md` está cubierto por qué tarea de `tasks.md`, qué tarea tiene
+  al menos una prueba asociada. Es contabilidad — confirma que existe
+  un enlace, no que el enlace sea de calidad.
+- **Las herramientas externas** verifican **fortaleza**: si el test que
+  cubre un AC realmente detecta regresiones. Esto se mide con mutation
+  testing, CRAP score, y complejidad ciclomática — métricas que la
+  capa de binding no puede calcular por sí sola porque requieren
+  ejecutar y analizar el código, no solo mapear referencias.
+
+`virgil health` consolida ambas dimensiones en un reporte de 4
+categorías: trazabilidad, fortaleza de pruebas, estructura de código, y
+salud de documentación. Los umbrales de cada categoría son configurables
+por tier (`strict`, `standard`, `relaxed`, `custom`) — un proyecto en
+tier Ligero no exige el mismo score de mutation testing que uno en tier
+Completo.
+
+**Virgil orquesta, no construye**: Virgil NO implementa motores de
+mutation testing, cálculo de CRAP score, ni analizadores de complejidad
+ciclomática propios. Delega esas mediciones a herramientas externas
+especializadas por lenguaje (por ejemplo, Stryker para JS/TS, mutmut o
+cosmic-ray para Python, PIT para JVM) y consolida sus resultados en el
+reporte de `virgil health`. Esto mantiene el framework agnóstico de
+lenguaje: agregar soporte a un lenguaje nuevo es cuestión de definir el
+adapter hacia su herramienta de métricas, no de reimplementar el motor
+de análisis.
+
+[↑ Contenido](#contenido)
 
 ---
 

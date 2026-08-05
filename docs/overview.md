@@ -25,6 +25,7 @@ tags: [actores, pipeline, modos, roles, artefactos, diagrama]
 
 ## Contenido
 
+- [Dogma Rector](#dogma-rector)
 - [Actores y Roles](#actores-y-roles)
 - [Modos de Funcionamiento](#modos-de-funcionamiento)
 - [Pipeline Completo](#pipeline-completo)
@@ -34,6 +35,45 @@ tags: [actores, pipeline, modos, roles, artefactos, diagrama]
 - [fastForward](#fastforward)
 - [artifactStore y Adapters](#artifactstore-y-adapters)
 - [Qué Sigue (áreas TBD)](#qué-sigue-áreas-tbd)
+
+---
+
+## Dogma Rector
+
+El framework se rige por seis principios no negociables (Dogma v2). Toda
+decisión de diseño, herramienta o proceso nueva debe alinearse con ellos.
+
+1. **Metodología e2e** — el framework cubre el ciclo completo idea →
+   operación. La operación es una fachada (facade) opcional sobre el
+   flujo end-to-end, no una macro-fase obligatoria para cerrar el ciclo.
+2. **Trazabilidad Y fortaleza verificadas** — no basta con verificar el
+   binding (la trazabilidad entre artefactos, que confirma que un enlace
+   existe). También se verifica la fortaleza real del código mediante
+   herramientas externas orquestadas (mutation testing, CRAP score,
+   complejidad ciclomática).
+3. **Gestión desde nivel superior** — el MIM gestiona el proyecto
+   mediante un dashboard de salud (`virgil health`), no mediante
+   revisión manual de código línea por línea.
+4. **El agente opera bajo constraint, no bajo confianza** — el
+   cumplimiento se impone mediante hooks y gates determinísticos, no
+   mediante la expectativa de que el agente "se porte bien".
+5. **Un handoff, ejecución paralela con semántica de coordinación** —
+   múltiples subAgents ejecutan sobre un mismo `handoff.md` mediante
+   claiming (`pending` → `claimed` → `done`) y execution state, evitando
+   colisiones sin necesitar handoffs separados por subAgent.
+6. **Gates determinísticos en transiciones de fase** — cada transición
+   entre fases se valida mecánicamente (`virgil handoff lint`), no por
+   aprobación subjetiva.
+
+> "I don't review code written by agents. I measure test coverage,
+> dependency structure, cyclomatic complexity, module sizes, mutation
+> testing. Humans need to disengage from code and manage from a higher
+> level." — Robert C. Martin ("Uncle Bob"), julio 2026.
+
+> Detalle: [Gobernanza Metodológica](planning/artifacts/methodology.md)
+> (sección "Verificación de métricas: trazabilidad y fortaleza").
+
+[↑ Contenido](#contenido)
 
 ---
 
@@ -124,6 +164,13 @@ flowchart LR
 | Dónde escribe | artifactStore (fuera del repo) | Working tree del repo |
 | Estado actual | **DEFINIDO** | **DEFINIDO** |
 
+> **Nota (Dogma v2)**: el `AGENTS.md` monolítico como único vehículo de
+> gobernanza por repo se reemplaza por **progressive disclosure**:
+> reglas divididas en skills que se activan por contexto, hooks que
+> imponen constraints determinísticos (principio 4), y MCP que expone
+> herramientas bajo demanda — en vez de un único archivo que el agente
+> debe leer completo en cada sesión.
+
 > Detalle: [modelo operativo](planning/operational-model.md).
 
 [↑ Contenido](#contenido)
@@ -134,7 +181,9 @@ flowchart LR
 
 El ciclo tiene 4 macro-fases, todas definidas. Las fases post-ejecución
 están definidas como parte de planning; la macro-fase de operación es
-operation, opcional y reactivo.
+operation: una fachada (facade) opcional y reactiva sobre el ciclo e2e
+completo (idea → operación) — no es un requisito para cerrar el ciclo
+(Dogma v2, principio 1).
 
 ```mermaid
 %% Pipeline completo con macro-fases
@@ -247,6 +296,16 @@ flowchart LR
     TASKS -->|"tareas\ndeps\nACs"| HANDOFF
     HANDOFF -->|"post-ejecución"| OPS
 ```
+
+> **binding layer**: esta cadena de artefactos es, en términos de Dogma
+> v2 (principio 2), el grafo de trazabilidad que el TPM mantiene —
+> vincula cada artefacto downstream con su upstream (idea → spec →
+> design → tasks → handoff → ops-runbook). `verifyConsistency` opera
+> sobre este grafo para detectar semanticDrift. El binding layer
+> confirma que el enlace existe; la fortaleza del enlace (si el test
+> realmente detecta regresiones) se verifica aparte, vía herramientas
+> externas orquestadas por Virgil (mutation testing, CRAP score,
+> complejidad ciclomática).
 
 ### Quién produce y quién valida
 

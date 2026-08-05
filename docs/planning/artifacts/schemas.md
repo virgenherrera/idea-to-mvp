@@ -292,6 +292,7 @@ Referencia a design.md, decisiones clave resumidas.
 - Lanes paralelos pre-calculados (campo `lane` de cada workItem)
 - Ruta crítica identificada
 - Blockers conocidos
+- `execution_state` por workItem (ver abajo)
 
 ## Estrategia de pruebas
 Qué tipo de pruebas, cobertura esperada, herramientas.
@@ -325,6 +326,49 @@ Qué se decidió NO hacer y por qué (para evitar scope creep).
 > **Nota sobre los estados**: Estos estados son específicos del ciclo de
 > vida del handoff y complementan la state machine universal de
 > artefactos (draft → review → approved).
+
+### `execution_state` — claiming semantics para lanes paralelos
+
+Cada workItem del handoff lleva un campo `execution_state` que permite
+a múltiples ejecutores reclamar tareas sin pisarse entre lanes:
+
+```markdown
+## execution_state (por workItem)
+- id: {workItem id}
+- status: pending | claimed | done
+- claimed_by: {identificador del ejecutor} (solo si status = claimed|done)
+- claimed_at: {timestamp} (solo si status = claimed|done)
+- lane: {nombre del lane al que pertenece}
+```
+
+| Estado | Significado | Quién lo cambia |
+|--------|-------------|-----------------|
+| `pending` | Sin reclamar, disponible para cualquier ejecutor cuyas dependencias (`depends_on`) estén satisfechas | Default al generar el handoff |
+| `claimed` | Un ejecutor la tomó y está trabajando en ella | El ejecutor, al iniciar |
+| `done` | Completada y verificada | El ejecutor, al finalizar (o el gate de verificación) |
+
+Un workItem con `depends_on` no resuelto NUNCA puede pasar a `claimed`,
+sin importar el estado de su lane. Dos ejecutores no pueden reclamar el
+mismo workItem — el segundo intento de claim sobre un item ya
+`claimed`/`done` es rechazado por la herramienta de ejecución.
+
+### Reglas de validación de `virgil handoff lint`
+
+`virgil handoff lint` es el gate mecánico que corre antes de la
+confirmación del MIM (ver [Fase 5](../behavior/phases.md#fase-5--generar-handoff)).
+Valida, sin juicio subjetivo:
+
+| Regla | Falla si |
+|-------|----------|
+| ACs con ID | Algún AC referenciado en `tareas a ejecutar` no tiene ID único trazable a `spec.md` |
+| Tareas con deps | Un workItem declara `depends_on` a un ID que no existe en el DAG |
+| Sin ciclos | El grafo de dependencias contiene un ciclo |
+| Refs a spec/design | El handoff referencia una decisión de `design.md` o un AC de `spec.md` que no existe en esos artefactos |
+| `execution_state` inicial | Algún workItem no tiene `execution_state` con `status: pending` al generarse (todo workItem nuevo nace `pending`, nunca `claimed`/`done`) |
+| Lanes consistentes | Un workItem declara un `lane` que no aparece en la lista de lanes del handoff |
+
+Si `virgil handoff lint` falla, el SM no presenta el handoff al MIM —
+regresa al TPM con la lista de errores para corrección antes de reintentar.
 
 > **Nota**: La sección de documentación operativa conecta el handoff con
 > operation. Si el handoff declara documentación esperada,

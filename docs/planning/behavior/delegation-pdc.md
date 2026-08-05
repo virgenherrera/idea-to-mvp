@@ -318,6 +318,26 @@ sequenceDiagram
 El PDC NO es opcional. No se puede lanzar otro subAgent sin haber
 completado los 4 pasos del PDC anterior.
 
+> **VERIFY ahora incluye fortaleza, no solo existencia**: el paso
+> VERIFY del PDC ya no se conforma con confirmar que una prueba existe
+> para una tarea — la capa de binding (TPM) rastrea esa existencia como
+> trazabilidad, pero la fortaleza de la prueba (¿detecta regresiones
+> reales?) requiere `virgil verify`. El scan de `virgil verify` corre
+> mutation testing, calcula CRAP score, y mide complejidad ciclomática
+> sobre el código y las pruebas afectadas por la delegación. Un
+> workItem NUNCA alcanza el nivel de confianza `verified` solo porque
+> el TPM registró un link tarea↔prueba — ese nivel se otorga
+> únicamente después de que `virgil verify` confirma el scan. Antes de
+> esa confirmación, el estado máximo posible es `traced` (enlace
+> registrado, fortaleza aún no evaluada).
+
+```plaintext
+confidence levels:
+  untested   → no hay prueba asociada a la tarea
+  traced     → existe una prueba asociada (binding del TPM), fortaleza sin evaluar
+  verified   → virgil verify confirmó el scan (mutation/CRAP/complejidad dentro de umbral del tier)
+```
+
 **Excepción: Fase 7 (Aceptar) — lanzamiento paralelo.** En Fase 7,
 los roles de aceptación votan en paralelo (ver
 [Contratos por Fase](../roles/profiles-by-phase.md)). Esto incluye los roles
