@@ -1,12 +1,13 @@
 {
-  "name": "sigil",
-  "version": "0.1.0",
+  "name": "virgil",
+  "version": "0.1.1",
   "description": "AI agent development methodology — structured ownership for any agent",
   "bin": {
-    "sigil": "./bin/cli.js"
+    "virgil": "./bin/cli.js"
   },
   "files": [
     "bin/",
+    "lib/",
     "templates/"
   ],
   "keywords": [

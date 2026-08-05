@@ -252,6 +252,7 @@ Todo subAgent recibe un contrato con estos campos obligatorios:
 | input | Que recibe para trabajar |
 | output | Que debe producir (estructura esperada) |
 | restricciones | Que NO debe hacer |
+| modelTier | Tier de capacidad asignado: free, standard o reasoning |
 | statusReport | Formato del reporte de retorno |
 
 Ejemplo concreto de delegationContract:
@@ -261,7 +262,39 @@ Ejemplo concreto de delegationContract:
 - **input**: "Descripcion del MIM + restricciones conocidas"
 - **output**: "idea.md con secciones requeridas completas"
 - **restricciones**: "No asumir stack --- solo documentar lo que el MIM declara"
+- **modelTier**: "free"
 - **statusReport**: "Obligatorio: que se hizo, que falta, que se decidio, bloqueantes"
+
+### Model Assignment Policy
+
+Antes de delegar, el orquestador asigna el tier MINIMO suficiente para la
+tarea. El framework define CAPACIDADES requeridas, no productos. El agente
+mapea estos tiers a los modelos que su plataforma provea.
+
+| Tier | Capacidad requerida | Cuando usarlo |
+|------|---------------------|---------------|
+| `free` | Lectura de archivos, busqueda de texto, formatting, scan de directorios | Grep, leer docs, lint checks, lecturas exploratorias, formatting |
+| `standard` | Generacion de codigo, escritura de tests, reviews, quality gates | Escribir codigo, implementar, verificar, revisar |
+| `reasoning` | Arquitectura, sintesis, resolucion de conflictos, analisis multi-fuente | Decisiones de diseno, sintesis cross-artefacto, judge panels |
+
+**Mapeo de tiers** (informativo, no prescriptivo --- el framework no
+prescribe infraestructura, prescribe capacidades):
+- Claude: free=haiku, standard=sonnet, reasoning=opus
+- OpenAI: free=gpt-4o-mini, standard=gpt-4o, reasoning=o3
+- Local: free=ollama-small, standard=ollama-large, reasoning=cloud-API
+
+Trabajo mecanico (lectura de archivos, grep, formatting) PUEDE usar modelos
+locales/gratuitos (Ollama, Docker containers) cuando esten disponibles.
+
+**Patron fan-out para busqueda/investigacion**: para tareas de busqueda o
+investigacion, delegar N agentes en tier `free` para busqueda paralela,
+luego 1 agente en tier `reasoning` para sintetizar los hallazgos. NUNCA
+asignar `reasoning` a busqueda mecanica.
+
+**Disciplina de tokens**: con 6+ agentes concurrentes, la disciplina de
+tiers multiplica el ahorro. El handoff file declara el tier asignado como
+campo obligatorio (`modelTier`). El orquestador valida que el tier sea
+coherente con la tarea antes de delegar.
 
 ### Status Report
 
@@ -390,6 +423,38 @@ desarrollo paralelo: cada lane trabaja contra contratos estables.
 3. Verificable (se puede escribir un test contra el).
 4. Versionado (tiene estrategia de cambio).
 5. Aprobado por MIM (si implica decision de negocio).
+
+#### visualApprovalGate
+
+**Activacion**: cuando el valor primario de la feature es VISUAL (animaciones,
+interacciones, transiciones, cambios de layout). Si la feature no tiene
+componente visual significativo, este gate se omite.
+
+**Posicion**: entre prePhase (contratos) y Red (tests). El gate visual
+reemplaza la necesidad de iterar sobre la implementacion real para aprobar
+el diseno --- el MIM aprueba el resultado visual ANTES de escribir codigo.
+
+**Artefacto**: un HTML standalone (autocontenido, sin build, sin dependencias
+externas) que contiene:
+
+| Elemento | Proposito |
+|----------|-----------|
+| Feature visual funcionando | Animacion, interaccion o transicion ejecutandose en el browser |
+| Toggle de tema | Light/dark mode para verificar contraste y legibilidad |
+| Toggle de movimiento | `prefers-reduced-motion` para verificar accesibilidad |
+| Tabla de specs | Dimensiones, timing, easing, breakpoints, colores usados |
+
+**Flujo**:
+1. El agente genera el HTML standalone basado en spec.md y design.md.
+2. El MIM recibe el artefacto y lo revisa desde cualquier dispositivo
+   (telefono, tablet, desktop) en <30 segundos.
+3. Resultado:
+   - **Aprobado** -> proceder a Red.
+   - **Rechazado** -> el agente itera sobre el HTML (no sobre codigo real).
+   - **N/A** -> la feature no es visual, omitir gate.
+
+**Beneficio**: cero rework en la implementacion del framework. El contrato
+visual se aprueba ANTES de que el codigo toque el proyecto real.
 
 ### Red --- escribir tests
 
@@ -526,6 +591,25 @@ Si un refactor rompe tests: REVERTIR. El refactor esta mal, no los tests.
 | Lane -> iter-N | `--no-ff` (preserva historia del lane) |
 | iter-N -> develop | `--no-ff` (preserva historia de iteracion) |
 | develop -> main | Squash opcional (MIM decide) |
+
+#### Bundling oportunista
+
+El default es 1 cambio = 1 branch = 1 PR. Pero cuando un cambio de bajo
+riesgo (docs, config, assets no-funcionales) surge DURANTE una feature,
+forzar un PR separado es churn sin valor de seguridad.
+
+**Patron permitido**: bundling de cambios low-risk en el mismo branch de
+la feature, bajo estas condiciones:
+
+| Regla | Detalle |
+|-------|---------|
+| Commit separado | El cambio bundled va en su propio commit con prefijo claro (`docs:`, `chore:`, `content:`) |
+| Aprobacion explicita | La PR description lista AMBOS cambios. El MIM aprueba explicitamente el bundle |
+| No toca codigo funcional | Si el cambio bundled modifica codigo fuente, tests o infra -> branch separado obligatorio |
+| Trazabilidad | El commit del cambio bundled es revertible independientemente del feature commit |
+
+**Anti-patron**: usar bundling para colar cambios de codigo sin review.
+El bundling es para cambios que el MIM puede evaluar en <10 segundos.
 
 #### Worktrees para paralelismo
 
@@ -836,22 +920,53 @@ proyecto nuevo). F4 = 2 siempre en takeover (hay codebase con patrones).
 ### Fases del takeover
 
 1. **Discovery (arqueologia)**: el agente explora la codebase para entender
-   estructura, patrones, stack, convenciones, deuda tecnica.
+   estructura, patrones, stack, convenciones, deuda tecnica. La arqueologia
+   audita el estado real del codebase antes de asignar puntos:
 
-2. **Scoring override**: el SM ejecuta fastForward pero con F4 = 2 fijo
-   (la codebase existe y tiene patrones). El resto de factores se evaluan
-   normalmente. Esto sesga el scoring hacia certezas mas altas.
+   | Dimension | Que busca | Donde lo encuentra |
+   |-----------|-----------|-------------------|
+   | **Documentacion** | README, ADRs, specs, wikis | Raiz, `/docs`, `/adr`, wiki del repo |
+   | **Tests** | Suite existente, cobertura, tipos de test | `/tests`, `/spec`, `/__tests__`, CI config |
+   | **CI/CD** | Pipeline, gates, checks automatizados | `.github/workflows`, `.gitlab-ci.yml`, `Jenkinsfile` |
+   | **Arquitectura** | Patrones, estructura, stack | Estructura de directorios, `package.json`, imports |
+   | **Deuda tecnica** | TODOs, hacks, workarounds documentados | Comentarios en codigo, issues abiertos, backlog |
+
+   Si `virgil scan` esta disponible, ejecutarlo ANTES de la arqueologia manual.
+   El output de `virgil scan --audit` alimenta directamente esta fase.
+
+2. **Scoring override**: el SM ejecuta fastForward pero con overrides
+   especificos para brownfield. La certeza se mide sobre lo que EXISTE,
+   no sobre lo que se quiere CAMBIAR:
+
+   | Factor | Scoring estandar (greenfield) | Override takeover |
+   |--------|-------------------------------|-------------------|
+   | **F1. Artefactos** | Existen artefactos en el RAG? | Existen equivalentes funcionales? (README ~ idea.md, tests ~ spec.md parcial) |
+   | **F2. Estandarizacion** | El dominio es estandar? | El codebase sigue estandares reconocibles? |
+   | **F3. Ambiguedad** | Cuantas interpretaciones posibles? | Se entiende que hace el sistema? (no que se quiere cambiar) |
+   | **F4. Referencia** | Hay codebase con patrones? | Siempre 2 --- el codebase ES la referencia |
+
+   **Consecuencia**: F4=2 siempre en takeover. Esto eleva el score base y
+   evita que un codebase bien documentado con tests caiga en Tier Completo
+   (el paradox del fastForward).
+
+   El SM no exige recrear artefactos que ya existen en forma equivalente. Un
+   README detallado puede cumplir la funcion de `idea.md`, una suite de tests
+   existente informa `spec.md`.
 
 3. **Echo bootstrap incremental**: el agente configura el echo system
-   incrementalmente:
-   - Paso 1: Setup (verificar que el proyecto instala y configura).
-   - Paso 2: Build (verificar que compila/transpila).
-   - Paso 3: Static Test (agregar linting si no existe).
-   - Paso 4: Dynamic Test (evaluar cobertura existente, establecer baseline).
-   - Paso 5: E2E (evaluar si hay tests E2E, agregar si la infra lo soporta).
+   incrementalmente. NO se exige echo verde inmediato --- se exige un PLAN
+   para llegar a echo verde:
 
-   Cada paso que falla se reporta como gap, no como bloqueante. El takeover
-   no exige echo verde inmediato --- exige un PLAN para llegar a echo verde.
+   | Semana | Echo paso | Que se activa | Umbral |
+   |--------|-----------|---------------|--------|
+   | 1 | Setup | Dependencias resuelven, proyecto compila | Build pasa |
+   | 2 | Static analysis | Linter configurado, 0 errores nuevos | Baseline establecido |
+   | 3 | Build + Static | Los dos anteriores mas formatting | CI verde |
+   | 4+ | Dynamic | Tests existentes pasan, cobertura baseline medida | No regression |
+   | Mes 2+ | Full echo | Los 5 pasos, E2E si aplica | Thresholds del proyecto |
+
+   Cada capa se activa solo cuando la anterior es estable. Cada paso que falla
+   se reporta como gap, no como bloqueante.
 
    > **brownfieldModifier**: durante el bootstrap del takeover (semanas 1-4 del
    > schedule incremental del echo), AXIOM-ECHO aplica con enforcement SCOPED:
@@ -864,6 +979,16 @@ proyecto nuevo). F4 = 2 siempre en takeover (hay codebase con patrones).
 4. **Planning con contexto**: el SM procede con planning normal pero enriquecido
    con el conocimiento de la codebase. Los artefactos referencian patrones
    existentes, convenciones detectadas y deuda tecnica identificada.
+
+### Puntos de entrada
+
+| Situacion | Descubrimiento | Punto de entrada | Tier probable |
+|-----------|---------------|-----------------|---------------|
+| Codebase heredado, sin cambios planificados | Arqueologia ligera | operation --- operar y aprender | N/A (no hay planning) |
+| Codebase heredado, cambios planificados, bien documentado | Arqueologia completa | fastForward --- docs existentes cuentan como artefactos parciales | Ligero o Estandar |
+| Codebase heredado, cambios planificados, sin documentacion | Arqueologia completa | planning --- generar artefactos faltantes | Estandar o Completo |
+| Codebase heredado con deuda tecnica critica | Arqueologia + spike(s) | planning con spike(s) para evaluar viabilidad, luego fastForward | Depende del spike |
+| Codebase abandonado (sin mantenedores activos) | Arqueologia profunda | planning desde idea.md --- tratar como producto nuevo con contexto heredado | Completo |
 
 ---
 
