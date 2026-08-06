@@ -406,20 +406,29 @@ puede gestionar el proyecto desde un nivel superior sin revisar código
 manualmente. Virgil resuelve esto orquestando herramientas externas de
 métricas — no las implementa.
 
-| Métrica | Herramienta (ejemplo por stack) | Qué mide |
-|---------|----------------------------------|----------|
-| Mutation testing | Stryker (JS/TS), PIT (JVM), mutmut/cosmic-ray (Python) | Si los tests detectan mutaciones deliberadas del código — fortaleza real, no solo cobertura de líneas |
-| CRAP score | crap4j y herramientas equivalentes | Complejidad ponderada por falta de cobertura — identifica código riesgoso y no testeado |
-| Complejidad ciclomática | ESLint complexity, radon, gocyclo | Ramificación de cada función/módulo |
-| Tamaño de módulo | Herramientas de linting/análisis estático | Módulos que exceden el tamaño manejable |
+| Métrica | Herramienta (ejemplo por stack) | Qué mide | Cuándo corre |
+|---------|----------------------------------|----------|--------------|
+| Mutation testing | Stryker (JS/TS), PIT (JVM), mutmut/cosmic-ray (Python) | Si los tests detectan mutaciones deliberadas del código — fortaleza real, no solo cobertura de líneas | post-commit / CI (periódico — costoso para correr en cada commit) |
+| CRAP score | crap4j y herramientas equivalentes | Complejidad ponderada por falta de cobertura — identifica código riesgoso y no testeado | post-commit / CI, junto con mutation testing (CRAP depende del mutation score) |
+| Complejidad ciclomática | ESLint complexity, radon, gocyclo | Ramificación de cada función/módulo | Junto con CRAP (mismo hook post-\*) — alimenta el cálculo de CRAP y se reporta también como métrica independiente contra su propio threshold |
+| Tamaño de módulo | Herramientas de linting/análisis estático | Módulos que exceden el tamaño manejable | post-commit / CI (periódico) |
+| Estructura de dependencias | madge / dependency-cruiser (JS/TS), import-linter (Python), herramientas de arquitectura (Go, JVM) | Dependencias circulares y violaciones de dirección (inversión de dependencias) | **pre-commit o pre-push** (bloqueante) |
 
-Virgil ejecuta estas herramientas (típicamente como hook post-\*, fuera
-del camino crítico del echo), agrega los resultados, y los expone vía
-`virgil health` (dashboard de 4 categorías: trazabilidad, fortaleza de
-pruebas, estructura de código, salud de documentación) y `virgil
-coverage --min` (gate de CI). El echo y Virgil son complementarios: el
-echo certifica que el código funciona; Virgil certifica que el código
-es sostenible.
+La estructura de dependencias es la excepción a la regla post-\*: a
+diferencia de mutation testing, CRAP y complejidad — que requieren
+correr o analizar la suite completa y son costosos por commit — un
+chequeo de dependencias es barato y detecta un defecto binario (hay o
+no hay ciclo/violación de dirección). Por eso corre como hook
+pre-commit o pre-push, igual que el paso 3 (Static Test) del echo, y
+bloquea el push si encuentra violaciones (ver [contrato de
+métricas](execution/contracts.md#contrato-de-métricas)).
+
+Virgil ejecuta estas herramientas, agrega los resultados, y los expone
+vía `virgil health` (dashboard de 4 categorías: trazabilidad,
+fortaleza de pruebas, estructura de código, salud de documentación) y
+`virgil coverage --min` (gate de CI). El echo y Virgil son
+complementarios: el echo certifica que el código funciona; Virgil
+certifica que el código es sostenible.
 
 > Detalle: [Gobernanza Metodológica](planning/artifacts/methodology.md)
 > (sección "Verificación de métricas: trazabilidad y fortaleza").

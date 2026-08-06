@@ -25,6 +25,7 @@ tags: [certificación, qa, handoff, documentación-operativa, gate]
 - [Mecanismo de certificación](#mecanismo-de-certificación)
 - [Flujo de la fase](#flujo-de-la-fase)
 - [Resultado](#resultado)
+- [Validación Externa (recomendada)](#validación-externa-recomendada)
 
 ---
 
@@ -52,7 +53,7 @@ pasan" es condición necesaria pero NO suficiente. QA certifica que:
 | Cobertura | Threshold del proyecto | No bajó. Código nuevo está cubierto. |
 | droppableCode | Coverage report | Código con 0% cobertura identificado y reportado |
 | Arquitectura | `design.md` (via handoff) | Refactor alineó la implementación con las decisiones arquitectónicas |
-| Seguridad | Reportes de Reviewers | Vulnerabilidades críticas resueltas antes de certificar |
+| Seguridad | Security scanners (govulncheck, npm audit, trivy) | Vulnerabilidades críticas resueltas antes de certificar |
 | echo completo | [echo system](../echo-system.md) | Los 5 pasos del echo pasan (setup, build, static, dynamic, E2E). Precondición para certificar |
 | Documentación operativa | `handoff.md` sección "Documentación operativa esperada" | Si el handoff la requiere: documentación existe, es usable, cubre lo declarado. Si el handoff dice "no requerida": omitir verificación. |
 | Métricas (Dogma v2) | `virgil health` | Mutation score, CRAP, complejidad y binding coverage cumplen el threshold del tier activo |
@@ -163,6 +164,22 @@ sequenceDiagram
 
 ---
 
+## Validación Externa (recomendada)
+
+La certificación de Accept es interna: QA valida el producto contra el
+handoff, no contra la experiencia de un usuario real. El framework
+RECOMIENDA, sin exigirlo, que tras un CERTIFICADO alguien fuera del
+equipo de agentes — el MIM, un stakeholder, un usuario piloto — vea el
+software funcionando antes de cerrar la iteración. Esa señal externa es
+el "Measure" de Build-Measure-Learn: alimenta la siguiente Fase 1
+(Definir Idea) o la Fase 8 (Retrospectiva) con evidencia real, no solo
+con la percepción del propio equipo. No bloquea el cierre de la
+iteración — es una ceremonia recomendada, no un gate.
+
+[↑ Contenido](#contenido)
+
+---
+
 ## Índice de Documentos Relacionados
 
 | Documento | Relación con este |
@@ -170,6 +187,6 @@ sequenceDiagram
 | [echo system](../echo-system.md) | QA verifica que el echo completo pasa como precondición de certificación |
 | [artifact system](../artifact-system.md) | Define dónde viven los reportes de cobertura y tests que QA consume |
 | [Fase Red](red.md) | Define la suite de tests y el umbral de cobertura que QA verifica |
-| [Fase Refactor](refactor.md) | QA verifica que los reportes de Reviewers no tienen vulnerabilidades críticas pendientes |
+| [Fase Refactor](refactor.md) | QA verifica que las fitness functions pasaron y no hay observaciones residuales críticas pendientes |
 
 [↑ Contenido](#contenido)

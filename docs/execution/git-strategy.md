@@ -148,22 +148,21 @@ flowchart TD
 
 > **Reconciliación roles ↔ worktrees**: En ejecución secuencial (1 lane),
 > el Orquestador lanza roles separados por fase — testEngineer (Red),
-> Implementor (Green), Reviewers (Refactor) — como subAgents distintos
-> con personalidades diferenciadas.
+> Implementor (Green), fitness functions + revisión residual (Refactor)
+> — como subAgents distintos con personalidades diferenciadas.
 >
 > En ejecución paralela con worktrees, cada lane se asigna a un
-> **compositeAgent** que asume las 3 personalidades secuencialmente dentro
-> del mismo worktree. La razón: lanzar 3 subAgents por lane dentro del
-> mismo worktree crearía conflictos de acceso al filesystem. El
-> compositeAgent cambia de personalidad entre fases:
+> **compositeAgent** que asume las personalidades secuencialmente dentro
+> del mismo worktree. La razón: lanzar múltiples subAgents por lane
+> dentro del mismo worktree crearía conflictos de acceso al filesystem.
+> El compositeAgent cambia de personalidad entre fases:
 >
 > 1. **Personalidad testEngineer** → escribe la suite de tests (Red)
 > 2. **Personalidad Implementor** → escribe código que pase los tests (Green)
-> 3. **Personalidad Reviewer** → revisa calidad y aplica refactors (Refactor).
->    Dentro de esta personalidad, el agente ejecuta 3 perspectivas de
->    forma secuencial: Arquitectura, Seguridad y Performance — replicando
->    en un solo compositeAgent lo que en ejecución secuencial harían los
->    3 Reviewers independientes.
+> 3. **Verificación mecánica** → ejecuta fitness functions (mutation,
+>    CRAP, complexity, dependencies, module size, security scanners).
+>    La revisión residual (autorización, DDD) se documenta y escala
+>    sin bloquear el gate.
 >
 > El Orquestador valida cada transición de personalidad con un miniPDC
 > entre fases.
@@ -185,7 +184,7 @@ sequenceDiagram
     Note over AG: miniPDC: transición Red → Green
     AG->>AG: Personalidad Implementor<br/>Green: implementa (commits)
     Note over AG: miniPDC: transición Green → Refactor
-    AG->>AG: Personalidad Reviewer<br/>Refactor: revisa calidad (commits)
+    AG->>AG: Verificación mecánica<br/>Refactor: fitness functions (commits)
     AG->>CI: Ejecuta tests del lane
     CI-->>AG: ✅ PASS
 

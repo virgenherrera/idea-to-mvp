@@ -88,8 +88,8 @@ flowchart LR
 | prePhase: Contratos | `handoff.md` (spec, design, tasks) | Contratos formales (API, DB, interfaces) | Orquestador + Contract Architect |
 | Red | Contratos + ACs de `spec.md` | testPlan + testContract + testImplementation (todos fallan) + cobertura configurada | testEngineer |
 | Green | Tests rojos + contratos | Codigo que pasa todos los tests | Implementor |
-| Refactor | Codigo verde + tests | Codigo limpio, revisado, alineado a `design.md` | Reviewers (multiples) |
-| Accept: Certificación QA | Código refactorizado + test reports + reports de Reviewers + handoff.md + documentación operativa (si requerida por handoff) | Certificación formal de cumplimiento del handoff | QA (execution) |
+| Refactor | Codigo verde + tests | Codigo limpio, verificado mecánicamente, alineado a `design.md` | Fitness functions + revisión residual |
+| Accept: Certificación QA | Código refactorizado + test reports + reportes de métricas + handoff.md + documentación operativa (si requerida por handoff) | Certificación formal de cumplimiento del handoff | QA (execution) |
 
 [↑ Contenido](#contenido)
 
@@ -230,9 +230,8 @@ flowchart LR
 | **Contract Architect** | Preciso, orientado a interfaces. Piensa en consumidores del contrato. | prePhase | Define contratos formales basados en la arquitectura y ACs. | `design.md` + `spec.md` (via handoff) | Contratos tipados (OpenAPI, schemas, interfaces) |
 | **testEngineer** | Esceptico, orientado a cobertura real. Prioriza appTests (stack real) sobre cualquier forma de mocking; unit prohibido, integración derivada por filtrado. | Red | Escribe la suite completa de tests mapeada a ACs y contratos. | Contratos + ACs | testPlan + testContract + testImplementation (todos fallan) + coverage config |
 | **Implementor** | Pragmatico, orientado a "que funcione". Sin perfeccionismo prematuro. | Green | Escribe codigo que pase los tests. Commits frecuentes. | Tests rojos + contratos | Codigo que pasa los tests |
-| **Reviewer (Arquitectura)** | Critico, orientado a mantenibilidad. Compara contra design.md. | Refactor | Revisa alineacion arquitectonica, SOLID, DRY, KISS, patrones. | Codigo verde + design.md | Reporte de revision + sugerencias de refactor |
-| **Reviewer (Seguridad)** | Paranoico constructivo. Busca vulnerabilidades. | Refactor | Revisa OWASP Top 10, secrets, dependencias, surface area. | Codigo verde + spec.md (no-funcionales) | Reporte de seguridad |
-| **Reviewer (Performance)** | Analitico, orientado a metricas. Busca bottlenecks. | Refactor | Revisa memory leaks, N+1, operaciones bloqueantes. | Codigo verde | Reporte de performance |
+| **Fitness Functions** | Mecánicas, determinísticas. Miden, no opinan. | Refactor | Ejecutan verificación mecánica: mutation score, CRAP, complexity, dependency structure, module size, security scanners. | Codigo verde + design.md + tier de métricas | Reporte de métricas (pass/fail por threshold del tier) |
+| **Revisión Residual** | Bajo demanda, solo para lo no mecanizable. | Refactor | Verifica aspectos que ninguna herramienta puede medir: lógica de autorización, modelado DDD. Se documenta y escala — no es un gate. | Codigo verde + spec.md | Observaciones documentadas (no bloquea) |
 | **QA (execution)** | Verificador exhaustivo. Contrasta producto contra handoff. No asume que "tests pasan" es suficiente. | Accept | Verifica que CADA AC del handoff se cumple en el producto, que la cobertura no bajó, que el comportamiento de producto es el esperado, y que la documentación operativa declarada en el handoff existe. Certifica formalmente. | Código refactorizado + test reports + handoff.md + documentación operativa (si requerida por handoff) | Certificación formal (mecanismo definido por el consumidor del framework) |
 | **MIM** | Humano. Decide, aprueba, desbloquea. | Todas (on-demand) | Aprueba contratos, resuelve ambiguedades, acepta resultado final. | Reportes del Orquestador | Decisiones y aprobaciones |
 
@@ -254,7 +253,7 @@ flowchart LR
         CA["Contract\nArchitect"]
         TE["testEngineer"]
         IMP["Implementor"]
-        REV["Reviewers"]
+        REV["Fitness Functions\n+ Revisión Residual"]
         QA_E["QA\n(Certificación)"]
     end
 

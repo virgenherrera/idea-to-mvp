@@ -103,11 +103,18 @@ Cada tier define un contrato de thresholds que el código debe cumplir
 antes de que Accept lo certifique (ver
 [refactor.md](refactor.md#verificación-basada-en-métricas)):
 
-| Tier | Mutation score mínimo | CRAP máximo |
-|------|------------------------|-------------|
-| strict | ≥ 80% | ≤ 30 |
-| standard | ≥ 60% | ≤ 45 |
-| relaxed | ≥ 40% | ≤ 60 |
+| Tier | Mutation score mínimo | CRAP máximo | Complejidad ciclomática máxima | Tamaño de módulo máximo |
+|------|------------------------|-------------|--------------------------------|--------------------------|
+| strict | ≥ 80% | ≤ 30 | ≤ 10 por función | ≤ 300 LOC por módulo |
+| standard | ≥ 60% | ≤ 45 | ≤ 15 por función | ≤ 500 LOC por módulo |
+| relaxed | ≥ 40% | ≤ 60 | ≤ 20 por función | ≤ 800 LOC por módulo |
+
+**Estructura de dependencias**: reglas de dirección (sin dependencias
+circulares, inversión de dependencias respetada), con umbral de
+**cero violaciones** en todos los tiers — a diferencia de las métricas
+anteriores, no admite gradación: una dependencia circular no es "más o
+menos aceptable" según el rigor del proyecto, es un defecto
+estructural binario.
 
 El tier activo es parte del contrato del handoff — no se negocia a
 mitad de ejecución sin re-aprobación del MIM.

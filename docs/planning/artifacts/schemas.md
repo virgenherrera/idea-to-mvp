@@ -300,6 +300,12 @@ Qué tipo de pruebas, cobertura esperada, herramientas.
 ## Criterios de aceptación globales
 Qué debe ser verdad para que el proyecto se considere completo.
 
+## Contrato de métricas
+Tier activo (`strict` | `standard` | `relaxed` | `custom`), herramientas
+externas esperadas por lenguaje detectado, overrides de threshold si
+el tier es `custom` (ver [contrato de
+métricas](../../execution/contracts.md#contrato-de-métricas)).
+
 ## Restricciones de ejecución
 Convenciones del repo (AGENTS.md), reglas de commits, hooks,
 compliance del echo (ver [echo system](../../echo-system.md)).
@@ -352,6 +358,29 @@ sin importar el estado de su lane. Dos ejecutores no pueden reclamar el
 mismo workItem — el segundo intento de claim sobre un item ya
 `claimed`/`done` es rechazado por la herramienta de ejecución.
 
+### `metrics_tier` — contrato de calidad activo
+
+Cada handoff declara el tier de métricas que rige el proyecto (ver
+[contrato de métricas](../../execution/contracts.md#contrato-de-métricas)),
+resolviendo el gap de que el tier se mencionaba como parte del
+contrato del handoff sin tener un campo propio:
+
+```markdown
+## metrics_tier
+- tier: strict | standard | relaxed | custom
+- tools: {lenguaje detectado: herramienta esperada por métrica}
+  (ej: TypeScript → Stryker + ESLint complexity + madge;
+       Python → mutmut + radon + import-linter)
+- overrides: thresholds específicos que reemplazan los defaults del
+  tier (solo si tier = custom)
+```
+
+| Campo | Obligatorio | Qué garantiza |
+|-------|-------------|----------------|
+| `tier` | Sí | Qué fila de la tabla de [contracts.md](../../execution/contracts.md#contrato-de-métricas) aplica (mutation score, CRAP, complejidad, tamaño de módulo) |
+| `tools` | Sí | Qué herramienta externa por lenguaje detectado ejecuta cada métrica (ver [Orquestación de Métricas](../../echo-system.md#orquestación-de-métricas-virgil)) |
+| `overrides` | Solo si `tier: custom` | Thresholds específicos que reemplazan los defaults del tier — requiere aprobación del MIM |
+
 ### Reglas de validación de `virgil handoff lint`
 
 `virgil handoff lint` es el gate mecánico que corre antes de la
@@ -366,6 +395,7 @@ Valida, sin juicio subjetivo:
 | Refs a spec/design | El handoff referencia una decisión de `design.md` o un AC de `spec.md` que no existe en esos artefactos |
 | `execution_state` inicial | Algún workItem no tiene `execution_state` con `status: pending` al generarse (todo workItem nuevo nace `pending`, nunca `claimed`/`done`) |
 | Lanes consistentes | Un workItem declara un `lane` que no aparece en la lista de lanes del handoff |
+| `metrics_tier` declarado | El handoff no declara `metrics_tier` con un `tier` válido (`strict`, `standard`, `relaxed` o `custom`) |
 
 Si `virgil handoff lint` falla, el SM no presenta el handoff al MIM —
 regresa al TPM con la lista de errores para corrección antes de reintentar.

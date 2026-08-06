@@ -44,8 +44,15 @@ El framework se rige por seis principios no negociables (Dogma v2). Toda
 decisión de diseño, herramienta o proceso nueva debe alinearse con ellos.
 
 1. **Metodología e2e** — el framework cubre el ciclo completo idea →
-   operación. La operación es una fachada (facade) opcional sobre el
-   flujo end-to-end, no una macro-fase obligatoria para cerrar el ciclo.
+   código certificado, con una transición de despliegue verificada
+   mecánicamente (gate pre/post-deploy y concepto de rollback, ver
+   [Detalle de Fases](planning/behavior/phases.md#despliegue--transición-entre-ejecución-y-operación))
+   hacia una operación opcional. La operación es una fachada (facade)
+   deliberadamente delgada — reactiva, sin fases propias — sobre el
+   flujo end-to-end; no es una macro-fase obligatoria para cerrar el
+   ciclo, y el framework no prescribe monitoreo continuo, alerting ni
+   SRE. "Idea → operación" describe la transición mecánica cubierta,
+   no que el framework opere el servicio por el usuario.
 2. **Trazabilidad Y fortaleza verificadas** — no basta con verificar el
    binding (la trazabilidad entre artefactos, que confirma que un enlace
    existe). También se verifica la fortaleza real del código mediante
@@ -269,6 +276,17 @@ timeline
 > Detalle: [comportamiento SM](planning/behavior/README.md)
 > (fases 1-8) y [roles](planning/roles/README.md) (contratos de cada
 > rol por fase).
+>
+> **Validación externa (recomendada, no un gate)**: tanto Fase Accept
+> (execution) como Fase 7 (planning) certifican el entregable de forma
+> **interna** — el propio equipo de agentes vota o certifica. El
+> framework recomienda, sin exigirlo, un checkpoint de **validación
+> externa**: alguien fuera del equipo de agentes (el MIM, un
+> stakeholder, un usuario real) ve el software funcionando antes de
+> cerrar el ciclo. Es el equivalente al "Measure" de
+> Build-Measure-Learn — sin esa señal externa, la Retrospectiva
+> (Fase 8) solo aprende de la percepción del propio equipo. Ver
+> [Fase Accept](execution/accept.md#validación-externa-recomendada).
 
 [↑ Contenido](#contenido)
 
@@ -522,6 +540,7 @@ definidas:
 | Área | Estado | Descripción |
 |------|--------|-------------|
 | Execution | **DEFINIDO** | 5 fases (Contratos → Red → Green → Refactor → Accept). Contract-first, boundaryModel (App + E2E), revisión multi-dimensional. Ver [modelo de ejecución](execution/README.md). |
+| Despliegue | **DEFINIDO (nivel dogma)** | Transición entre Fase Accept (execution) y Operation. Define gate pre/post-deploy y el concepto de rollback a nivel dogma; NO prescribe mecanismo de despliegue (CI/CD, blue-green, canary) — eso queda a decisión del proyecto. Ver [Detalle de Fases](planning/behavior/phases.md#despliegue--transición-entre-ejecución-y-operación). |
 | Operation | **DEFINIDO** | Opcional. Para proyectos con superficie operativa: el usuario consume el producto con asistencia del agente. Reactivo, sin fases. Ver [modelo de operación](operation/README.md). |
 | Adapters avanzados | TBD | Jira, DBMS, Git repo, MS Project como adapters del artifactStore. |
 | Routing no-Scrum | TBD | Routing tables para Kanban (WIP limits), Shape Up (bets), SAFe (PIs). Los artefactos son universales; la orquestación no. |

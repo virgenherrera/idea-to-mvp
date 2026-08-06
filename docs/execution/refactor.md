@@ -3,7 +3,7 @@ id: execution/refactor
 title: "Fase Refactor — Calidad"
 mode: execution
 type: process
-tags: [refactor, calidad, arquitectura, seguridad, performance, review, reviewer]
+tags: [refactor, calidad, arquitectura, seguridad, performance, métricas, fitness-functions]
 ---
 
 # Fase Refactor — Gate de Calidad
@@ -15,8 +15,8 @@ tags: [refactor, calidad, arquitectura, seguridad, performance, review, reviewer
 ## Contenido
 
 - [Principio](#principio)
-- [Dimensiones de revision](#dimensiones-de-revision)
-- [Checklist de revision](#checklist-de-revision)
+- [Dimensiones de verificación mecánica](#dimensiones-de-verificación-mecánica)
+- [Checklist de verificación mecánica](#checklist-de-verificación-mecánica)
 - [Verificación Basada en Métricas](#verificación-basada-en-métricas)
 - [Reglas del refactor](#reglas-del-refactor)
 
@@ -33,64 +33,81 @@ revierte.
 
 ---
 
-## Dimensiones de revision
+## Dimensiones de verificación mecánica
+
+> **Dogma v2, principio 3**: "No revisas código del agente — mides
+> métricas." Uncle Bob lo formula así: "No reviso código escrito por
+> agentes. Mido cobertura de tests, estructura de dependencias,
+> complejidad ciclomática, tamaño de módulos, mutation testing."
+> (julio 2026). Virgil v2 no traslada la revisión de código de un
+> humano a un sub-agente — la ELIMINA y la reemplaza por herramientas
+> mecánicas. Un sub-agente leyendo código y emitiendo un "reporte de
+> revisión" sigue siendo revisión de código, solo que relocalizada.
+> Eso es exactamente lo que el dogma prohíbe.
+
+Cada dimensión de calidad se verifica con una herramienta que produce
+un número comparable contra un threshold, no con una lectura subjetiva
+del código:
 
 ```mermaid
 flowchart TD
-    CODE["Codigo verde\n(tests pasan)"]
+    CODE["Código verde\n(tests pasan)"]
 
-    CODE --> SOLID["SOLID\nSingle Responsibility\nOpen-Closed\nLiskov\nInterface Segregation\nDependency Inversion"]
-    CODE --> DRY_KISS["DRY + KISS\n(3 instancias\nantes de abstraer)"]
-    CODE --> ARCH["Arquitectura\nHexagonal / Clean\n(ports & adapters)"]
-    CODE --> SEC["Seguridad\nOWASP Top 10\nSecrets management"]
-    CODE --> PERF["Performance\nMemory leaks\nN+1 queries\nLazy loading"]
-    CODE --> DDD_P["DDD + Patrones\n(si la complejidad\nlo amerita)"]
-    CODE --> DI["Inyeccion de\nDependencias"]
+    CODE --> MUT["Mutation testing\nStryker / pitest / mutate4go"]
+    CODE --> CRAP["CRAP score\ncrap4j y equivalentes"]
+    CODE --> CYCLO["Complejidad ciclomática\ngocyclo, eslint complexity"]
+    CODE --> DEPS["Estructura de dependencias\ngo vet, eslint-plugin-import,\ndependency-cruiser"]
+    CODE --> SIZE["Tamaño de módulo\ncloc, max-lines"]
+    CODE --> SEC["Seguridad mecanizable\ngovulncheck, npm audit,\ngitleaks, semgrep"]
 
-    SOLID --> GATE
-    DRY_KISS --> GATE
-    ARCH --> GATE
+    MUT --> GATE
+    CRAP --> GATE
+    CYCLO --> GATE
+    DEPS --> GATE
+    SIZE --> GATE
     SEC --> GATE
-    PERF --> GATE
-    DDD_P --> GATE
-    DI --> GATE
 
-    GATE{{"Gate de calidad\n¿Tests siguen pasando?\n¿Coverage no bajo?"}}
-    GATE -->|"Si"| APPROVED["Refactor aprobado"]
-    GATE -->|"No"| REVERT["Revertir refactor\n(regresion detectada)"]
+    CODE -.->|"bajo demanda,\nno automático"| RESIDUAL["Revisión residual\n(no mecanizable)"]
+    RESIDUAL -.->|"documentada,\nno bloquea el gate"| GATE
+
+    GATE{{"Gate de calidad\n¿Tests pasan?\n¿Coverage no bajó?\n¿Métricas dentro del tier?"}}
+    GATE -->|"Sí"| APPROVED["Refactor aprobado"]
+    GATE -->|"No"| REVERT["Revertir refactor\n(regresión o métrica\nfuera de threshold)"]
 ```
 
 [↑ Contenido](#contenido)
 
 ---
 
-## Checklist de revision
+## Checklist de verificación mecánica
 
-| Dimension | Que se revisa | Criterio |
-|-----------|-----------------|----------|
-| **SOLID** | Cada clase/modulo tiene una sola responsabilidad. Extensible sin modificar. Contratos respetados. | Violaciones documentadas con severidad |
-| **DRY** | Duplicacion detectada. Regla de 3: no abstraer hasta tener 3 instancias del mismo patron. | Abstracciones prematuras son peor que duplicacion |
-| **KISS** | Complejidad innecesaria. Sobre-ingenieria. Patrones aplicados sin justificacion. | Cada abstraccion debe resolver un problema real |
-| **Arquitectura** | Alineacion con `design.md`. Ports & adapters. Capas respetadas. Dependencias en la direccion correcta. | Desviaciones documentadas con justificacion |
-| **Seguridad** | OWASP Top 10. Secrets hardcodeados. SQL injection. XSS. CORS. Dependencias con CVEs. | Vulnerabilidades criticas bloquean aprobacion |
-| **Performance** | Memory leaks. N+1 queries. Operaciones bloqueantes. Lazy loading donde aplica. Bundle analysis (tamaño, tree shaking) cuando aplica (ver [sistema de artifacts](../artifact-system.md)). | Problemas documentados con severidad |
-| **DDD / Patrones** | Domain-Driven Design (si la complejidad lo amerita). Patrones aplicados donde resuelven un problema real, no por decoracion. | Solo donde la complejidad del dominio lo justifica |
-| **DI** | Dependencias inyectadas, no hardcodeadas. Testeable. Reemplazable. | Dependencias directas a implementaciones concretas son violaciones |
+| Dimensión | Qué mide | Herramienta | Criterio |
+|-----------|----------|--------------|----------|
+| **Complejidad ciclomática** | Ramas de decisión por función/método (proxy mecánico de SRP y KISS). | gocyclo, eslint `complexity`, radon | Threshold independiente por tier (ver [thresholds](#thresholds-por-tier)) |
+| **Tamaño de módulo** | Líneas de código por archivo/módulo (proxy mecánico de SRP a nivel módulo). | cloc, `wc -l`, eslint `max-lines` | Threshold independiente por tier |
+| **Estructura de dependencias** | Dirección de dependencias, ciclos, inversión de dependencias (Arquitectura hexagonal, DI). | go vet, eslint-plugin-import, dependency-cruiser, ArchUnit | Cero violaciones, en todos los tiers |
+| **Duplicación (DRY)** | Bloques de código repetidos. | jscpd, dupl (Go), PMD CPD | Referencial — no bloquea el gate por sí sola |
+| **Fortaleza de tests** | Mutation score + CRAP (penaliza complejidad sin cobertura; recompensa indirectamente diseño testeable). | Stryker, pitest, mutate4go + crap4j | Ver [thresholds](#thresholds-por-tier) |
+| **Seguridad mecanizable** | CVEs en dependencias, secrets hardcodeados, patrones inseguros detectables por SAST. | govulncheck, npm audit, gitleaks, semgrep | Vulnerabilidades críticas = 0 |
 
----
+### Revisión residual
 
-### Asignación de dimensiones por rol
+Uncle Bob no reemplaza cada dimensión de calidad por una métrica —
+reemplaza las que SON mecanizables. Lo que no lo es queda como
+excepción explícita, no como regla:
 
-| Reviewer | Dimensiones que cubre |
-|----------|----------------------|
-| **Reviewer (Arquitectura)** | SOLID, DRY, KISS, Arquitectura, DDD/Patrones, DI |
-| **Reviewer (Seguridad)** | Seguridad (OWASP Top 10, secrets, dependencias, CORS) |
-| **Reviewer (Performance)** | Performance (memory leaks, N+1, lazy loading, operaciones bloqueantes) |
+- **Seguridad no mecanizable** — lógica de autorización correcta,
+  modelado de amenazas, decisiones de diseño de seguridad. Ningún
+  linter certifica que la regla de negocio "solo el dueño del recurso
+  puede editarlo" está bien implementada.
+- **Modelado DDD** — si un bounded context o un agregado está bien
+  diseñado es una decisión semántica, no una que un tool de análisis
+  estático pueda puntuar.
 
-> En ejecución paralela con worktrees, el compositeAgent del lane
-> ejecuta las 3 perspectivas secuencialmente. En ejecución secuencial,
-> el Orquestador puede lanzar los 3 Reviewers en paralelo sobre el mismo
-> código verde.
+Estos casos no bloquean el gate automático de refactor. Se documentan
+como hallazgo y, si el riesgo lo justifica, se escalan a una revisión
+puntual bajo demanda (humana o de agente) — la EXCEPCIÓN, no el
+mecanismo por defecto de la fase.
 
 [↑ Contenido](#contenido)
 
@@ -98,16 +115,15 @@ flowchart TD
 
 ## Verificación Basada en Métricas
 
-> **Dogma v2**: "No reviso código escrito por agentes. Mido cobertura de
-> tests, estructura de dependencias, complejidad ciclomática, tamaño de
-> módulos, mutation testing." — Uncle Bob (julio 2026)
-
 Virgil v2 reemplaza la revisión manual de código por verificación
-basada en métricas. El binding layer (declarado en
+basada en métricas (ver dogma citado arriba en
+[Dimensiones de verificación mecánica](#dimensiones-de-verificación-mecánica)).
+El binding layer (declarado en
 [Fase Red](red.md#trazabilidad-ac-testplan-testcontract-implementación-coverage),
 inferido en [Fase Green](green.md#inferencia-de-bindings)) rastrea
 requirement → código → test; las herramientas de esta sección verifican
-la FUERZA real de esos tests, no solo su existencia.
+la FUERZA real de esos tests y del código que producen, no solo su
+existencia.
 
 ### virgil metrics
 
@@ -117,16 +133,31 @@ Durante o después del refactor, `virgil metrics` ejecuta el chequeo de:
   de tests. Un mutation score bajo significa tests que pasan pero no
   detectan cambios reales en el comportamiento del código.
 - **CRAP score** — Change Risk Anti-Patterns (ver fórmula abajo).
-- **Complejidad ciclomática** — por función/método.
+- **Complejidad ciclomática** — por función/método. Alimenta el CRAP
+  score Y se verifica además como threshold independiente: una función
+  puede tener CRAP bajo por estar bien cubierta y seguir siendo
+  demasiado compleja para mantener.
+- **Estructura de dependencias** — dirección de las dependencias entre
+  módulos/capas. Detecta ciclos y violaciones de la regla de
+  dependencia (las capas internas no dependen de las externas). Es la
+  verificación mecánica de lo que en Dogma v1 cubría el rol reviewer
+  de Arquitectura (ver [Revisión residual](#revisión-residual)).
+- **Tamaño de módulo** — líneas de código por archivo/módulo. Un
+  módulo que crece sin límite es la señal mecánica de una
+  responsabilidad que dejó de ser única.
 
 Virgil **orquesta** herramientas externas especializadas por lenguaje —
 no las construye ni las reimplementa:
 
-| Lenguaje | Mutation testing | Complejidad / CRAP |
-|----------|-------------------|---------------------|
-| Go | mutate4go | gocyclo, crap4go |
-| JavaScript / TypeScript | Stryker | — |
-| Java | pitest | — |
+| Lenguaje | Mutation testing | Complejidad ciclomática | CRAP | Dependencias |
+|----------|-------------------|--------------------------|------|--------------|
+| Go | mutate4go | gocyclo | crap4go | go vet, depguard |
+| JavaScript / TypeScript | Stryker | eslint (`complexity`) | — | eslint-plugin-import, dependency-cruiser |
+| Java | pitest | — | — | ArchUnit |
+
+El tamaño de módulo es agnóstico de lenguaje (cloc, `wc -l`, o la regla
+`max-lines` del linter del stack) y no requiere una columna por
+lenguaje en esta tabla.
 
 ### CRAP score
 
@@ -142,11 +173,15 @@ tests, no la complejidad por sí sola.
 
 ### Thresholds por tier
 
-| Tier | Mutation score mínimo | CRAP máximo |
-|------|------------------------|-------------|
-| strict | ≥ 80% | ≤ 30 |
-| standard | ≥ 60% | ≤ 45 |
-| relaxed | ≥ 40% | ≤ 60 |
+| Tier | Mutation score mínimo | CRAP máximo | Complejidad ciclomática máxima | Tamaño de módulo máximo (LOC) | Violaciones de dependencia |
+|------|------------------------|-------------|----------------------------------|----------------------------------|-------------------------------|
+| strict | ≥ 80% | ≤ 30 | ≤ 10 | ≤ 300 | 0 |
+| standard | ≥ 60% | ≤ 45 | ≤ 15 | ≤ 500 | 0 |
+| relaxed | ≥ 40% | ≤ 60 | ≤ 20 | ≤ 800 | 0 |
+
+Las violaciones de dependencia son tolerancia cero en los tres tiers:
+un ciclo o una inversión de la regla de dependencia no es un problema
+de grado, es una violación arquitectónica binaria — existe o no existe.
 
 > El tier activo es parte del contrato del handoff (ver
 > [contracts.md](contracts.md#contrato-de-métricas)). `virgil health`
@@ -167,9 +202,10 @@ tests, no la complejidad por sí sola.
    arquitectura definida, no lo aleja
 4. **Commit por refactor** --- cada refactor es un commit separado para
    facilitar reversion
-5. **Métricas dentro del threshold del tier** --- mutation score y CRAP
-   cumplen el mínimo definido para el tier activo antes de considerar
-   el refactor aprobado (ver
+5. **Métricas dentro del threshold del tier** --- mutation score, CRAP,
+   complejidad ciclomática, tamaño de módulo y violaciones de
+   dependencia cumplen el umbral definido para el tier activo antes de
+   considerar el refactor aprobado (ver
    [Verificación Basada en Métricas](#verificación-basada-en-métricas))
 
 > Los quality gates del refactor están alineados con el paso 3 (Static

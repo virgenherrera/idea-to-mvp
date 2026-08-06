@@ -17,6 +17,7 @@ tags: [fases, gates, roles-por-fase, retrospectiva, verificación, aceptación]
 - [Detalle por fase](#detalle-por-fase)
 - [Bloqueo: cómo el SM detiene avances prematuros](#bloqueo-cómo-el-sm-detiene-avances-prematuros)
 - [Reglas del SM](#reglas-del-sm)
+- [Despliegue — transición entre Ejecución y Operación](#despliegue--transición-entre-ejecución-y-operación)
 - [Fase Operación — opcional (facade)](#fase-operación--opcional-facade)
 - [Matriz Completa: Roles × Etapas](#matriz-completa-roles-etapas)
 
@@ -430,6 +431,37 @@ Reglas generales de operación:
     al MIM para confirmación. La aprobación del MIM certifica intención
     de negocio; el gate determinista certifica integridad estructural.
     Ambos son necesarios — ninguno sustituye al otro.
+
+[↑ Contenido](#contenido)
+
+---
+
+## Despliegue — transición entre Ejecución y Operación
+
+El pipeline cubre idea → código certificado (Fase Accept de execution)
+y, si el proyecto activa el facade, la fase de Operación. Entre ambos
+extremos hay una transición que el framework reconoce a nivel dogma:
+pasar de "artefacto certificado en el registro" a "servicio corriendo
+y alcanzable" es **despliegue**, y tiene su propio gate. El framework
+no prescribe CÓMO desplegar (CI/CD, blue-green, canary, manual — eso
+es decisión del proyecto), pero sí prescribe QUÉ se verifica antes y
+después.
+
+| Momento | Gate | Qué verifica |
+|---------|------|---------------|
+| Pre-deploy | Gate de despliegue | Todos los ACs de la iteración certificados en Fase Accept. Métricas de `virgil health` dentro del threshold del tier activo. Sin findings bloqueantes abiertos (seguridad, DevSecOps). Estrategia de despliegue documentada en `design.md` o `handoff.md`. |
+| Post-deploy | Smoke test | El servicio responde en el entorno destino (health check, smoke E2E mínimo). Una falla dispara **rollback**. |
+
+**Rollback** no es solo un encabezado de sección — es un concepto
+prescrito con tres componentes obligatorios: qué lo dispara (falla del
+smoke post-deploy, o degradación de métricas críticas durante la
+ventana de observación inicial), quién lo autoriza (DevSecOps propone;
+el MIM confirma si el rollback implica pérdida de datos o downtime
+visible), y cómo se verifica (el smoke test se repite sobre la versión
+anterior; el servicio debe volver a un estado conocido bueno). El
+mecanismo de rollback (revert de imagen, feature flag, migración de
+base de datos reversible) no está prescrito — es una decisión de
+DevSecOps/Dev Lead documentada en `design.md`.
 
 [↑ Contenido](#contenido)
 
