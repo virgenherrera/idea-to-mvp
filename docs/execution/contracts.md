@@ -21,6 +21,7 @@ tags: [contratos, api, schema, interfaces, contract-first, desarrollo-paralelo]
 - [Contrato de estado de ejecución](#contrato-de-estado-de-ejecución)
 - [Flujo de definicion de contratos](#flujo-de-definicion-de-contratos)
 - [Criterios de validacion del contrato](#criterios-de-validacion-del-contrato)
+- [Colisión de Contratos entre Ciclos Concurrentes](#colisión-de-contratos-entre-ciclos-concurrentes)
 
 ---
 
@@ -185,5 +186,48 @@ Un contrato esta listo cuando:
 3. Los contratos son consistentes entre si (sin contradicciones)
 4. Las dependencias entre contratos estan explicitas
 5. El MIM aprobo los contratos que requieren decisiones de negocio
+
+[↑ Contenido](#contenido)
+
+---
+
+## Colisión de Contratos entre Ciclos Concurrentes
+
+Cuando dos ciclos concurrentes (o un ciclo y un hotfix) definen
+contratos que modifican el mismo recurso — tipicamente el mismo schema
+de base de datos — la prePhase Contratos es donde el SM detecta la
+colision, antes de que ambos ciclos lleguen a Fase Red con migraciones
+incompatibles.
+
+```mermaid
+flowchart TD
+    C1["Ciclo A declara migracion:\nALTER TABLE orders\nADD COLUMN status"]
+    C2["Ciclo B declara migracion:\nALTER TABLE orders\nADD COLUMN priority"]
+
+    C1 --> CHECK{{"SM: ¿ambos ciclos\nalteran la misma\ntabla/recurso?"}}
+    C2 --> CHECK
+
+    CHECK -->|"No"| PARALLEL["Ambos proceden\nen paralelo\n(sin conflicto)"]
+    CHECK -->|"Si"| SERIAL["SM serializa:\nordena por llegada a\nprePhase Contratos\no prioridad del MIM"]
+
+    SERIAL --> FIRST["Ciclo A procede\ncontra baseline actual"]
+    SERIAL --> REPLAN["Ciclo B replanifica\nsu migracion contra\nla nueva baseline\n(post Ciclo A)"]
+```
+
+**Criterio de serializacion**: el SM ordena por el ciclo que llegó
+primero a la prePhase Contratos con el contrato declarado, o por
+prioridad explícita del MIM si hay empate. El ciclo que va segundo NO
+pierde su trabajo — su migracion se replanifica contra la nueva
+baseline que el primer ciclo estableció.
+
+**Dónde se detecta**: durante la validacion de contratos (ver
+[criterios de validacion del contrato](#criterios-de-validacion-del-contrato)),
+el SM extiende el criterio 3 ("los contratos son consistentes entre
+si") para incluir consistencia ENTRE ciclos activos, no solo dentro de
+un mismo ciclo.
+
+**Registro**: el SM anota la serializacion como `[COLLISION]`
+en el `plan.md`/`idea.md` del ciclo que replanifica, con referencia al
+ciclo que tomó precedencia.
 
 [↑ Contenido](#contenido)

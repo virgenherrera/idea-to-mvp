@@ -293,6 +293,31 @@ funciona, Virgil verifica que el código es rastreable y robusto.
 El deployment gate exige echo verde completo como precondición. Post-
 deploy, un subset de E2E (smoke) verifica que el despliegue fue exitoso.
 
+### Verificación de Paridad de Ambientes (recomendada)
+
+Cuando staging y producción divergen en configuración, datos o estado
+de infraestructura, un test puede pasar en staging (echo verde) y la
+misma implementación comportarse distinto en producción. La
+homogeneidad de ambientes (ver [sección anterior](#homogeneidad-de-ambientes))
+ya cubre esto conceptualmente — mismos pasos, mismo orden — pero no
+exige verificar que la CONFIGURACIÓN de cada ambiente coincide.
+
+**Virgil no gestiona infraestructura** — no es su responsabilidad
+provisionar ni mantener paridad entre ambientes. Lo que SÍ puede hacer
+es orquestar un chequeo de paridad como parte del deployment gate:
+
+| Aspecto verificable | Ejemplo de chequeo |
+|----------------------|---------------------|
+| Versión de runtime/dependencias | Misma versión de Node/Go/Python en staging y producción |
+| Variables de entorno declaradas | Mismo set de env vars (sin comparar valores secretos) entre ambientes |
+| Configuración de infraestructura | Mismos flags de feature/infra activos (drift de estado, ej. Terraform) |
+
+Este chequeo es **RECOMENDADO, no obligatorio** — a diferencia de los 5
+pasos del echo, que son TINA. El proyecto lo implementa como paso
+adicional del deployment gate en CD (ver [En CD](#en-cd)) usando sus
+propias herramientas de infraestructura; el echo lo orquesta pero no lo
+prescribe.
+
 [↑ Contenido](#contenido)
 
 ---

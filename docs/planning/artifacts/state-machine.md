@@ -148,6 +148,19 @@ semantico):
 | Decision en `design.md` que contradice restriccion de `spec.md` | Spec exige respuesta < 200ms; design elige polling de 5s | `SEMANTIC_DRIFT_CRITICAL` |
 | Tarea en `tasks.md` sin trazabilidad a componente de `design.md` | Tarea "implementar cache Redis" sin ADR que la respalde | `SEMANTIC_DRIFT_MINOR` |
 | Requisito nuevo que aparecio mid-chain sin aprobacion del MIM | Design agrega autenticacion biometrica que nadie pidio | `SEMANTIC_DRIFT_CRITICAL` |
+| API externa rompe contrato asumido en `design.md` (endpoint deprecado, campo requerido nuevo) | API de pagos remueve `POST /v1/charge`; `design.md` asume ese endpoint | `SEMANTIC_DRIFT_CRITICAL` |
+
+> **Drift originado en contratos externos**: un cambio breaking en una
+> API de tercero (endpoint removido, campo requerido nuevo, cambio de
+> rate limit) no se origina en la cadena idea → spec → design → tasks,
+> pero produce la misma cascada que el drift interno: invalida las
+> suposiciones que `design.md` — y posiblemente `spec.md` — hicieron
+> sobre ese contrato. El SM trata el hallazgo como drift critico:
+> bloquea la aprobacion y re-delega a `design.md` para reflejar el
+> nuevo contrato. Si el cambio es backward-compatible (ej. nuevo campo
+> opcional), se clasifica como drift menor y se absorbe sin cascada.
+> Ver [contrato de tipos](../../execution/contracts.md#tipos-de-contrato)
+> que estas dependencias externas deben declarar.
 
 **Niveles de severidad**:
 

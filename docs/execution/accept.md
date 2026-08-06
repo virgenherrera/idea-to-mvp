@@ -26,6 +26,7 @@ tags: [certificación, qa, handoff, documentación-operativa, gate]
 - [Flujo de la fase](#flujo-de-la-fase)
 - [Resultado](#resultado)
 - [Validación Externa (recomendada)](#validación-externa-recomendada)
+- [Testing de Interacción Multi-Ciclo (Feature Flags)](#testing-de-interacción-multi-ciclo-feature-flags)
 
 ---
 
@@ -175,6 +176,36 @@ el "Measure" de Build-Measure-Learn: alimenta la siguiente Fase 1
 (Definir Idea) o la Fase 8 (Retrospectiva) con evidencia real, no solo
 con la percepción del propio equipo. No bloquea el cierre de la
 iteración — es una ceremonia recomendada, no un gate.
+
+[↑ Contenido](#contenido)
+
+---
+
+## Testing de Interacción Multi-Ciclo (Feature Flags)
+
+Cuando dos o más ciclos activos entregan features detrás de feature
+flags, cada feature puede pasar su propio Accept de forma aislada y
+seguir interactuando de forma inesperada cuando ambos flags están
+habilitados simultáneamente. Ningún test de un ciclo individual cubre
+el estado combinado.
+
+**Comportamiento esperado**: si los scopes de archivos de dos ciclos
+activos se superponen (mismo módulo, mismo dominio), QA recomienda
+integration testing con ambos flags habilitados. Esto es **advisory,
+no bloqueante** — no impide la certificación individual de cada
+feature, pero queda registrado como observación en el reporte de
+Accept.
+
+| Condición | Acción de QA |
+|-----------|---------------|
+| Ciclos con scopes de archivos disjuntos | Sin acción adicional |
+| Ciclos con scopes superpuestos, flags independientes | Recomendar test de integración con ambos flags ON. No bloquea. |
+| Ciclos con scopes superpuestos, dependencia funcional conocida | Recomendar test de integración obligatorio antes del siguiente deploy conjunto. Sigue sin bloquear el Accept individual. |
+
+Esta verificación depende de que `verifyConsistency` exponga qué
+ciclos están activos y qué archivos toca cada uno — ver
+[detección de semanticDrift](../planning/artifacts/state-machine.md#detección-de-semanticdrift)
+para el mecanismo de detección de superposición entre artefactos.
 
 [↑ Contenido](#contenido)
 

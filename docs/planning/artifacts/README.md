@@ -33,6 +33,7 @@ tags: [artefactos, tpm, state-machine, adaptadores, rag]
 - [Documentos del Modelo](#documentos-del-modelo)
 - [Cadena de Artefactos — Flujo Completo](#cadena-de-artefactos-flujo-completo)
 - [Ownership — Quién Produce, Quién Consume, Quién Valida](#ownership-quién-produce-quién-consume-quién-valida)
+- [Trazabilidad Inversa — Código a Artefacto](#trazabilidad-inversa-código-a-artefacto)
 - [Preguntas Abiertas](#preguntas-abiertas)
 
 ---
@@ -304,6 +305,80 @@ flowchart TD
    parte de seguridad y monitoreo; Dev Lead la de troubleshooting y
    arquitectura operativa. El formato final depende de lo que el
    proyecto SEA, no de una plantilla rigida.
+
+[↑ Contenido](#contenido)
+
+---
+
+## Trazabilidad Inversa — Código a Artefacto
+
+> El `bindingLayer` (ver [glosario](../../glossary.md)) traza hacia
+> adelante: qué AC de `spec.md` está cubierto por qué tarea de
+> `tasks.md`. Pero dado un archivo de código ya escrito
+> (`src/auth/middleware.ts`), no existe forma mecánica de determinar qué
+> tarea lo originó, qué decisión de diseño lo motivó, o qué problema de
+> negocio resuelve. Esta sección define el binding inverso: código →
+> artefacto.
+
+### Grafo de Binding Inverso
+
+```mermaid
+%% Camino inverso: de un archivo de código hasta el problema que lo originó
+flowchart LR
+    FILE["src/auth/\nmiddleware.ts\n(archivo de código)"]
+    TASK["tasks.md\nT-3: Implementar\nmiddleware auth"]
+    DESIGN["design.md\nADR-2: JWT\nstateless auth"]
+    SPEC["spec.md\nAC-4: Given usuario\nsin token válido..."]
+    IDEA["idea.md\nProblema: acceso\nno autorizado a\nrecursos"]
+
+    FILE -->|"campo files:\n(confirmado en\nFase Green)"| TASK
+    TASK -->|"traza a componente\n(bindingLayer)"| DESIGN
+    DESIGN -->|"traza a constraint"| SPEC
+    SPEC -->|"traza a problema"| IDEA
+
+    style FILE fill:#f9f,stroke:#333
+```
+
+Dado un `path`, el grafo se camina en un solo sentido: código hacia el
+problema de negocio que lo justifica. Es el complemento inverso de la
+[Cadena de Artefactos](#cadena-de-artefactos-flujo-completo), que traza
+hacia adelante (`idea.md` → ... → `handoff.md`).
+
+### Tres Mecanismos Complementarios
+
+Ningún mecanismo por sí solo resuelve el binding inverso. Los tres
+operan juntos:
+
+| Mecanismo | Dónde vive | Cómo funciona |
+|-----------|-----------|---------------|
+| **Anotación de binding** | Campo `files` del workItem, en `tasks.md` y `handoff.md` | En planificación, `files` es una estimación ("si se conocen", ver [Schemas](schemas.md)) usada para detectar solapamiento entre lanes. Durante **Fase Green** (ver [Estrategia de Commits](../../execution/git-strategy.md#estrategia-de-commits)), el implementor CONFIRMA el campo con los archivos realmente creados o modificados. La estimación de planificación se convierte en el registro de binding real. |
+| **Integración con git** | Historial de commits | Los commits de Green ya referencian AC y test bajo la convención `tipo: descripción (referencias)` (ver [Estrategia de Commits](../../execution/git-strategy.md#estrategia-de-commits)). El ID de tarea se agrega al mismo paréntesis: `feat: implement auth middleware (T-3, passes auth-login-success)`. Trazabilidad secundaria vía `git log --grep "T-3"`. |
+| **Query inversa** | `verifyConsistency` en modo `--reverse` (ver [universalInterface](tpm-adapter.md)) | Dado un path de archivo, camina el `bindingLayer` hacia atrás: file → task (`files`) → design (componente/ADR) → spec (AC) → idea (problema). Extiende la operación `verifyConsistency(artifact[])` existente — no agrega una operación nueva al `universalInterface`. |
+
+### Regla — Trazabilidad Vive en Artefactos y Git, Nunca en Código
+
+La trazabilidad se registra en los artefactos (campo `files`) y en git
+(mensajes de commit). **NUNCA** en comentarios de código:
+
+```typescript
+// ❌ NUNCA — el comentario se desincroniza del artefacto y nadie lo audita
+// Task: T-3
+// See spec AC-4
+export function authMiddleware() { /* ... */ }
+```
+
+```typescript
+// ✅ El código no anota su propio origen. La trazabilidad vive en
+// handoff.md (campo files) y en el commit que lo introdujo.
+export function authMiddleware() { /* ... */ }
+```
+
+**Razón**: un comentario de código no está bajo control del TPM — nadie
+lo valida, nadie lo actualiza cuando la tarea se re-planifica, y
+`verifyConsistency` no puede leerlo como fuente de verdad. El
+`bindingLayer` exige que la trazabilidad viva donde el TPM puede
+escribirla, validarla y consultarla mecánicamente: el artifactStore y
+el historial de git, nunca el código fuente.
 
 [↑ Contenido](#contenido)
 

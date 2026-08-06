@@ -14,12 +14,55 @@ tags: [fases, gates, roles-por-fase, retrospectiva, verificación, aceptación]
 
 ## Contenido
 
+- [Modo Imperativo — Respuesta del SM a Pedidos Directos](#modo-imperativo--respuesta-del-sm-a-pedidos-directos)
 - [Detalle por fase](#detalle-por-fase)
 - [Bloqueo: cómo el SM detiene avances prematuros](#bloqueo-cómo-el-sm-detiene-avances-prematuros)
 - [Reglas del SM](#reglas-del-sm)
 - [Despliegue — transición entre Ejecución y Operación](#despliegue--transición-entre-ejecución-y-operación)
 - [Fase Operación — opcional (facade)](#fase-operación--opcional-facade)
 - [Matriz Completa: Roles × Etapas](#matriz-completa-roles-etapas)
+
+---
+
+## Modo Imperativo — Respuesta del SM a Pedidos Directos
+
+Cuando el MIM emite un pedido imperativo — "solo haz X", "implementa
+esto directo", sin pasar por la cadena de fases — el SM no tiene
+licencia para ejecutar ciegamente ni para bloquear por default. El
+pedido imperativo activa una evaluación de dominio y riesgo que
+resuelve en una de tres rutas: rechazar, guiar, o usar el escape hatch.
+
+```mermaid
+flowchart TD
+    REQ["Pedido imperativo\ndel MIM:\n'solo haz X'"]
+    REQ --> EVAL{{"SM evalúa\ndominio y riesgo"}}
+
+    EVAL -->|"Seguridad, integridad\nde datos, regulado"| A["(a) RECHAZAR\nSM explica POR QUÉ\nel gate mínimo es\nnecesario.\nNo ejecuta."]
+
+    EVAL -->|"Válido pero\nsubespecificado"| B["(b) GUIAR (DEFAULT)\nSM hace 2-3 preguntas\ntargeted.\nCon las respuestas,\nfastForward Tier Ligero."]
+
+    EVAL -->|"Mecánico, bajo riesgo,\ndeterminista\n(score F1-F4 sería 7-8)"| C["(c) ESCAPE HATCH\nSM delega a Implementor\ncon micro-ciclo.\nRegistra [IMPERATIVE].\nplan.md auto-aprobado."]
+```
+
+| Respuesta | Cuándo aplica | Ejemplos | Qué hace el SM |
+|-----------|---------------|----------|-----------------|
+| **(a) Rechazar** | El pedido toca seguridad (auth, crypto, secrets), integridad de datos (migraciones, schema) o dominios regulados | "Cambia la encriptación a MD5", "Borra la tabla users" | Explica el riesgo concreto. NO ejecuta. Ofrece la ruta (b) guiar como alternativa. |
+| **(b) Guiar** | El pedido es válido pero carece de scope, ACs, o evaluación de impacto. **DEFAULT para pedidos imperativos.** | "Agrega un endpoint de health", "Pon rate limiting" | Formula 2-3 preguntas targeted. Con las respuestas, aplica [fastForward](fast-forward.md) en Tier Ligero (`plan.md`). |
+| **(c) Escape hatch** | El pedido es mecánico, bajo riesgo, determinista. El score F1-F4 sería 7-8. | "Renombra X a Y", "Actualiza ESLint a v9", "Corrige este typo" | Delega a un Implementor con un micro-ciclo (plan.md auto-aprobado). Registra `[IMPERATIVE]` en el ciclo actual o como micro-ciclo standalone. El SM no ejecuta — delega. |
+
+**Restricción del escape hatch**: la ruta (c) NUNCA aplica a cambios
+que modifiquen contratos, APIs públicas, schemas de base de datos, o
+boundaries de seguridad. Estos dominios fuerzan (a) rechazar o, si el
+pedido es válido pero subespecificado, (b) guiar. Ante cualquier duda
+sobre si un pedido calza en (c), el SM elige (b).
+
+**Audit trail obligatorio**: toda interacción imperativa — sea (a),
+(b), o (c) — se registra con el razonamiento del SM sobre qué ruta
+eligió y por qué. El registro vive en el `idea.md` o `plan.md` del
+ciclo activo, mismo mecanismo que el registro `[INTERRUPTION]` (ver
+[fastForward y Tiers de Activación](fast-forward.md)).
+
+[↑ Contenido](#contenido)
 
 ---
 
@@ -462,6 +505,66 @@ anterior; el servicio debe volver a un estado conocido bueno). El
 mecanismo de rollback (revert de imagen, feature flag, migración de
 base de datos reversible) no está prescrito — es una decisión de
 DevSecOps/Dev Lead documentada en `design.md`.
+
+### Protocolo de Rollback Post-Deploy
+
+El rollback descrito arriba cubre el mecanismo técnico. Falta el caso
+donde el cambio revertido no es un hecho aislado: un cambio ya
+desplegado pasó todos los gates (Verify, Accept) pero causa problemas
+en producción no detectados durante verificación, y el **siguiente**
+cambio — ya en planificación o en ejecución — depende de él.
+
+**Comportamiento del SM**: el rollback se trata como una interrupción
+Abort + Replan (ver [fastForward y Tiers de
+Activación](fast-forward.md) → estrategias de interrupción) aplicada
+al cambio dependiente. La cascada `approved → draft` alcanza los
+artefactos del cambio dependiente que asumían el estado del cambio
+revertido.
+
+```mermaid
+flowchart TD
+    DEPLOY["Cambio desplegado\npasó Verify + Accept"]
+    DEPLOY --> PROD["Falla detectada\nen producción"]
+    PROD --> RB["Rollback ejecutado\n(mecanismo del gate\nde despliegue)"]
+
+    RB --> DEP_CHECK{{"¿El siguiente cambio\ndepende del revertido?"}}
+    DEP_CHECK -->|"No"| ISOLATED["Rollback aislado.\nSin cascada adicional."]
+    DEP_CHECK -->|"Sí"| ABORT["Abort + Replan\npara el cambio dependiente.\nCascada approved → draft."]
+
+    RB --> REENTRY["Cambio revertido\nre-entra al ciclo\nen Fase 6 Verificar\ncon nuevos test cases"]
+    REENTRY --> RETRO["Retrospectiva (Fase 8)\nDEBE capturar el gap\nque los gates no detectaron"]
+```
+
+- **Cambio dependiente**: el SM dispara Abort + Replan tal como
+  documenta [fastForward](fast-forward.md) para interrupciones que
+  invalidan artefactos upstream. El branch del cambio dependiente se
+  preserva; la replanificación arranca desde el artefacto invalidado
+  por la nueva baseline post-rollback.
+- **Cambio revertido**: no vuelve a cero. Re-entra al ciclo en la Fase
+  6 (Verificar), con nuevos test cases que cubran específicamente el
+  problema detectado en producción — el gap de cobertura que dejó
+  pasar el gate original.
+- **Retrospectiva obligatoria**: la Fase 8 del ciclo del cambio
+  revertido DEBE capturar, como acuerdo concreto, qué falló en el
+  gate de Verify o Accept que permitió que el problema llegara a
+  producción. Un rollback sin ese acuerdo no cierra el ciclo.
+
+### Nota — Paridad de Ambientes (Staging ≠ Producción)
+
+Virgil no gestiona infraestructura, por lo tanto no puede prescribir
+CÓMO se mantiene la paridad entre staging y producción. Lo que sí
+recomienda es un gate: la transición de despliegue (Ejecución →
+Operación) debería incluir una verificación de paridad de ambientes
+(configuración, datos representativos, versión de dependencias de
+infra) antes del smoke test post-deploy.
+
+Este gate es **RECOMENDADO, no obligatorio** — a diferencia del gate
+de despliegue de la tabla anterior, que sí es dogma. El principio de
+homogeneidad de ambientes ya está cubierto conceptualmente por el
+[echo system](../../echo-system.md); esta nota agrega la
+recomendación concreta de dónde verificarlo en el pipeline: como paso
+previo al smoke test de la tabla de arriba, orquestado por el echo
+system del proyecto si el proyecto lo activa.
 
 [↑ Contenido](#contenido)
 

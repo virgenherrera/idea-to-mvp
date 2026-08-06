@@ -140,6 +140,86 @@ No solo al inicio. Ejemplos:
 
 ---
 
+## Protocolo de Interrupción (mid-implementation)
+
+`fastForward` MID-CYCLE resuelve cómo el SM prioriza un evento externo
+(bug en producción, CVE, cambio de contrato) que llega mientras un ciclo
+ya está en ejecución. Pero priorizar no es lo mismo que decidir qué pasa
+con el trabajo en curso. Esta sección define el árbol de decisión del SM
+para esa interrupción.
+
+```mermaid
+%% Árbol de decisión del SM ante una interrupción mid-implementation
+flowchart TD
+    BUG["Bug en producción\n(mid-implementation)"] --> Q1{{"¿Afecta el scope\ndel trabajo actual?"}}
+
+    Q1 -->|"No"| HOLD["HOLD\nTrabajo actual se queda\nen su branch.\nSM abre ciclo paralelo\npara el bug."]
+
+    Q1 -->|"Sí"| Q2{{"¿Invalida artefactos\nupstream?\n(contratos, schema,\nseguridad)"}}
+
+    Q2 -->|"No, fix ≤1 tarea\nsin cambio de contratos"| STOWAWAY["STOWAWAY\nFix viaja en el PR actual.\nSM registra como sub-item\ncon tag [HOTFIX].\nTraceabilidad preservada."]
+
+    Q2 -->|"Sí"| ABORT["ABORT + REPLAN\nSM dispara cascada\napproved → draft.\nBranch actual preservado\n(no se borra).\nReplanificación desde\nel artefacto invalidado."]
+```
+
+### Estrategias de interrupción
+
+| Estrategia | Condiciones | Riesgo | Acción del SM |
+|------------|-------------|--------|----------------|
+| **Hold** | Bug independiente del scope actual | Branch actual envejece si el bug tarda | Abrir ciclo paralelo. Registrar `[INTERRUPTION]` en `idea.md`/`plan.md` del ciclo actual |
+| **Stowaway** | Bug en mismo dominio AND fix ≤1 tarea AND no cambia contratos | Contamina scope del PR; `verifyConsistency` debe detectar drift | Registrar sub-item con `[HOTFIX]` en el handoff. El fix pasa por el echo del ciclo actual |
+| **Abort + Replan** | Bug invalida suposiciones (schema, contratos, seguridad) | Trabajo potencialmente perdido | Cascada `approved → draft` en artefactos afectados. Branch preservado para cherry-pick post-replan |
+
+### Gate obligatorio: registro [INTERRUPTION]
+
+El SM DEBE registrar la decisión de interrupción y su razonamiento como
+entrada `[INTERRUPTION]` en el `idea.md` o `plan.md` del ciclo actual,
+con el mismo criterio de auditabilidad cross-session que aplica al score
+`[FASTFORWARD]`. Formato:
+
+`[INTERRUPTION] Estrategia: {hold|stowaway|abort}. Razón: {resumen}.`
+
+Sin este registro, la interrupción no queda trazada y `verifyConsistency`
+no puede reconstruir por qué el ciclo cambió de forma.
+
+### Casos especiales de interrupción
+
+#### CVE en dependencia (supply chain comprometido)
+
+Un CVE (Common Vulnerabilities and Exposures) reportado en una
+dependencia del proyecto mientras un ciclo está en ejecución es un caso
+de supply chain comprometido. La respuesta del SM depende de dos ejes:
+**severidad** y **scope**.
+
+```mermaid
+%% Decisión del SM ante CVE según severidad y scope
+flowchart TD
+    CVE["CVE reportado\nen dependencia"]
+    CVE --> SEV{{"Severidad\n(CVSS / explotación)"}}
+
+    SEV -->|"Crítica\n(CVSS ≥ 9.0 o\nactivamente explotado\no zero-day)"| PRIO["PRIORIDAD MÁXIMA\nIndependiente del scope.\nSM pausa ciclo actual,\nabre ciclo de emergencia.\nRegistra [INTERRUPTION]\ncon severity: critical."]
+
+    SEV -->|"Alta/Media/Baja\n(CVSS < 9.0, no\nactivamente explotado)"| SCOPE{{"¿Afecta al módulo\nen desarrollo?"}}
+
+    SCOPE -->|"No"| HOLD["HOLD\nCiclo paralelo para\nevaluar y parchar.\nCiclo actual continúa."]
+
+    SCOPE -->|"Sí"| ABORT["ABORT + REPLAN\nDependencia vulnerable\nes importada por\ncódigo en desarrollo.\nDiseño puede necesitar\nrevisión."]
+```
+
+| Severidad | Scope | Estrategia |
+|-----------|-------|------------|
+| **Crítica** (CVSS ≥ 9.0 o activamente explotado o zero-day) | Cualquiera | Prioridad máxima. SM pausa el ciclo actual y abre ciclo de emergencia. No aplica la evaluación de scope — un RCE activamente explotado en cualquier dependencia es una emergencia independientemente de si el módulo afectado es el que se está implementando. |
+| Alta/Media/Baja (CVSS < 9.0) | No afecta módulo actual | **Hold**. Ciclo paralelo para evaluar y parchar. |
+| Alta/Media/Baja (CVSS < 9.0) | Sí afecta módulo actual | **Abort + Replan**. El trabajo en curso puede estar construido sobre una superficie insegura. |
+
+La actualización de la dependencia puede además requerir cambios de
+contrato si la API del paquete cambió entre la versión vulnerable y la
+versión parcheada. En ese caso, el SM trata el cambio de contrato como
+`semanticDrift` (ver [detección de semanticDrift](../artifacts/state-machine.md#detección-de-semanticdrift))
+sobre `design.md`, independientemente de la estrategia elegida.
+
+---
+
 ## Tiers de Activación
 
 El SM determina el **tier de ceremonia** al inicio de cada ciclo usando el
