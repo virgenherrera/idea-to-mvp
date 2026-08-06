@@ -28,7 +28,7 @@ type Config struct {
 	Telemetry  TelemetryConfig `yaml:"telemetry"`
 }
 
-var Version = "0.5.0-alpha.1"
+var Version = "0.5.0-dev"
 
 func DefaultConfig(tier string) Config {
 	return Config{
