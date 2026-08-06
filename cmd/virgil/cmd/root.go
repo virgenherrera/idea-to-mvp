@@ -1,12 +1,14 @@
 package cmd
 
 import (
+	"github.com/virgenherrera/virgil/internal/distribution"
 	"github.com/spf13/cobra"
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "virgil",
-	Short: "Virgil — AI-assisted development methodology",
+	Use:     "virgil",
+	Short:   "Virgil — AI-assisted development methodology",
+	Version: distribution.Version,
 	Long: `Virgil distributes and manages the Virgil methodology for
 AI-assisted software development. It provides methodology docs,
 orchestration protocols, and feedback collection.
