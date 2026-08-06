@@ -552,7 +552,8 @@ Puntos de integración:
 ### Recomendaciones de CI/CD del propio Virgil
 
 - GoReleaser en tag push: matrices macOS (arm64, amd64), Linux (amd64, arm64), Windows
-  (amd64); CGo cross-compile con zig; artefactos firmados y checksums.
+  (amd64); cross-compile pure Go (`CGO_ENABLED=0`, sin zig, sin musl, sin toolchain C);
+  artefactos firmados y checksums.
 - Homebrew tap actualizado por GoReleaser (canal primario); `go install` funciona porque
   los assets van embebidos (ADR-003).
 - Suite de performance en CI con un corpus fijo de 50K LOC que valida los targets de

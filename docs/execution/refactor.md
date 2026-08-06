@@ -53,12 +53,12 @@ del código:
 flowchart TD
     CODE["Código verde\n(tests pasan)"]
 
-    CODE --> MUT["Mutation testing\nStryker / pitest / mutate4go"]
-    CODE --> CRAP["CRAP score\ncrap4j y equivalentes"]
-    CODE --> CYCLO["Complejidad ciclomática\ngocyclo, eslint complexity"]
-    CODE --> DEPS["Estructura de dependencias\ngo vet, eslint-plugin-import,\ndependency-cruiser"]
-    CODE --> SIZE["Tamaño de módulo\ncloc, max-lines"]
-    CODE --> SEC["Seguridad mecanizable\ngovulncheck, npm audit,\ngitleaks, semgrep"]
+    CODE --> MUT["Mutation testing\nStryker/pitest (establecido)\nmutate4go (emergente)"]
+    CODE --> CRAP["CRAP score\ncrap4j (establecido,\nsin mantenimiento activo)"]
+    CODE --> CYCLO["Complejidad ciclomática\ngocyclo, eslint complexity\n(establecido)"]
+    CODE --> DEPS["Estructura de dependencias\ngo vet, eslint-plugin-import,\ndependency-cruiser (establecido)"]
+    CODE --> SIZE["Tamaño de módulo\ncloc, max-lines (establecido)"]
+    CODE --> SEC["Seguridad mecanizable\ngovulncheck, npm audit,\ngitleaks, semgrep (establecido)"]
 
     MUT --> GATE
     CRAP --> GATE
@@ -81,14 +81,14 @@ flowchart TD
 
 ## Checklist de verificación mecánica
 
-| Dimensión | Qué mide | Herramienta | Criterio |
-|-----------|----------|--------------|----------|
-| **Complejidad ciclomática** | Ramas de decisión por función/método (proxy mecánico de SRP y KISS). | gocyclo, eslint `complexity`, radon | Threshold independiente por tier (ver [thresholds](#thresholds-por-tier)) |
-| **Tamaño de módulo** | Líneas de código por archivo/módulo (proxy mecánico de SRP a nivel módulo). | cloc, `wc -l`, eslint `max-lines` | Threshold independiente por tier |
-| **Estructura de dependencias** | Dirección de dependencias, ciclos, inversión de dependencias (Arquitectura hexagonal, DI). | go vet, eslint-plugin-import, dependency-cruiser, ArchUnit | Cero violaciones, en todos los tiers |
-| **Duplicación (DRY)** | Bloques de código repetidos. | jscpd, dupl (Go), PMD CPD | Referencial — no bloquea el gate por sí sola |
-| **Fortaleza de tests** | Mutation score + CRAP (penaliza complejidad sin cobertura; recompensa indirectamente diseño testeable). | Stryker, pitest, mutate4go + crap4j | Ver [thresholds](#thresholds-por-tier) |
-| **Seguridad mecanizable** | CVEs en dependencias, secrets hardcodeados, patrones inseguros detectables por SAST. | govulncheck, npm audit, gitleaks, semgrep | Vulnerabilidades críticas = 0 |
+| Dimensión | Qué mide | Herramienta | Estado | Criterio |
+|-----------|----------|--------------|--------|----------|
+| **Complejidad ciclomática** | Ramas de decisión por función/método (proxy mecánico de SRP y KISS). | gocyclo, eslint `complexity`, radon | Establecido | Threshold independiente por tier (ver [thresholds](#thresholds-por-tier)) |
+| **Tamaño de módulo** | Líneas de código por archivo/módulo (proxy mecánico de SRP a nivel módulo). | cloc, `wc -l`, eslint `max-lines` | Establecido | Threshold independiente por tier |
+| **Estructura de dependencias** | Dirección de dependencias, ciclos, inversión de dependencias (Arquitectura hexagonal, DI). | go vet, eslint-plugin-import, dependency-cruiser, ArchUnit | Establecido | Cero violaciones, en todos los tiers |
+| **Duplicación (DRY)** | Bloques de código repetidos. | jscpd, dupl (Go), PMD CPD | Establecido | Referencial — no bloquea el gate por sí sola |
+| **Fortaleza de tests** | Mutation score + CRAP (penaliza complejidad sin cobertura; recompensa indirectamente diseño testeable). | Stryker, pitest (establecidos); mutate4go, crap4go (emergentes, ver [tabla por lenguaje](#virgil-metrics)) | Mixto | Ver [thresholds](#thresholds-por-tier) |
+| **Seguridad mecanizable** | CVEs en dependencias, secrets hardcodeados, patrones inseguros detectables por SAST. | govulncheck, npm audit, gitleaks, semgrep | Establecido | Vulnerabilidades críticas = 0 |
 
 ### Revisión residual
 
@@ -147,17 +147,29 @@ Durante o después del refactor, `virgil metrics` ejecuta el chequeo de:
   responsabilidad que dejó de ser única.
 
 Virgil **orquesta** herramientas externas especializadas por lenguaje —
-no las construye ni las reimplementa:
+no las construye ni las reimplementa. No todas están al mismo nivel de
+madurez: se marcan explícitamente cuáles son **establecidas** (mantenidas,
+con adopción verificable) y cuáles son **emergentes/no verificadas**
+(existencia o mantenimiento activo sin confirmar):
 
 | Lenguaje | Mutation testing | Complejidad ciclomática | CRAP | Dependencias |
 |----------|-------------------|--------------------------|------|--------------|
-| Go | mutate4go | gocyclo | crap4go | go vet, depguard |
-| JavaScript / TypeScript | Stryker | eslint (`complexity`) | — | eslint-plugin-import, dependency-cruiser |
-| Java | pitest | — | — | ArchUnit |
+| Go | mutate4go — emergente, custom adapter requerido | gocyclo — establecido | crap4go — emergente, custom adapter requerido | go vet, depguard — establecido |
+| JavaScript / TypeScript | Stryker — establecido | eslint (`complexity`) — establecido | pendiente de evaluación — sin herramienta madura equivalente | eslint-plugin-import, dependency-cruiser — establecido |
+| Java | pitest — establecido | — | crap4j — establecido pero sin mantenimiento activo reciente, evaluar antes de adoptar | ArchUnit — establecido |
 
 El tamaño de módulo es agnóstico de lenguaje (cloc, `wc -l`, o la regla
 `max-lines` del linter del stack) y no requiere una columna por
 lenguaje en esta tabla.
+
+> **Degradación elegante**: Virgil orquesta herramientas externas. Donde
+> no existe una herramienta madura para una celda de la tabla anterior,
+> Virgil reporta "no disponible" para esa dimensión y el tier degrada a
+> las métricas disponibles (cobertura + complejidad ciclomática) en
+> lugar de bloquear el gate por una herramienta inexistente. La
+> degradación elegante es una feature del diseño, no una limitación —
+> ver el criterio de aceptación de degradación elegante en el contrato
+> de métricas (AC-10.6).
 
 ### CRAP score
 

@@ -75,10 +75,32 @@
 - **Estimación**: M
 - **Archivos afectados**: `internal/binding/repository.go`, `internal/binding/queries.go`
 
+#### T-000: Spike — validar GoTreeSitter pure Go con corpus tier-1
+
+- **Descripción**: Spike bloqueante previo a la integración productiva de GoTreeSitter (T-006). Parsear un corpus de referencia de 50K LOC en los 6 lenguajes tier-1 (Go, TypeScript/JavaScript, Python, Rust, Java, C#), medir tiempos de parseo contra los targets de RNF-01 (< 30s scan completo, < 512 MB memoria), y verificar en la práctica la afirmación de `odvcencio/gotreesitter` de "205 grammars embebidas, `CGO_ENABLED=0`". El spike debe cerrar con una decisión GO/NOT-GO documentada, incluyendo el plan de fallback (CGo detrás de build tag) si GoTreeSitter no sostiene los targets o la promesa pure Go.
+- **Dependencias**: T-001
+- **Criterios de aceptación**:
+  ```
+  GIVEN el corpus de referencia de 50K LOC en los 6 lenguajes tier-1
+  WHEN se ejecuta el spike de parsing con GoTreeSitter
+  THEN se documentan tiempo de parseo y memoria pico por lenguaje,
+       se confirma o refuta la afirmación "205 grammars, CGO_ENABLED=0",
+       y se registra una decisión GO/NOT-GO con plan de fallback
+       (CGo detrás de build tag) si no se sostiene el target de RNF-01
+  ```
+- **Estimación**: S
+- **Archivos afectados**: `internal/parser/spike/` (código descartable), documento de decisión GO/NOT-GO
+- **Nota**: Gate GO/NOT-GO bloqueante para los lanes A y B — T-006 no arranca
+  sin esta decisión. Si GoTreeSitter no sostiene los targets, la historia de
+  distribución cambia (ADR-002 debe revisarse: CGo implica cross-compile con
+  toolchain C, afecta RNF-02).
+
+---
+
 #### T-006: Integrar GoTreeSitter para parsing AST (pure Go)
 
 - **Descripción**: Integrar GoTreeSitter (`odvcencio/gotreesitter` v0.49+) — reimplementación pure Go de Tree-Sitter con 205 grammars embebidas. Sin CGo. Extraer símbolos (funciones, clases, módulos, interfaces) de un archivo fuente para los lenguajes tier-1 (Go, TypeScript, JavaScript, Python, Rust, Java).
-- **Dependencias**: T-001
+- **Dependencias**: T-000 (gate GO/NOT-GO)
 - **Criterios de aceptación**:
   ```
   GIVEN un archivo TypeScript con una clase PdfService y método generate()
@@ -229,23 +251,24 @@
   GIVEN un binding DB con datos
   WHEN se ejecuta `virgil trace AC-3`
   THEN muestra tabla formateada con: code artifacts, test artifacts,
-       confidence (declared|inferred|verified), status (active|stale|broken)
+       confidence (declared|inferred|verified), status (bound|stale|unbound)
   ```
 - **Estimación**: S
 - **Archivos afectados**: `internal/cli/trace.go`
 
 #### T-016: Implementar `virgil verify <AC-ID>`
 
-- **Descripción**: Scan focalizado de un AC: leer spec, escanear implementación actual via Tree-Sitter, comparar con bindings existentes, retornar implemented|stale|broken, actualizar confidence a verified.
+- **Descripción**: Verificación estructural de un AC (no semántica — Tree-Sitter no puede juzgar si el código cumple el given/when/then): existencia del símbolo vinculado, staleness contra el último scan, test linkage, y mutation strength si hay herramientas de mutación disponibles. Actualiza confidence a verified (verificación estructural).
 - **Dependencias**: T-005, T-006
 - **Criterios de aceptación**:
   ```
   GIVEN un AC con binding declared
   WHEN se ejecuta `virgil verify AC-3`
   THEN re-escanea el código vinculado,
-       verifica que el símbolo existe y es coherente,
+       verifica existencia de símbolo, staleness y test linkage
+       (más mutation strength si hay herramientas disponibles),
        actualiza confidence a verified,
-       retorna status: implemented | stale | broken
+       retorna status: bound | stale | unbound
   ```
 - **Estimación**: M
 - **Archivos afectados**: `internal/cli/verify.go`, `internal/binding/verifier.go`
@@ -259,7 +282,7 @@
   GIVEN un binding DB con datos
   WHEN se ejecuta `virgil impact src/pdf.service.ts`
   THEN lista todos los ACs vinculados a ese archivo
-  AND `virgil coverage` muestra: total ACs, verified, stale, broken, %
+  AND `virgil coverage` muestra: total ACs, verified, stale, unbound, %
   ```
 - **Estimación**: S
 - **Archivos afectados**: `internal/cli/impact.go`, `internal/cli/coverage.go`
@@ -445,7 +468,8 @@ flowchart TD
     T001["T-001\nScaffold Go"] --> T002["T-002\ngo:embed docs"]
     T001 --> T003["T-003\nCobra CLI"]
     T001 --> T004["T-004\nSQLite schema"]
-    T001 --> T006["T-006\nTree-Sitter"]
+    T001 --> T000["T-000\nSpike GoTreeSitter\n(GO/NOT-GO)"]
+    T000 --> T006["T-006\nTree-Sitter"]
     T001 --> T018["T-018\nAdapter local"]
     T001 --> T022["T-022\nGoReleaser"]
 
@@ -495,23 +519,24 @@ flowchart TD
     style T007 fill:#6a1b9a,color:#fff
     style T027 fill:#d32f2f,color:#fff
     style T028 fill:#d32f2f,color:#fff
+    style T000 fill:#d32f2f,color:#fff
 ```
 
 ### Ruta crítica
 
 ```
 T-001 → T-004 → T-005 → T-007 → T-020 → T-021
-              ↘ T-006 ↗
+              ↘ T-000 → T-006 ↗
 ```
 
-La ruta crítica pasa por: scaffold → SQLite schema → binding CRUD → Tree-Sitter → scan completo → derivación → scoring. El takeover flow es el camino más largo porque depende de toda la infraestructura del binding layer.
+La ruta crítica pasa por: scaffold → SQLite schema → binding CRUD → Tree-Sitter → scan completo → derivación → scoring. El takeover flow es el camino más largo porque depende de toda la infraestructura del binding layer. T-000 (spike GO/NOT-GO de GoTreeSitter) es un gate bloqueante para el lane B antes de que T-006 pueda arrancar: si el spike resulta NOT-GO, ADR-002 se revisa y la ruta crítica se recalcula con el fallback CGo.
 
 ### Lanes paralelos
 
 | Lane | Tareas | Tema |
 |------|--------|------|
 | A (crítico) | T-001 → T-004 → T-005 → T-007 → T-020 → T-021 | Binding engine + takeover |
-| B | T-001 → T-006 → (merge con lane A en T-007) | Tree-Sitter parser |
+| B | T-001 → T-000 (gate GO/NOT-GO) → T-006 → (merge con lane A en T-007) | Tree-Sitter parser |
 | C | T-001 → T-002 → T-009 → T-010 → T-012 | Compilador + init |
 | D | T-005 → T-013 → T-014, T-023 | MCP server |
 | E | T-005 → T-015, T-016, T-017, T-024, T-025, T-026 | CLI queries + metrics |
@@ -525,8 +550,9 @@ La ruta crítica pasa por: scaffold → SQLite schema → binding CRUD → Tree-
 
 - Fecha de creación: 2026-08-05
 - Estado: borrador
-- Total de tareas: 28
-- Estimación agregada: 9S + 12M + 5L = ~140-190 horas de implementación
+- Total de tareas: 29
+- Estimación agregada: 10S + 12M + 5L = ~145-195 horas de implementación
 - Fases: 8 (0-7)
 - Lanes paralelos: 8 (A-H)
-- Ruta crítica: 6 tareas (T-001 → T-004 → T-005 → T-007 → T-020 → T-021)
+- Ruta crítica: 6 tareas (T-001 → T-004 → T-005 → T-007 → T-020 → T-021),
+  con T-000 (spike GO/NOT-GO) como gate bloqueante del lane B antes de T-006

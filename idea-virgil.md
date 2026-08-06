@@ -36,14 +36,17 @@ Virgil es la respuesta operativa a esa declaración:
    lenguaje y persiste resultados junto al binding, con thresholds
    configurables por tier:
    - **Trazabilidad**: binding coverage, staleness, gaps (binding layer)
-   - **Fuerza de tests**: mutation score, CRAP score (herramientas externas
-     por lenguaje: mutate4go, Stryker, pitest, mutmut)
+   - **Fuerza de tests**: mutation score (herramientas externas por
+     lenguaje: gremlins, Stryker, pitest, mutmut, cargo-mutants) y CRAP
+     score (fórmula que Virgil calcula desde complejidad + cobertura —
+     no requiere una herramienta dedicada por lenguaje)
    - **Estructura**: complejidad ciclomática, dependency structure, module
      sizes (análisis estático)
    - **Salud documental**: completitud de docs funcionales, ACs sin binding
-   Virgil no construye las herramientas de mutación — las orquesta. El
-   ecosistema de Uncle Bob (mutate4go, crap4go) y sus equivalentes por
-   lenguaje son los motores; Virgil es el tablero de control.
+   Virgil no construye las herramientas de mutación ni de análisis
+   estático — las orquesta. El ecosistema por lenguaje son los motores;
+   Virgil es el tablero de control. Ver auditoría de madurez de
+   herramientas en "Motor de Métricas".
 4. **El agente opera bajo constraint, no bajo confianza** — hooks, skills y
    binding declarations garantizan que la metodología se cumple.
 5. **Un handoff, ejecución paralela con semántica de coordinación** — a
@@ -512,7 +515,7 @@ flowchart TD
         direction TB
         D1["MIM o agente pide\nvirgil verify AC-3"]
         D2["Scan focalizado\nsolo AC-3 y sus bindings"]
-        D3["Resultado:\nimplemented | stale | broken"]
+        D3["Resultado:\nbound | stale | unbound"]
         D1 --> D2 --> D3
     end
 
@@ -592,19 +595,71 @@ por alta complejidad + baja cobertura efectiva.
 
 ### Virgil como orquestador, no como motor
 
-Virgil NO construye herramientas de mutación ni análisis estático. Eso es
-el ecosistema — cada lenguaje tiene las suyas:
+Virgil NO construye herramientas de mutación ni de análisis estático. Eso
+es el ecosistema — cada lenguaje tiene las suyas, con grados de madurez
+distintos. Leyenda de madurez usada en esta sección: **✅ Established**
+(ampliamente usada, mantenimiento activo), **⚠️ Emerging** (funcional,
+comunidad o mantenimiento limitado), **🔧 Custom adapter needed** (sin
+evaluar todavía, requiere adapter propio).
 
-| Métrica | Go | JS/TS | Python | Java | Rust |
-|---------|-----|-------|--------|------|------|
-| Mutation | mutate4go | Stryker | mutmut | pitest | cargo-mutants |
-| CRAP | crap4go | — (custom) | radon+coverage | — (custom) | — (custom) |
-| Complexity | gocyclo | eslint | radon | PMD | clippy |
-| DRY | dry4go | jscpd | pylint | CPD | — |
+#### CRAP no es una herramienta, es una fórmula
+
+CRAP score (`comp² × (1-cov/100)³ + comp`) se calcula a partir de dos
+insumos que sí tienen herramientas establecidas: complejidad ciclomática y
+cobertura de tests. Virgil no necesita una "CRAP tool" dedicada por
+lenguaje (herramientas como `crap4go` no existen como proyectos
+establecidos) — necesita los outputs de `gocyclo` + `go test -cover` (y
+sus pares en cada lenguaje) para hacer el cálculo internamente. Esto
+reduce el número real de integraciones externas de "una CRAP tool por
+lenguaje" a dos categorías ya establecidas: complejidad y cobertura.
+
+#### Mutation testing (por lenguaje)
+
+| Lenguaje | Herramienta | Madurez | Nota |
+|----------|-------------|---------|------|
+| Go | `gremlins` | ⚠️ Emerging | Alternativa activa. `go-mutesting` existe pero está **archivado** — no usarlo como default. |
+| JS/TS | `Stryker` | ✅ Established | Referencia del ecosistema JS. |
+| Python | `mutmut` | ✅ Established | Mantenimiento activo. |
+| Java | `pitest` | ✅ Established | Estándar de facto en JVM. |
+| Rust | `cargo-mutants` | ✅ Established | Integrado al toolchain de cargo. |
+
+#### Complejidad ciclomática (insumo para CRAP)
+
+| Lenguaje | Herramienta | Madurez | Nota |
+|----------|-------------|---------|------|
+| Go | `gocyclo` | ✅ Established | — |
+| JS/TS | `eslint` (regla `complexity`) | ✅ Established | — |
+| Python | `radon` | ✅ Established | — |
+| Java | `PMD` | ✅ Established | — |
+| Rust | `clippy` | ⚠️ Emerging | Lints de complejidad parciales; no reporta cyclomatic complexity completo. Requiere adapter propio para métrica exacta. |
+
+#### Cobertura de tests (segundo insumo para CRAP)
+
+| Lenguaje | Herramienta | Madurez | Nota |
+|----------|-------------|---------|------|
+| Go | `go test -cover` | ✅ Established | — |
+| JS/TS | `istanbul` / `c8` | ✅ Established | — |
+| Python | `coverage.py` | ✅ Established | — |
+| Java | `JaCoCo` | ✅ Established | — |
+| Rust | `cargo-tarpaulin` | ⚠️ Emerging | Limitaciones conocidas en algunas plataformas. |
+
+#### Duplicación (DRY)
+
+| Lenguaje | Herramienta | Madurez | Nota |
+|----------|-------------|---------|------|
+| Go | `jscpd` | ✅ Established | Detector de copy-paste multi-lenguaje vía tokenizer; no requiere una tool dedicada por lenguaje. |
+| JS/TS | `jscpd` | ✅ Established | — |
+| Python | `pylint` (`duplicate-code`) | ✅ Established | — |
+| Java | `CPD` (parte de PMD) | ✅ Established | — |
+| Rust | `jscpd` | ✅ Established | — |
 
 Virgil orquesta: ejecuta la herramienta correcta por lenguaje detectado,
-captura resultados estructurados, y los persiste junto al binding layer con
-thresholds configurables por tier.
+captura resultados estructurados, calcula CRAP internamente desde
+complejidad + cobertura, y persiste todo junto al binding layer con
+thresholds configurables por tier. Las herramientas marcadas ⚠️ o 🔧 se
+declaran así explícitamente en `virgil init` — el proyecto puede optar
+por un threshold más laxo o desactivar esa métrica si la herramienta de
+su lenguaje no está lo suficientemente madura.
 
 ### Flujo de verificación completa
 

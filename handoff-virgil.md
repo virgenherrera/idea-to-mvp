@@ -78,7 +78,8 @@ flowchart TD
     T001["T-001\nScaffold Go"] --> T002["T-002\ngo:embed"]
     T001 --> T003["T-003\nCobra CLI"]
     T001 --> T004["T-004\nSQLite schema"]
-    T001 --> T006["T-006\nTree-Sitter"]
+    T001 --> T000["T-000\nSpike GoTreeSitter\n(GO/NOT-GO)"]
+    T000 --> T006["T-006\nTree-Sitter"]
     T001 --> T018["T-018\nAdapter local"]
     T001 --> T022["T-022\nGoReleaser"]
 
@@ -117,25 +118,28 @@ flowchart TD
     style T012 fill:#2e7d32,color:#fff
     style T013 fill:#e65100,color:#fff
     style T007 fill:#6a1b9a,color:#fff
+    style T000 fill:#d32f2f,color:#fff
 ```
 
 ### Ruta crítica
 
 ```
 T-001 → T-004 → T-005 → T-007 → T-020 → T-021
-              ↘ T-006 ↗
+              ↘ T-000 → T-006 ↗
 ```
 
-6 tareas en ruta crítica. El cuello es T-006 (GoTreeSitter) y T-007 (scan
-completo) — la integración de las queries de extracción por lenguaje es
-el riesgo técnico más alto (ya no hay riesgo CGo: stack 100% pure Go).
+6 tareas en ruta crítica. El cuello es T-000 → T-006 (GoTreeSitter) y T-007
+(scan completo) — T-000 es un spike bloqueante que valida con un corpus
+tier-1 real si GoTreeSitter sostiene los targets de RNF-01 y la promesa
+"205 grammars, CGO_ENABLED=0" antes de integrarlo productivamente; NOT-GO
+obliga a revisar ADR-002 y recalcular la ruta con el fallback CGo.
 
 ### Lanes paralelos
 
 | Lane | Tareas | Tema |
 |------|--------|------|
 | A (crítico) | T-001 → T-004 → T-005 → T-007 → T-020 → T-021 | Binding + takeover |
-| B | T-001 → T-006 → merge con A en T-007 | Tree-Sitter |
+| B | T-001 → T-000 (gate GO/NOT-GO) → T-006 → merge con A en T-007 | Tree-Sitter |
 | C | T-001 → T-002 → T-009 → T-010 → T-012 | Compilador + init |
 | D | T-005 → T-013 → T-014, T-023 | MCP server |
 | E | T-005 → T-015, T-016, T-017, T-024, T-025, T-026 | CLI queries + metrics |
@@ -152,7 +156,8 @@ el riesgo técnico más alto (ya no hay riesgo CGo: stack 100% pure Go).
 | T-003 | Cobra CLI commands | S | T-001 | — |
 | T-004 | SQLite schema binding layer | M | T-001 | A |
 | T-005 | Repository CRUD bindings | M | T-004 | A |
-| T-006 | GoTreeSitter pure Go + grammars tier-1 | L | T-001 | B |
+| T-000 | Spike GoTreeSitter pure Go (gate GO/NOT-GO) | S | T-001 | B |
+| T-006 | GoTreeSitter pure Go + grammars tier-1 | L | T-000 | B |
 | T-007 | virgil scan --full | L | T-005, T-006 | A+B |
 | T-008 | virgil refresh --diff | M | T-005, T-006 | — |
 | T-009 | Compilador modular | L | T-002 | C |
@@ -176,13 +181,16 @@ el riesgo técnico más alto (ya no hay riesgo CGo: stack 100% pure Go).
 | T-027 | virgil handoff lint (gate determinístico) | M | T-005 | H |
 | T-028 | execution state + claiming de tasks | M | T-004, T-027 | H |
 
-**Total**: 28 tareas — 9S, 12M, 5L (estimación: ~140-190 horas).
+**Total**: 29 tareas — 10S, 12M, 5L (estimación: ~145-195 horas).
 
 ### Blockers conocidos
 
 1. **GoTreeSitter queries de extracción**: Las queries de símbolos varían por
    lenguaje. Los lenguajes tier-1 (Go, TS/JS, Python, Rust, Java, C#)
-   necesitan testing exhaustivo con fixtures reales.
+   necesitan testing exhaustivo con fixtures reales. Mitigado por T-000
+   (spike GO/NOT-GO con corpus de 50K LOC, bloqueante antes de T-006):
+   si GoTreeSitter no sostiene los targets de RNF-01, se activa el fallback
+   CGo detrás de build tag y ADR-002 se revisa.
 2. **MCP SDK estabilidad**: El SDK oficial de MCP para Go puede estar en early
    stage. Evaluar madurez antes de T-013; fallback: implementar JSON-RPC 2.0
    sobre stdio desde cero (protocolo simple).
@@ -198,15 +206,21 @@ el riesgo técnico más alto (ya no hay riesgo CGo: stack 100% pure Go).
 
 ### Testing por módulo
 
+Vocabulario según la metodología (`red.md`): tests unitarios con mocks del
+propio producto están **prohibidos**. Todo test ejercita el paquete por su
+API pública contra dependencias reales — la granularidad se expresa como
+contract tests (límite del paquete, dependencia real) e integration tests
+(flujo entre paquetes), nunca como "unit" con mocking interno.
+
 | Módulo | Tipo de test | Herramienta | Cobertura esperada |
 |--------|-------------|-------------|-------------------|
-| `binding/` | Unit (in-memory repo) + Integration (SQLite real) | `go test` | ≥ 90% |
-| `scanner/` | Unit (fixtures por lenguaje) | `go test` + archivos fixture | ≥ 80% |
-| `compiler/` | Unit (output vs snapshot) + Integration | `go test` | ≥ 85% |
+| `binding/` | Contract tests (Repository interface, SQLite real) + Integration (SQLite real) | `go test` | ≥ 90% |
+| `scanner/` | Contract tests (Parser interface, fixtures reales por lenguaje) | `go test` + archivos fixture | ≥ 80% |
+| `compiler/` | Contract tests (Compiler interface, output vs snapshot con docs embebidos reales) + Integration | `go test` | ≥ 85% |
 | `mcpserver/` | Integration (stdio pipe) | `go test` + MCP test client | ≥ 80% |
-| `adapter/` | Unit (interface contract) + Integration (filesystem) | `go test` | ≥ 85% |
-| `metrics/` | Unit (mock exec) + Integration (herramienta real) | `go test` | ≥ 80% |
-| `handoff/` | Unit (linter rules) + Integration (handoff fixtures) | `go test` | ≥ 85% |
+| `adapter/` | Contract tests (DocAdapter interface) + Integration (filesystem) | `go test` | ≥ 85% |
+| `metrics/` | Contract tests (Orchestrator interface, exec real) + Integration (herramienta real) | `go test` | ≥ 80% |
+| `handoff/` | Contract tests (Linter interface, fixtures reales de handoff.md) + Integration (handoff fixtures) | `go test` | ≥ 85% |
 | `cli/` | Integration (exec.Command del binario) | `go test` | ≥ 70% |
 | `gitio/` | Integration (repo fixture con commits) | `go test` + `git init` en tempdir | ≥ 75% |
 
@@ -239,8 +253,10 @@ El proyecto se considera completo cuando:
    disparado automáticamente por los 4 git hooks
 4. **MCP server** responde `virgil_trace`, `virgil_impact`, `virgil_coverage`,
    `virgil_stale` y `virgil_declare` en < 500ms via stdio
-5. **`virgil verify`** re-escanea código via Tree-Sitter y retorna
-   implemented|stale|broken con confidence: verified
+5. **`virgil verify`** hace verificación estructural (existencia de símbolo,
+   staleness, test linkage y mutation strength si hay herramientas
+   disponibles — no juicio semántico sobre el given/when/then del AC) y
+   retorna bound|stale|unbound con confidence: verified
 6. **Skills** reemplazan el AGENTS.md monolítico: progressive disclosure,
    1 skill por fase, ≤ 150 líneas cada uno
 7. **Binarios** para macOS (arm64, amd64), Linux (amd64, arm64), Windows (amd64)
@@ -298,7 +314,7 @@ El proyecto se considera completo cuando:
 | Gestión de branches/PRs | Responsabilidad de git/gh, no de Virgil |
 | Adapter de Jira/Linear | Could Have v2.2+ — solo local y engram en v2.0 |
 | Cross-repo binding | Could Have v2.2+ — scope actual es single repo |
-| Integración CI bloqueante | Could Have v2.2+ — v2.0 es advisory |
+| Integración CI/CD externa (GitHub Actions marketplace, GitLab CI templates, etc.) | Could Have v2.2+ — el wiring a un proveedor de CI específico queda fuera de v2.0. **No confundir con los exit codes**: `virgil coverage --min <pct>` (AC-10.4) y `virgil handoff lint --strict` (AC-12.3) SON Must Have en v2.0 y fallan el build por sí solos — cualquier pipeline de CI puede invocarlos directamente sin integración adicional. Lo que es Could Have v2.2+ es el empaquetado como action/plugin oficial de un proveedor |
 
 ---
 

@@ -112,7 +112,28 @@ File está prohibido, Module se deriva del boundary App.
   circunstancia en este framework. Si un test necesita mockear el propio
   archivo bajo prueba para pasar, esa es la señal de que el test no
   pertenece a este modelo. Ver la excepción para librerías sin
-  infraestructura runtime en [boundaryModel](#boundarymodel).
+  infraestructura runtime en [boundaryModel](#boundarymodel) y la
+  excepción específica para bibliotecas y CLIs a continuación.
+
+#### Excepción para bibliotecas y CLIs
+
+Bibliotecas y CLIs que SON el producto (no proyectos que consumen
+Virgil como dependencia) pueden testear lógica de dominio en el
+boundary de la API pública del paquete. Un repositorio testeado contra
+una implementación real (incluida una en memoria, si implementa
+fielmente el contrato de la interfaz) es un appTest, no un unit test —
+el criterio es si el test ejercita comportamiento real o lo mockea, no
+si la implementación es "in-memory" o "en disco". Una implementación en
+memoria del repositorio que cumple el contrato de la interfaz es una
+implementación real, no un mock.
+
+La prohibición se mantiene sin excepción para: testear funciones o
+métodos privados, testear con dependencias externas mockeadas (HTTP,
+bases de datos externas), y testear detalles de implementación en lugar
+de comportamiento observable.
+
+Esta excepción aplica cuando el paquete bajo prueba no tiene interfaz
+de usuario y el boundary App ES la API pública del paquete.
 
 ### Sin desarrollo explícito (derivado por filtrado)
 

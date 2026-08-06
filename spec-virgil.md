@@ -196,11 +196,19 @@ THEN analiza el diff contra docs funcionales,
 ```
 GIVEN un AC con bindings existentes
 WHEN el MIM o agente ejecuta `virgil verify AC-N`
-THEN Virgil hace scan focalizado:
-     - Lee spec del AC
-     - Escanea implementación actual via Tree-Sitter
-     - Retorna: implemented | stale | broken
-     - Actualiza confidence a: verified
+THEN Virgil hace verificación estructural (Tree-Sitter es sintáctico,
+     NO puede juzgar si el código cumple el given/when/then del AC —
+     esa lectura semántica queda para el MIM o el agente):
+     - Existencia de símbolo: los símbolos vinculados siguen presentes
+       en el codebase
+     - Staleness: los archivos/símbolos vinculados cambiaron desde el
+       último scan
+     - Test linkage: existe un test vinculado a este AC
+     - Mutation strength (si hay herramientas de mutación disponibles):
+       el test vinculado efectivamente guarda el AC
+     - Retorna: bound | stale | unbound
+     - Actualiza confidence a: verified (verificación estructural,
+       no semántica)
 ```
 
 **AC-04.5** — Detección de desincronización
@@ -435,7 +443,7 @@ orquestadas).
 ```
 GIVEN un proyecto con binding layer poblado
 WHEN se ejecuta `virgil coverage`
-THEN reporta: total ACs, vinculados, verificados, stale, broken,
+THEN reporta: total ACs, vinculados, verificados, stale, unbound,
      y porcentaje de cobertura con umbral configurable
 ```
 
@@ -634,6 +642,16 @@ AND las lecturas son no-bloqueantes
 - Mensajes de error accionables (qué falló + cómo resolverlo)
 - Progreso visible durante scan (`virgil scan --full` muestra porcentaje)
 
+### RNF-05 — Precisión de inferencia
+
+- La inferencia de bindings de `virgil refresh --diff` debe alcanzar
+  ≥ 90% de precisión (≤ 10% de tasa de false-stale), medida contra los
+  resultados de `virgil verify` sobre el corpus de referencia
+- **False-stale**: `refresh` marca un binding como STALE, pero `verify`
+  confirma que el símbolo sigue existiendo y no cambió
+- Esta métrica se mide en la misma suite de performance de RNF-01
+  (corpus fijo, CI) y se reporta junto a los targets de tiempo/memoria
+
 ---
 
 ## Contratos de interfaz
@@ -645,11 +663,12 @@ AND las lecturas son no-bloqueantes
 | `virgil init` | directorio con .git | AGENTS.md + .virgil/ | Inicializa proyecto |
 | `virgil scan --full` | codebase | .virgil/bindings.db populated | Crawl exhaustivo |
 | `virgil refresh --diff` | git diff | bindings actualizados | Refresh incremental |
-| `virgil verify <AC-ID>` | AC identifier | implemented\|stale\|broken | Verifica un AC |
+| `virgil verify <AC-ID>` | AC identifier | bound\|stale\|unbound | Verifica un AC (estructural: símbolo, staleness, test linkage, mutation strength) |
 | `virgil trace <AC-ID>` | AC identifier | bindings + archivos + tests | Muestra trazabilidad |
 | `virgil impact <file>` | file path | ACs afectados | Análisis de impacto |
 | `virgil coverage` | — | % ACs verified + reporte | Cobertura de bindings |
-| `virgil status` | — | resumen del binding layer | Estado general |
+| `virgil status` | — | resumen del binding layer + execution state | Estado general |
+| `virgil claim <task-id>` | task ID + `--lane` | claimed \| rejected (ya claimed / deps no done) | Reclama una task de un handoff en ejecución (RF-13) |
 | `virgil health` | — | reporte 4 categorías | Salud del proyecto |
 | `virgil metrics` | — | resultados métricas externas | Mutation/CRAP/complexity |
 | `virgil handoff lint` | handoff.md | errores + guía | Validación del contrato |
@@ -660,7 +679,7 @@ AND las lecturas son no-bloqueantes
 |------|-------|--------|
 | `virgil_trace` | `{requirement_id: string}` | `{bindings: Binding[], code: CodeArtifact[], tests: TestArtifact[]}` |
 | `virgil_impact` | `{file_path: string}` | `{requirements: Requirement[], bindings: Binding[]}` |
-| `virgil_coverage` | `{}` | `{total: int, verified: int, stale: int, broken: int, pct: float}` |
+| `virgil_coverage` | `{}` | `{total: int, verified: int, stale: int, unbound: int, pct: float}` |
 | `virgil_stale` | `{}` | `{stale_bindings: Binding[]}` |
 | `virgil_declare` | `{requirement_id: string, artifact: {path, symbol}}` | `{binding_id: string}` |
 

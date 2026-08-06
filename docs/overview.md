@@ -26,6 +26,7 @@ tags: [actores, pipeline, modos, roles, artefactos, diagrama]
 ## Contenido
 
 - [Dogma Rector](#dogma-rector)
+- [Adopción Progresiva](#adopción-progresiva)
 - [Actores y Roles](#actores-y-roles)
 - [Modos de Funcionamiento](#modos-de-funcionamiento)
 - [Pipeline Completo](#pipeline-completo)
@@ -79,6 +80,30 @@ decisión de diseño, herramienta o proceso nueva debe alinearse con ellos.
 
 > Detalle: [Gobernanza Metodológica](planning/artifacts/methodology.md)
 > (sección "Verificación de métricas: trazabilidad y fortaleza").
+
+[↑ Contenido](#contenido)
+
+---
+
+## Adopción Progresiva
+
+Las capacidades de Virgil (binding layer, `virgil scan`, `virgil health`)
+son usables de forma **independiente** de la metodología completa. La
+metodología de 8 fases es el default opinado del framework, no el peaje
+de entrada para beneficiarse del binding layer.
+
+| Nivel | Comando | Qué incluye |
+|-------|---------|-------------|
+| **Mínima** | `virgil init --minimal` | Binding graph + `virgil scan` + `virgil health`. Sin fases, sin roles, sin ceremonia. |
+| **Estándar** | `virgil init` | Binding + echo hooks + handoff lint + orquestación del motor de métricas (mutation, CRAP, complejidad). |
+| **Completa** | `virgil init --full` | Metodología de 8 fases completa, con los roles del equipo default y gates de aprobación. |
+
+Cada nivel agrega valor por sí mismo; ningún nivel exige adoptar el
+siguiente. Un equipo puede quedarse en adopción mínima de forma indefinida
+y seguir beneficiándose de trazabilidad y verificación de fortaleza — así
+como un equipo puede adoptar la metodología completa sin tocar nunca el
+binding layer, aunque en ese caso pierde la mitad "fortaleza" del Dogma
+(principio 2).
 
 [↑ Contenido](#contenido)
 
