@@ -1,4 +1,4 @@
-# Spec: Virgil v2
+# Spec: Virgil
 
 ## Dogma rector
 
@@ -762,5 +762,5 @@ type DocAdapter interface {
 
 - Fecha de creación: 2026-08-05
 - Estado: borrador
-- Fuente: idea-virgil-v2.md + research (RTM + code intelligence + GoReleaser)
+- Fuente: idea-virgil.md + research (RTM + code intelligence + GoReleaser)
 - Revisores pendientes: MIM (aprobación)

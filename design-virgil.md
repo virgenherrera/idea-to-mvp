@@ -1,8 +1,8 @@
-# Design: Virgil v2
+# Design: Virgil
 
-Descripción de arquitectura conforme a ISO/IEC/IEEE 42010 + IEEE 1016 para Virgil v2:
+Descripción de arquitectura conforme a ISO/IEC/IEEE 42010 + IEEE 1016 para Virgil:
 herramienta de metodología + ownership para proyectos asistidos por IA. Este documento
-deriva de `spec-virgil-v2.md` y cada decisión traza a un requisito (RF-XX / RNF-XX).
+deriva de `spec-virgil.md` y cada decisión traza a un requisito (RF-XX / RNF-XX).
 
 Alcance: CLI en Go distribuido como binario estático que provee bootstrap de proyectos
 (`virgil init`), flujo greenfield (`/virgil-idea`), flujo brownfield (`/virgil-takeover`),
@@ -38,16 +38,16 @@ Nota de toolchain:
 ### Vista de contenedores
 
 ```mermaid
-%% C4 nivel 2 — contenedores de Virgil v2 y sistemas externos
+%% C4 nivel 2 — contenedores de Virgil y sistemas externos
 C4Container
-    title Contenedores — Virgil v2
+    title Contenedores — Virgil
 
     Person(mim, "MIM", "Humano que dirige el proyecto")
     System_Ext(agent, "AI Agent", "Claude Code, Cursor, etc.")
     System_Ext(git, "Git", "VCS del proyecto destino")
     System_Ext(docstore, "Doc backend", "engram / GitHub / Jira")
 
-    System_Boundary(virgil, "Virgil v2 (binario Go)") {
+    System_Boundary(virgil, "Virgil (binario Go)") {
         Container(cli, "CLI", "Go + cobra", "init, scan, refresh, verify")
         Container(compiler, "Compiler", "Go + go:embed", "docs a skills/hooks/AGENTS")
         Container(scanner, "Scanner", "Go + Tree-Sitter", "AST a code artifacts")
@@ -561,7 +561,7 @@ Puntos de integración:
 
 ## Trazabilidad
 
-| Elemento de diseño | Requisito(s) de `spec-virgil-v2.md` |
+| Elemento de diseño | Requisito(s) de `spec-virgil.md` |
 |--------------------|-------------------------------------|
 | Stack Go + go:embed + GoReleaser | RNF-02, Restricciones 1-2, RF-09 |
 | Contenedor CLI (cobra) | RF-01, Contrato CLI Commands, RNF-04 |
@@ -578,7 +578,7 @@ Puntos de integración:
 | ADR-005 (skills texto plano) | RF-06, Restricción 5 |
 | ADR-006 (delegación de hooks) | RF-05, RNF-03 |
 | Superficie de seguridad | RNF-03, Restricción 4 |
-| Integración Echo + CI/CD | AC-06.3, RNF-01, Could Have v2.2+ |
+| Integración Echo + CI/CD | AC-06.3, RNF-01, Could Have v2+ |
 | SM mental model (bootstrap en AGENTS.md) | RF-07 |
 | Flujos `/virgil-idea` y `/virgil-takeover` (skills generados por Compiler + Scanner) | RF-02, RF-03 |
 | ADR-007 (métricas externas) | RF-10 (AC-10.3, AC-10.5, AC-10.6), Dogma principio 2-3 |
@@ -590,10 +590,10 @@ Puntos de integración:
 
 | Campo | Valor |
 |-------|-------|
-| Documento | `design-virgil-v2.md` |
+| Documento | `design-virgil.md` |
 | Estándares | ISO/IEC/IEEE 42010, IEEE 1016 |
-| Deriva de | `spec-virgil-v2.md`, `idea-virgil-v2.md` |
+| Deriva de | `spec-virgil.md`, `idea-virgil.md` |
 | Versión | 1.0.0 |
 | Fecha | 2026-08-05 |
 | Estado | Draft — pendiente de aprobación del MIM |
-| Próximo artefacto | `tasks-virgil-v2.md` (task breakdown) |
+| Próximo artefacto | `tasks-virgil.md` (task breakdown) |

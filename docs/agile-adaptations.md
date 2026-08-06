@@ -31,7 +31,7 @@ tags: [agile, principios, manifiesto, session-manager]
 
 ## Honestidad sobre el Trade-off
 
-Virgil v2 no es Scrum. Descrito con precisión, es **Stage-Gate con
+Virgil no es Scrum. Descrito con precisión, es **Stage-Gate con
 vocabulario de Scrum**: fases secuenciales con gates de aprobación
 obligatorios, en vez de sprints time-boxed con entrega continua al
 cliente. Esta es una decisión de diseño deliberada, no una desviación
@@ -43,7 +43,7 @@ constraint, no bajo confianza"**, ver
 persistente ni reputación acumulada no puede auto-organizarse como un
 equipo humano de confianza — necesita gates mecánicos que verifiquen
 cada transición antes de avanzar. Scrum asume equipos que negocian su
-propio proceso sobre una base de confianza mutua; Virgil v2 asume
+propio proceso sobre una base de confianza mutua; Virgil asume
 agentes que ejecutan contratos porque, entre instancias sin
 persistencia, no hay nada más con qué confiar. La gobernanza mecánica
 reemplaza la confianza — no porque sea preferible en abstracto, sino
@@ -194,7 +194,7 @@ significados distintos de la misma palabra.
 - El "contract negotiation" del Manifiesto es un contrato **comercial**
   entre cliente y proveedor: alcance fijado por adelantado, cambios
   costosos, negociación adversarial sobre quién asume el riesgo.
-- Los "contratos" de Virgil v2 son contratos **técnicos agente-a-agente**:
+- Los "contratos" de Virgil son contratos **técnicos agente-a-agente**:
   especificaciones que evitan que un subAgent sin contexto compartido
   interprete mal su tarea. Se compilan a partir de artefactos que el
   MIM ya aprobó — no se negocian con el MIM.

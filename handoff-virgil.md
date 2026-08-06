@@ -1,8 +1,8 @@
-# Handoff: Virgil v2
+# Handoff: Virgil
 
 ## Resumen ejecutivo
 
-Virgil v2 es una herramienta CLI en Go (100% pure, sin CGo) que provee
+Virgil es una herramienta CLI en Go (100% pure, sin CGo) que provee
 **metodología e2e y ownership** a proyectos de software asistidos por IA.
 
 **Dogma** (6 principios): implementa la visión de Uncle Bob (julio 2026) —
@@ -24,7 +24,7 @@ sin toolchain C.
 
 ## Stack y arquitectura
 
-**Referencia completa**: `design-virgil-v2.md`
+**Referencia completa**: `design-virgil.md`
 
 ### Decisiones clave
 
@@ -69,7 +69,7 @@ virgil/
 
 ## Tareas a ejecutar
 
-**Referencia completa**: `tasks-virgil-v2.md`
+**Referencia completa**: `tasks-virgil.md`
 
 ### DAG de dependencias
 
@@ -304,7 +304,7 @@ El proyecto se considera completo cuando:
 
 ## Documentación operativa esperada
 
-Virgil v2 es un CLI de desarrollo (no un servicio desplegado). Documentación
+Virgil es un CLI de desarrollo (no un servicio desplegado). Documentación
 requerida durante la ejecución:
 
 | Documento | Audiencia | Formato |
@@ -312,7 +312,7 @@ requerida durante la ejecución:
 | README.md | Usuarios de Virgil | Markdown: instalación, quickstart, comandos |
 | CLI reference | Usuarios avanzados | Generado por cobra (`virgil --help`, man pages) |
 | Contributing guide | Contribuidores | Markdown: setup, testing, release process |
-| Architecture overview | Contribuidores | Resumen de design-virgil-v2.md en docs/ |
+| Architecture overview | Contribuidores | Resumen de design-virgil.md en docs/ |
 
 No aplica: ops-runbook, SLAs, monitoreo, troubleshooting de producción
 (Virgil no tiene servicios desplegados).
@@ -324,7 +324,7 @@ No aplica: ops-runbook, SLAs, monitoreo, troubleshooting de producción
 | Campo | Valor |
 |-------|-------|
 | Fecha de generación | 2026-08-05 |
-| Artefactos fuente | idea-virgil-v2.md, spec-virgil-v2.md, design-virgil-v2.md, tasks-virgil-v2.md |
+| Artefactos fuente | idea-virgil.md, spec-virgil.md, design-virgil.md, tasks-virgil.md |
 | Estado | generado |
 | Pipeline | idea → spec → design → tasks → **handoff** |
 | Aprobación pendiente | MIM |

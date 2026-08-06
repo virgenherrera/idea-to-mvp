@@ -400,7 +400,7 @@ universal; las decisiones de implementación no.
 
 ## Orquestación de Métricas (Virgil)
 
-Dogma v2 (principios 2 y 3) exige verificar no solo que el código pasa
+Dogma (principios 2 y 3) exige verificar no solo que el código pasa
 el echo, sino que tiene la fortaleza estructural adecuada y que el MIM
 puede gestionar el proyecto desde un nivel superior sin revisar código
 manualmente. Virgil resuelve esto orquestando herramientas externas de

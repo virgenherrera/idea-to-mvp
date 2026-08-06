@@ -20,7 +20,7 @@ tags: [certificación, qa, handoff, documentación-operativa, gate]
 
 - [Principio](#principio)
 - [Qué verifica QA](#qué-verifica-qa)
-- [Verificación Mecánica (Dogma v2)](#verificación-mecánica-dogma-v2)
+- [Verificación Mecánica (Dogma)](#verificación-mecánica-dogma)
 - [Qué NO hace QA en esta fase](#qué-no-hace-qa-en-esta-fase)
 - [Mecanismo de certificación](#mecanismo-de-certificación)
 - [Flujo de la fase](#flujo-de-la-fase)
@@ -56,13 +56,13 @@ pasan" es condición necesaria pero NO suficiente. QA certifica que:
 | Seguridad | Security scanners (govulncheck, npm audit, trivy) | Vulnerabilidades críticas resueltas antes de certificar |
 | echo completo | [echo system](../echo-system.md) | Los 5 pasos del echo pasan (setup, build, static, dynamic, E2E). Precondición para certificar |
 | Documentación operativa | `handoff.md` sección "Documentación operativa esperada" | Si el handoff la requiere: documentación existe, es usable, cubre lo declarado. Si el handoff dice "no requerida": omitir verificación. |
-| Métricas (Dogma v2) | `virgil health` | Mutation score, CRAP, complejidad y binding coverage cumplen el threshold del tier activo |
+| Métricas (Dogma) | `virgil health` | Mutation score, CRAP, complejidad y binding coverage cumplen el threshold del tier activo |
 
 [↑ Contenido](#contenido)
 
 ---
 
-## Verificación Mecánica (Dogma v2)
+## Verificación Mecánica (Dogma)
 
 Además de las dimensiones de la tabla anterior, la certificación de
 Accept incluye el reporte de `virgil health`, que agrega cuatro
@@ -80,7 +80,7 @@ el mínimo de cobertura configurado falla antes de llegar a Accept — QA
 nunca certifica sobre un build que ya venía roto en ese gate.
 
 > **Gate determinista**: a diferencia de una revisión manual, el gate
-> de Accept en Dogma v2 es determinista — se aprueba cuando la
+> de Accept en Dogma es determinista — se aprueba cuando la
 > cobertura de bindings y las métricas de `virgil health` alcanzan el
 > threshold del tier activo (ver
 > [refactor.md](refactor.md#verificación-basada-en-métricas)), no

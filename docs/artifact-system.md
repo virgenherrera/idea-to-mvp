@@ -53,7 +53,7 @@ tipo (planificación). Cuando se refiere a outputs de build, se usa
 ## El Artifact handoff.md
 
 `handoff.md` es un artifact de planificación (ver
-[Distinción Semántica](#distinción-semántica)), pero Dogma v2 le añade
+[Distinción Semántica](#distinción-semántica)), pero Dogma le añade
 dos propiedades que lo distinguen del resto de los artifacts de
 planning.
 
@@ -64,7 +64,7 @@ aprobación humana del SM. `virgil handoff lint` valida mecánicamente
 que `handoff.md` es autocontenido, referencia artefactos existentes y
 cumple el schema mínimo, antes de habilitar el arranque de execution.
 Un `handoff.md` que no pasa el lint no habilita la Fase Contratos — sin
-excepción manual. Es un gate determinístico (Dogma v2, principio 6), no
+excepción manual. Es un gate determinístico (Dogma, principio 6), no
 un juicio de aprobación.
 
 ### Execution State: Claiming por Tarea
@@ -81,8 +81,8 @@ independiente del estado de aprobación del artefacto:
 
 Este execution state es lo que permite que varios subAgents trabajen en
 paralelo sobre el mismo `handoff.md` sin colisionar: cada uno hace
-claim de su tarea antes de empezar, y la marca `done` al terminar (Dogma
-v2, principio 5). Ver [glosario](glossary.md) — `claiming`,
+claim de su tarea antes de empezar, y la marca `done` al terminar (Dogma,
+principio 5). Ver [glosario](glossary.md) — `claiming`,
 `executionState`.
 
 [↑ Contenido](#contenido)

@@ -1,4 +1,4 @@
-# Tasks: Virgil v2
+# Tasks: Virgil
 
 ## Tareas
 

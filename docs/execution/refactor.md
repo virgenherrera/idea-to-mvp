@@ -35,11 +35,11 @@ revierte.
 
 ## Dimensiones de verificación mecánica
 
-> **Dogma v2, principio 3**: "No revisas código del agente — mides
+> **Dogma principio 3**: "No revisas código del agente — mides
 > métricas." Uncle Bob lo formula así: "No reviso código escrito por
 > agentes. Mido cobertura de tests, estructura de dependencias,
 > complejidad ciclomática, tamaño de módulos, mutation testing."
-> (julio 2026). Virgil v2 no traslada la revisión de código de un
+> (julio 2026). Virgil no traslada la revisión de código de un
 > humano a un sub-agente — la ELIMINA y la reemplaza por herramientas
 > mecánicas. Un sub-agente leyendo código y emitiendo un "reporte de
 > revisión" sigue siendo revisión de código, solo que relocalizada.
@@ -115,7 +115,7 @@ mecanismo por defecto de la fase.
 
 ## Verificación Basada en Métricas
 
-Virgil v2 reemplaza la revisión manual de código por verificación
+Virgil reemplaza la revisión manual de código por verificación
 basada en métricas (ver dogma citado arriba en
 [Dimensiones de verificación mecánica](#dimensiones-de-verificación-mecánica)).
 El binding layer (declarado en

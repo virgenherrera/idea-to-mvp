@@ -1,4 +1,4 @@
-# Virgil v2 — Idea Document
+# Virgil — Idea Document
 
 ## Identidad
 
@@ -135,7 +135,7 @@ flowchart TD
 
 ```mermaid
 C4Context
-    title Virgil v2 — System Context
+    title Virgil — System Context
 
     Person(mim, "MIM", "Humano que dirige")
 

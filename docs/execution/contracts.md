@@ -70,7 +70,7 @@ es la ceremonia alrededor.
 | Event Schema | JSON Schema / AsyncAPI | Sistemas event-driven | `UserCreatedEvent { id, email, timestamp }` |
 | Component Interface | Props/inputs tipados | Frontend con componentes | `LoginFormProps { onSubmit, initialValues }` |
 | Connector / Adapter Interface | Ports & adapters | Integraciones con terceros | `interface PaymentGateway { charge(amount): Receipt }` |
-| Binding Layer | Manifiesto requirement ↔ test ↔ código | Todo proyecto que use Virgil v2 | `AC-01 ↔ AuthTestCase.loginSuccess ↔ src/auth/login.service.ts` |
+| Binding Layer | Manifiesto requirement ↔ test ↔ código | Todo proyecto que use Virgil | `AC-01 ↔ AuthTestCase.loginSuccess ↔ src/auth/login.service.ts` |
 
 > Los formatos son ilustrativos. Cualquier especificación formal que
 > cumpla los requisitos del contrato (tipada, verificable por máquina,

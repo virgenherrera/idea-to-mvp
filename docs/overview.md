@@ -40,7 +40,7 @@ tags: [actores, pipeline, modos, roles, artefactos, diagrama]
 
 ## Dogma Rector
 
-El framework se rige por seis principios no negociables (Dogma v2). Toda
+El framework se rige por seis principios no negociables (Dogma). Toda
 decisión de diseño, herramienta o proceso nueva debe alinearse con ellos.
 
 1. **Metodología e2e** — el framework cubre el ciclo completo idea →
@@ -171,7 +171,7 @@ flowchart LR
 | Dónde escribe | artifactStore (fuera del repo) | Working tree del repo |
 | Estado actual | **DEFINIDO** | **DEFINIDO** |
 
-> **Nota (Dogma v2)**: el `AGENTS.md` monolítico como único vehículo de
+> **Nota (Dogma)**: el `AGENTS.md` monolítico como único vehículo de
 > gobernanza por repo se reemplaza por **progressive disclosure**:
 > reglas divididas en skills que se activan por contexto, hooks que
 > imponen constraints determinísticos (principio 4), y MCP que expone
@@ -190,7 +190,7 @@ El ciclo tiene 4 macro-fases, todas definidas. Las fases post-ejecución
 están definidas como parte de planning; la macro-fase de operación es
 operation: una fachada (facade) opcional y reactiva sobre el ciclo e2e
 completo (idea → operación) — no es un requisito para cerrar el ciclo
-(Dogma v2, principio 1).
+(Dogma, principio 1).
 
 ```mermaid
 %% Pipeline completo con macro-fases
@@ -315,8 +315,8 @@ flowchart LR
     HANDOFF -->|"post-ejecución"| OPS
 ```
 
-> **binding layer**: esta cadena de artefactos es, en términos de Dogma
-> v2 (principio 2), el grafo de trazabilidad que el TPM mantiene —
+> **binding layer**: esta cadena de artefactos es, en términos del Dogma
+> (principio 2), el grafo de trazabilidad que el TPM mantiene —
 > vincula cada artefacto downstream con su upstream (idea → spec →
 > design → tasks → handoff → ops-runbook). `verifyConsistency` opera
 > sobre este grafo para detectar semanticDrift. El binding layer
