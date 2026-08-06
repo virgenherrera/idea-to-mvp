@@ -7,6 +7,11 @@ import (
 	"path/filepath"
 )
 
+func GlobalDocsDir() string {
+	home, _ := os.UserHomeDir()
+	return filepath.Join(home, ".virgil", "docs")
+}
+
 func Init(tier string, methodologyFS embed.FS) (extracted []string, err error) {
 	virgilDir := VirgilDir()
 
@@ -14,11 +19,10 @@ func Init(tier string, methodologyFS embed.FS) (extracted []string, err error) {
 		return nil, fmt.Errorf(".virgil/ already exists — run 'virgil init --force' or delete it manually")
 	}
 
-	docsDir := filepath.Join(virgilDir, "docs")
 	feedbackDir := filepath.Join(virgilDir, "feedback")
 
-	if mkErr := os.MkdirAll(docsDir, 0755); mkErr != nil {
-		return nil, fmt.Errorf("creating docs directory: %w", mkErr)
+	if mkErr := os.MkdirAll(feedbackDir, 0755); mkErr != nil {
+		return nil, fmt.Errorf("creating feedback directory: %w", mkErr)
 	}
 	defer func() {
 		if err != nil {
@@ -26,11 +30,12 @@ func Init(tier string, methodologyFS embed.FS) (extracted []string, err error) {
 		}
 	}()
 
-	if mkErr := os.MkdirAll(feedbackDir, 0755); mkErr != nil {
-		return nil, fmt.Errorf("creating feedback directory: %w", mkErr)
+	globalDocs := GlobalDocsDir()
+	if mkErr := os.MkdirAll(globalDocs, 0755); mkErr != nil {
+		return nil, fmt.Errorf("creating global docs directory: %w", mkErr)
 	}
 
-	extracted, err = ExtractDocs(docsDir, methodologyFS, tier)
+	extracted, err = ExtractDocs(globalDocs, methodologyFS, tier)
 	if err != nil {
 		return nil, fmt.Errorf("extracting docs: %w", err)
 	}

@@ -56,65 +56,40 @@ func Link() error {
 	}
 	source := string(data)
 
-	virgilDir := VirgilDir()
-	if _, err := os.Stat(virgilDir); os.IsNotExist(err) {
-		return fmt.Errorf(".virgil/ directory not found — run 'virgil init' first")
-	}
-
-	docsDir := filepath.Join(virgilDir, "docs")
-	if err := os.RemoveAll(docsDir); err != nil {
+	globalDocs := GlobalDocsDir()
+	if err := os.RemoveAll(globalDocs); err != nil {
 		return fmt.Errorf("cannot remove existing docs: %w", err)
 	}
 
 	linkTarget := filepath.Join(source, "docs", "en")
-	if err := os.Symlink(linkTarget, docsDir); err != nil {
+	if err := os.Symlink(linkTarget, globalDocs); err != nil {
 		return fmt.Errorf("cannot create symlink: %w", err)
 	}
 
-	cfg, err := ReadConfig(virgilDir)
-	if err != nil {
-		return fmt.Errorf("cannot read config: %w", err)
-	}
-	cfg.DocsSource = "linked"
-	cfg.LinkedPath = source
-	if err := WriteConfig(virgilDir, cfg); err != nil {
-		return fmt.Errorf("cannot update config: %w", err)
-	}
-
-	fmt.Printf("Linked .virgil/docs/ → %s\n", linkTarget)
+	fmt.Printf("Linked %s → %s\n", globalDocs, linkTarget)
 	return nil
 }
 
 func Unlink(methodologyFS embed.FS, tier string) error {
-	virgilDir := VirgilDir()
-	if _, err := os.Stat(virgilDir); os.IsNotExist(err) {
-		return fmt.Errorf(".virgil/ directory not found — run 'virgil init' first")
-	}
+	globalDocs := GlobalDocsDir()
 
-	cfg, err := ReadConfig(virgilDir)
+	info, err := os.Lstat(globalDocs)
 	if err != nil {
-		return fmt.Errorf("reading config: %w", err)
+		return fmt.Errorf("~/.virgil/docs/ not found — nothing to unlink")
 	}
-	if cfg.DocsSource != "linked" {
-		return fmt.Errorf("docs are not linked — nothing to unlink")
-	}
-
-	docsDir := filepath.Join(virgilDir, "docs")
-	if err := os.RemoveAll(docsDir); err != nil {
-		return fmt.Errorf("cannot remove linked docs: %w", err)
+	if info.Mode()&os.ModeSymlink == 0 {
+		return fmt.Errorf("~/.virgil/docs/ is not a symlink — nothing to unlink")
 	}
 
-	extracted, extErr := ExtractDocs(docsDir, methodologyFS, tier)
+	if err := os.Remove(globalDocs); err != nil {
+		return fmt.Errorf("cannot remove symlink: %w", err)
+	}
+
+	extracted, extErr := ExtractDocs(globalDocs, methodologyFS, tier)
 	if extErr != nil {
 		return fmt.Errorf("cannot re-extract embedded docs: %w", extErr)
 	}
 
-	cfg.DocsSource = "embedded"
-	cfg.LinkedPath = ""
-	if err := WriteConfig(virgilDir, cfg); err != nil {
-		return fmt.Errorf("cannot update config: %w", err)
-	}
-
-	fmt.Printf("Unlinked. Re-extracted %d embedded docs.\n", len(extracted))
+	fmt.Printf("Unlinked. Re-extracted %d embedded docs to %s\n", len(extracted), globalDocs)
 	return nil
 }

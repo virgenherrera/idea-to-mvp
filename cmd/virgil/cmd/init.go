@@ -50,13 +50,14 @@ Tiers control how many docs are extracted:
 			return err
 		}
 
-		targetFile, err := awareness.InjectAwarenessBlock(distribution.VirgilDir())
+		docsPath := distribution.GlobalDocsDir()
+		targetFile, err := awareness.InjectAwarenessBlock(docsPath)
 		if err != nil {
 			return err
 		}
 
 		fmt.Printf("Virgil initialized (%s tier)\n", tier)
-		fmt.Printf("  %d docs extracted to .virgil/docs/\n", len(extracted))
+		fmt.Printf("  %d docs at %s\n", len(extracted), docsPath)
 		fmt.Printf("  Awareness block injected into %s\n", targetFile)
 		return nil
 	},
